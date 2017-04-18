@@ -74,6 +74,11 @@
 *       sk     10/13/16 Reduced the delay during power cycle to 1ms as per spec
 *       sk     10/19/16 Used emmc_hwreset pin to reset eMMC.
 *       sk     11/07/16 Enable Rst_n bit in ext_csd reg if not enabled.
+* -     pf     04/18/17 Fix misprint in XSdPs_CmdTransfer (variable named Status
+*                       instead of StatusReg)
+* -     pf     04/18/17 Add a missing break in XSdPs_FrameCmd (case CMD23, ACMD23,
+*                       CMD24, CMD25) (Note: it was not resulting in a bug since
+*                       RESP_R3 is included in RESP_R1).
 * </pre>
 *
 ******************************************************************************/
@@ -1003,11 +1008,13 @@ s32 XSdPs_CmdTransfer(XSdPs *InstancePtr, u32 Cmd, u32 Arg, u32 BlkCnt)
 		}
 
 		if ((StatusReg & XSDPS_INTR_ERR_MASK) != 0U) {
-			Status = XSdPs_ReadReg16(InstancePtr->Config.BaseAddress,
+			StatusReg = XSdPs_ReadReg16(InstancePtr->Config.BaseAddress,
 									XSDPS_ERR_INTR_STS_OFFSET);
-			if ((Status & ~XSDPS_INTR_ERR_CT_MASK) == 0) {
+			if ((StatusReg & ~XSDPS_INTR_ERR_CT_MASK) == 0) {
 				Status = XSDPS_CT_ERROR;
-			}
+			} else {
+                Status = XST_FAILURE;
+            }
 			 /* Write to clear error bits */
 			XSdPs_WriteReg16(InstancePtr->Config.BaseAddress,
 					XSDPS_ERR_INTR_STS_OFFSET,
@@ -1107,6 +1114,7 @@ u32 XSdPs_FrameCmd(XSdPs *InstancePtr, u32 Cmd)
 		case CMD24:
 		case CMD25:
 			RetVal |= RESP_R1 | (u32)XSDPS_DAT_PRESENT_SEL_MASK;
+			break;
 		case ACMD41:
 			RetVal |= RESP_R3;
 		break;
