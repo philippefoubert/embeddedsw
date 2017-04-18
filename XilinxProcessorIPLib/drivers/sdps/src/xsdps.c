@@ -79,6 +79,10 @@
 * -     pf     04/18/17 Add a missing break in XSdPs_FrameCmd (case CMD23, ACMD23,
 *                       CMD24, CMD25) (Note: it was not resulting in a bug since
 *                       RESP_R3 is included in RESP_R1).
+* -     pf     04/18/17 Bug correction in and XSdPs_ReadPolledXSdPs_WritePolled when
+*                       HCS is not supported.
+* -     pf     04/18/17 Fix misprint in XSdPs_CmdTransfer (XSDPS_PSR_INHIBIT_DAT_MASK
+*                       instead of XSDPS_PSR_INHIBIT_CMD_MASK)
 * </pre>
 *
 ******************************************************************************/
@@ -983,7 +987,7 @@ s32 XSdPs_CmdTransfer(XSdPs *InstancePtr, u32 Cmd, u32 Arg, u32 BlkCnt)
 	if ((Cmd != CMD21) && (Cmd != CMD19)) {
 		PresentStateReg = XSdPs_ReadReg(InstancePtr->Config.BaseAddress,
 				XSDPS_PRES_STATE_OFFSET);
-		if (((PresentStateReg & (XSDPS_PSR_INHIBIT_DAT_MASK |
+		if (((PresentStateReg & (XSDPS_PSR_INHIBIT_CMD_MASK |
 									XSDPS_PSR_INHIBIT_DAT_MASK)) != 0U) &&
 				((CommandReg & XSDPS_DAT_PRESENT_SEL_MASK) != 0U)) {
 			Status = XST_FAILURE;
@@ -1196,6 +1200,10 @@ s32 XSdPs_ReadPolled(XSdPs *InstancePtr, u32 Arg, u32 BlkCnt, u8 *Buff)
 	Xil_DCacheInvalidateRange((INTPTR)Buff, BlkCnt * XSDPS_BLK_SIZE_512_MASK);
 
 	/* Send block read command */
+	if (0 == InstancePtr->HCS)
+	{
+		Arg = Arg << 9;
+	}
 	Status = XSdPs_CmdTransfer(InstancePtr, CMD18, Arg, BlkCnt);
 	if (Status != XST_SUCCESS) {
 		Status = XST_FAILURE;
@@ -1286,6 +1294,10 @@ s32 XSdPs_WritePolled(XSdPs *InstancePtr, u32 Arg, u32 BlkCnt, const u8 *Buff)
 			XSDPS_TM_MUL_SIN_BLK_SEL_MASK | XSDPS_TM_DMA_EN_MASK);
 
 	/* Send block write command */
+	if (0 == InstancePtr->HCS)
+	{
+		Arg = Arg << 9;
+	}
 	Status = XSdPs_CmdTransfer(InstancePtr, CMD25, Arg, BlkCnt);
 	if (Status != XST_SUCCESS) {
 		Status = XST_FAILURE;
