@@ -83,6 +83,8 @@
 *                       HCS is not supported.
 * -     pf     04/18/17 Fix misprint in XSdPs_CmdTransfer (XSDPS_PSR_INHIBIT_DAT_MASK
 *                       instead of XSDPS_PSR_INHIBIT_CMD_MASK)
+* -     pf     04/19/17 Fix misprints in the comments in XSdPs_CfgInitialize
+*                       Fix comments in XSdPs_Select_Card
 * </pre>
 *
 ******************************************************************************/
@@ -158,7 +160,7 @@ static s32 XSdPs_Switch_Voltage(XSdPs *InstancePtr);
 *		Voltage of 3.3V is selected as that is supported by host.
 *		Interrupts status is enabled and signal disabled by default.
 *		Default data direction is card to host and
-*		32 bit ADMA2 is selected. Defualt Block size is 512 bytes.
+*		32 bit ADMA2 is selected. Default Block size is 512 bytes.
 *
 ******************************************************************************/
 s32 XSdPs_CfgInitialize(XSdPs *InstancePtr, XSdPs_Config *ConfigPtr,
@@ -259,7 +261,7 @@ s32 XSdPs_CfgInitialize(XSdPs *InstancePtr, XSdPs_Config *ConfigPtr,
 	XSdPs_WriteReg8(InstancePtr->Config.BaseAddress,
 			XSDPS_POWER_CTRL_OFFSET,
 			PowerLevel | XSDPS_PC_BUS_PWR_MASK);
-	/* Enable ADMA2 in 64bit mode. */
+	/* Enable ADMA2 in 32bit mode. */
 	XSdPs_WriteReg8(InstancePtr->Config.BaseAddress,
 			XSDPS_HOST_CTRL1_OFFSET,
 			XSDPS_HC_DMA_ADMA2_32_MASK);
@@ -1334,7 +1336,7 @@ s32 XSdPs_WritePolled(XSdPs *InstancePtr, u32 Arg, u32 BlkCnt, const u8 *Buff)
 /*****************************************************************************/
 /**
 *
-* Selects card and sets default block size
+* Selects card
 *
 *
 * @param	InstancePtr is a pointer to the XSdPs instance.
