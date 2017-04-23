@@ -21,7 +21,7 @@ var xv__hdmirx_8c =
     [ "XV_HdmiRx_GetGcpColorDepth", "xv__hdmirx_8c.html#a87e0904b6a6167f3cde2e7fcc0843e1d", null ],
     [ "XV_HdmiRx_GetLinkStatus", "xv__hdmirx_8c.html#aad02ea3d99f0ac3a7f4a0b18f88d62e8", null ],
     [ "XV_HdmiRx_GetTmdsClockRatio", "xv__hdmirx_8c.html#a36bca352ee91492da1392cae5ddcfa6c", null ],
-    [ "XV_HdmiRx_GetVideoProperties", "xv__hdmirx_8c.html#a6534bc4c10991955be627dc1d36bd23b", null ],
+    [ "XV_HdmiRx_GetVideoProperties", "xv__hdmirx_8c.html#a6f74899b52dfbb8e0e554bbdea04bd29", null ],
     [ "XV_HdmiRx_GetVideoTiming", "xv__hdmirx_8c.html#a9e11e21cff30c73785c0a2f63944ccd0", null ],
     [ "XV_HdmiRx_IsLinkStatusErrMax", "xv__hdmirx_8c.html#a70bb5419e7285a268518668fda1d70cd", null ],
     [ "XV_HdmiRx_IsStreamConnected", "xv__hdmirx_8c.html#a9bbc4765c852092e33ff24124b2fc3f8", null ],

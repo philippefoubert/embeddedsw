@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,8 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00  kc   10/21/13 Initial release
+* 2.0   vb   03/24/17 Added macros for LOVEC/HIVEC and USB boot mode,
+*                     Made compliance to MISRAC 2012 guidelines
 *
 * </pre>
 *
@@ -114,8 +116,8 @@ typedef struct {
 /***************** Macros (Inline Functions) Definitions *********************/
 
 /* SDK release version */
-#define SDK_RELEASE_YEAR	2016
-#define SDK_RELEASE_QUARTER	4
+#define SDK_RELEASE_YEAR	2017
+#define SDK_RELEASE_QUARTER	1
 
 #define XFSBL_RUNNING			(0xFFFFU)
 #define XFSBL_COMPLETED			(0x0U)
@@ -138,6 +140,7 @@ typedef struct {
 #define XFSBL_NAND_BOOT_MODE		(0x4U)
 #define XFSBL_SD1_BOOT_MODE	        (0x5U)
 #define XFSBL_EMMC_BOOT_MODE		(0x6U)
+#define XFSBL_USB_BOOT_MODE			(0x7U)
 #define XFSBL_SD1_LS_BOOT_MODE	    (0xEU)
 
 /**
@@ -166,15 +169,15 @@ typedef struct {
 #define ATTRIB_MEMORY_A53_32 0x15DE6U
 #define ATTRIB_RESERVED_A53  0x0U
 
-/* Reset Reason */
-
-#define PS_ONLY_RESET		0x1U
-
 /* Pattern to be filled for DDR ECC Initialization */
 #define XFSBL_ECC_INIT_VAL_WORD 0xDEADBEEFU
 
 #define XFSBL_R50_TCM_ECC_INIT_STATUS 0x00000001U
 #define XFSBL_R51_TCM_ECC_INIT_STATUS 0x00000002U
+
+/* R5 vectors value*/
+#define XFSBL_R5_LOVEC_VALUE 	0xEAFEFFFEU
+#define XFSBL_R5_HIVEC_VALUE    0xEAFF3FFEU
 
 /************************** Function Prototypes ******************************/
 /**
@@ -182,8 +185,6 @@ typedef struct {
  */
 void XFsbl_PrintFsblBanner(void );
 void XFsbl_ErrorLockDown(u32 ErrorStatus);
-void XFsbl_FallBack(void );
-void XFsbl_UpdateMultiBoot(u32 MultiBootValue);
 
 #if defined(XFSBL_PERF)
 void XFsbl_MeasurePerfTime(XTime tCur);
@@ -192,7 +193,6 @@ void XFsbl_MeasurePerfTime(XTime tCur);
 /**
  * Functions defined in xfsbl_initialization.c
  */
-void XFsbl_CfgInitialize (XFsblPs * FsblInstancePtr);
 u32 XFsbl_Initialize(XFsblPs * FsblInstancePtr);
 u32 XFsbl_BootDeviceInitAndValidate(XFsblPs * FsblInstancePtr);
 u32 XFsbl_TcmEccInit(XFsblPs * FsblInstancePtr, u32 CpuId);
@@ -202,17 +202,11 @@ u32 XFsbl_TcmEccInit(XFsblPs * FsblInstancePtr, u32 CpuId);
  */
 u32 XFsbl_PartitionLoad(XFsblPs * FsblInstancePtr, u32 PartitionNum);
 u32 XFsbl_PowerUpMemory(u32 MemoryType);
-u32 XFsbl_CalcualteCheckSum(XFsblPs * FsblInstancePtr,
-		PTRSIZE LoadAddress, u32 PartitionNum);
-u32 XFsbl_CalcualteSHA(XFsblPs * FsblInstancePtr, PTRSIZE LoadAddress,
-		u32 PartitionNum, u32 ChecksumType);
-
 /**
  * Functions defined in xfsbl_handoff.c
  */
-u32 XFsbl_Handoff (XFsblPs * FsblInstancePtr, u32 PartitionNum, u32 EarlyHandoff);
+u32 XFsbl_Handoff (const XFsblPs * FsblInstancePtr, u32 PartitionNum, u32 EarlyHandoff);
 void XFsbl_HandoffExit(u64 HandoffAddress, u32 Flags);
-u32 XFsbl_CheckEarlyHandoffCpu(u32 CpuId);
 u32 XFsbl_CheckEarlyHandoff(XFsblPs * FsblInstancePtr, u32 PartitionNum);
 /************************** Variable Definitions *****************************/
 

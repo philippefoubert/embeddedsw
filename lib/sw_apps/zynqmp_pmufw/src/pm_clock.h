@@ -52,7 +52,7 @@ typedef struct PmClockDeps PmClockDeps;
  * @pll		Pointer to the PLL that is selected with the 'select' value
  */
 typedef struct {
-	PmSlavePll* const pll;
+	PmPll* const pll;
 	const u8 select;
 } PmClockSel2Pll;
 
@@ -75,9 +75,10 @@ typedef struct {
  */
 typedef struct PmClock {
 	const PmClockMux* const mux;
-	PmSlavePll* pll;
+	PmPll* pll;
 	PmClockHandle* users;
 	const u32 ctrlAddr;
+	u32 ctrlVal;
 } PmClock;
 
 /**
@@ -99,11 +100,13 @@ typedef struct PmClockHandle {
 /*********************************************************************
  * Function declarations
  ********************************************************************/
-void PmClockInitList(void);
-void PmClockInitData(void);
+int PmClockRequest(PmNode* const node);
 
-int PmClockRequest(const PmNode* const node);
-void PmClockRelease(const PmNode* const node);
+void PmClockRelease(PmNode* const node);
 void PmClockSnoop(const u32 addr, const u32 mask, const u32 val);
+void PmClockConstructList(void);
+void PmClockRestore(PmNode* const node);
+void PmClockSave(PmNode* const node);
+s32 PmClockIsActive(PmNode* const node);
 
 #endif

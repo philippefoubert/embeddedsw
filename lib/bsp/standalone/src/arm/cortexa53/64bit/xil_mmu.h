@@ -33,7 +33,12 @@
 /**
 * @file xil_mmu.h
 *
+* @addtogroup a53_64_mmu_apis Cortex A53 64bit Processor MMU Handling
 *
+* MMU function equip users to modify default memory attributes of MMU table as
+* per the need.
+*
+* @{
 *
 * <pre>
 * MODIFICATION HISTORY:
@@ -96,10 +101,13 @@ extern "C" {
 
 /************************** Function Prototypes ******************************/
 
-void Xil_SetTlbAttributes(INTPTR Addr, u64 attrib);
+void Xil_SetTlbAttributes(UINTPTR Addr, u64 attrib);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
 #endif /* XIL_MMU_H */
+/**
+* @} End of "addtogroup a53_64_mmu_apis".
+*/

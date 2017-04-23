@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,8 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00  kc   10/21/13 Initial release
+* 2.0   bv   12/05/16 Made compliance to MISRAC 2012 guidelines
+*            03/24/17 Added new error codes.
 *
 * </pre>
 *
@@ -85,14 +87,14 @@ extern "C" {
  */
 
 #define XFSBL_ERROR_STAGE_1		(0x0000U)
-#define XFSBL_ERROR_STAGE_2		(0x2000U)
-#define XFSBL_ERROR_STAGE_3		(0x4000U)
-#define XFSBL_ERROR_STAGE_4		(0x6000U)
+#define XFSBL_ERROR_STAGE_2		(u32)(0x2000U)
+#define XFSBL_ERROR_STAGE_3		(u32)(0x4000U)
+#define XFSBL_ERROR_STAGE_4		(u32)(0x6000U)
 
 #define XFSBL_PSU_INIT_FAILED				(0x0800U)
 #define XFSBL_PSU_POSTCONFIG_FAILED			(0x1000U)
 
-#define XFSBL_SUCCESS					(0x0U)
+#define XFSBL_SUCCESS					(u32)(0x0U)
 #define XFSBL_STATUS_JTAG				(0x1U)
 #define XFSBL_SUCCESS_NOT_PARTITION_OWNER		(0x2U)
 #define XFSBL_STATUS_CONTINUE_PARTITION_LOAD	(0x3U)
@@ -120,7 +122,7 @@ extern "C" {
 #define XFSBL_ERROR_PH_CHECKSUM_FAILED			(0x17U)
 #define XFSBL_ERROR_PWR_UP_CPU				(0x18U)
 #define XFSBL_ERROR_QSPI_LENGTH				(0x19U)
-#define XFSBL_ERROR_INVALID_QSPI_CONNECTION		(0x1AU)
+#define XFSBL_ERROR_INVALID_QSPI_CONNECTION		(s32)(0x1A)
 #define XFSBL_ERROR_UNDEFINED_EXCEPTION			(0x1BU)
 #define XFSBL_ERROR_SVC_EXCEPTION			(0x1CU)
 #define XFSBL_ERROR_PREFETCH_ABORT_EXCEPTION		(0x1DU)
@@ -179,8 +181,20 @@ extern "C" {
 #define XFSBL_ERROR_PROTECTION_CFG					(0x51U)
 #define XFSBL_ERROR_UNAVAILABLE_CPU					(0x52U)
 #define XFSBL_ERROR_GT_LANE_SELECTION				(0x53U)
-
-#define XFSBL_FAILURE					(0x3FFU)
+#define XFSBL_ERROR_I2C_SET_SCLK                    (0x54U)
+#define XFSBL_ERROR_PMU_GLOBAL_REQ_ISO				(0x55U)
+#define XFSBL_ERROR_AES_INITIALIZE             		(0x56U)
+#define XFSBL_ERROR_QSPI_MANUAL_START     			(0x57U)
+#define XFSBL_ERROR_QSPI_PRESCALER_CLK              (0x58U)
+#define XFSBL_ERROR_RSA_INITIALIZE                  (0x59U)
+#define XFSBL_ERROR_CHUNK_HASH_COMPARISON			(0x60U)
+#define XFSBL_ERROR_PROVIDED_BUF_HASH_STORE			(0x61U)
+#define XFSBL_ERROR_USB_BOOT_WITH_NO_DDR			(0x62U)
+#define XFSBL_ERROR_BLOCK_SIZE_SEC_BS				(0x63U)
+#define XFSBL_ERROR_IMAGE_HEADER_ACOFFSET			(0x64U)
+#define XFSBL_ERROR_PPK_VERIFICATION				(0x65U)
+#define XFSBL_ERROR_SPKID_VERIFICATION				(0x66U)
+#define XFSBL_FAILURE					(0x3FFFFFFFU)
 
 /**************************** Type Definitions *******************************/
 

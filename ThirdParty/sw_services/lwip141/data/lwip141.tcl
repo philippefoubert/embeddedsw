@@ -239,7 +239,7 @@ proc lwip_sw_drc {libhandle emacs_list} {
 		set os_handle [hsi::get_os]
 		set os_name [common::get_property NAME $os_handle]
 		if { [string compare -nocase "xilkernel" $os_name] != 0} {
-			if { [string compare -nocase "freertos823_xilinx" $os_name] != 0} {
+			if { [string compare -nocase "freertos901_xilinx" $os_name] != 0} {
 				error "ERROR: lwIP with Sockets requires \"xilkernel or freertos\" OS" "" "mdt_error"
 			}
 		}
@@ -321,6 +321,51 @@ proc lwip_drc {libhandle} {
 	set emac_periphs_list [get_emac_periphs $processor]
 
 	if { [llength $emac_periphs_list] == 0 } {
+		#Retain correct compiler and processor details
+		set makeconfig "src/Makefile.config"
+		file delete $makeconfig
+		set fd [open $makeconfig w]
+
+		# determine the processor type so that we know the compiler to use
+		switch -regexp $processor_type {
+		    "microblaze" {
+			puts $fd "GCC_COMPILER=mb-gcc"
+
+			# AXI systems are Little Endian
+			# 0 = BE, 1 = LE
+			set endian [common::get_property CONFIG.C_ENDIANNESS $processor]
+			if {$endian != 0} {
+			    #puts "Little Endian system"
+			    puts $fd "CONFIG_PROCESSOR_LITTLE_ENDIAN=y"
+			} else {
+			    #puts "Big Endian system"
+			    puts $fd "CONFIG_PROCESSOR_BIG_ENDIAN=y"
+			}
+		    }
+		    ppc* {
+			puts $fd "GCC_COMPILER=powerpc-eabi-gcc"
+		    }
+		    "ps7_cortexa9" {
+			puts $fd "GCC_COMPILER=arm-xilinx-eabi-gcc"
+			#puts "Little Endian system"
+			puts $fd "CONFIG_PROCESSOR_LITTLE_ENDIAN=y"
+		    }
+		    "psu_cortexr5" {
+			puts $fd "GCC_COMPILER=arm-none-eabi-gcc"
+			#puts "Little Endian system"
+			puts $fd "CONFIG_PROCESSOR_LITTLE_ENDIAN=y"
+		    }
+		    "psu_cortexa53" {
+			puts $fd "GCC_COMPILER=aarch64-none-elf-gcc"
+			#puts "Little Endian system"
+			puts $fd "CONFIG_PROCESSOR_LITTLE_ENDIAN=y"
+		    }
+		    default {
+			puts "unknown processor type $proctype\n"
+		    }
+		    close $fd
+		}
+
 		set cpuname [common::get_property NAME $processor]
 		error "ERROR: No Ethernet MAC cores are addressable from processor $cpuname. \
 			lwIP requires atleast one EMAC (xps_ethernetlite | xps_ll_temac | axi_ethernet | axi_ethernet_buffer | axi_ethernetlite | ps7_ethernet | psu_ethernet ) core \
@@ -424,11 +469,16 @@ proc generate_lwip_opts {libhandle} {
 
 	set api_mode [common::get_property CONFIG.api_mode $libhandle]
 	if {$api_mode == "RAW_API"} {
+		# If RAW_API mode, NO_SYS should be 1, else this is set to zero by default in opt.h
 		puts $lwipopts_fd "\#define NO_SYS 1"
 		puts $lwipopts_fd "\#define LWIP_SOCKET 0"
 		puts $lwipopts_fd "\#define LWIP_COMPAT_SOCKETS 0"
 		puts $lwipopts_fd "\#define LWIP_NETCONN 0"
 	}
+	puts $lwipopts_fd ""
+
+	set no_sys_no_timers	[expr [common::get_property CONFIG.no_sys_no_timers $libhandle] == true]
+	puts $lwipopts_fd "\#define NO_SYS_NO_TIMERS $no_sys_no_timers"
 	puts $lwipopts_fd ""
 
 	set thread_prio [common::get_property CONFIG.socket_mode_thread_prio $libhandle]
@@ -445,7 +495,7 @@ proc generate_lwip_opts {libhandle} {
 			puts $lwipopts_fd "\#define LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT 0"
 			puts $lwipopts_fd ""
 		}
-		if { [string compare -nocase "freertos823_xilinx" $os_name] == 0} {
+		if { [string compare -nocase "freertos901_xilinx" $os_name] == 0} {
 			puts $lwipopts_fd "\#define OS_IS_FREERTOS"
 			puts $lwipopts_fd "\#define DEFAULT_THREAD_PRIO $thread_prio"
 			puts $lwipopts_fd "\#define TCPIP_THREAD_PRIO ($thread_prio + 1)"
@@ -463,6 +513,10 @@ proc generate_lwip_opts {libhandle} {
 
 	set use_axieth_on_zynq [common::get_property CONFIG.use_axieth_on_zynq $libhandle]
 	set use_emaclite_on_zynq [common::get_property CONFIG.use_emaclite_on_zynq  $libhandle]
+
+	set lwip_tcp_keepalive	[expr [common::get_property CONFIG.lwip_tcp_keepalive $libhandle] == true]
+	puts $lwipopts_fd "\#define LWIP_TCP_KEEPALIVE $lwip_tcp_keepalive"
+	puts $lwipopts_fd ""
 
 	# memory options
 	set mem_size 		[common::get_property CONFIG.mem_size $libhandle]
@@ -683,7 +737,6 @@ proc generate_lwip_opts {libhandle} {
 	puts $lwipopts_fd ""
 
 
-	puts $lwipopts_fd "\#define NO_SYS_NO_TIMERS 1"
 	puts $lwipopts_fd "\#define MEMP_SEPARATE_POOLS 1"
 	puts $lwipopts_fd "\#define MEMP_NUM_FRAG_PBUF 256"
 	puts $lwipopts_fd "\#define IP_OPTIONS_ALLOWED 0"
@@ -699,6 +752,10 @@ proc generate_lwip_opts {libhandle} {
 	if {$jumbo_frames} {
 		puts $lwipopts_fd "\#define USE_JUMBO_FRAMES 1"
 		puts $lwipopts_fd ""
+
+		if {$proctype == "ps7_cortexa9"} {
+			puts "WARNING: Zynq Ethernet MAC does not support jumbo frames \n"
+		}
 	}
 
 	# DHCP options

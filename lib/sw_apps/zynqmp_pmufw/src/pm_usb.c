@@ -27,6 +27,8 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*********************************************************************
  * Definitions of PM slave USB structures and state transitions.
@@ -40,31 +42,55 @@
 #include "lpd_slcr.h"
 
 /* Power states of USB */
-#define PM_USB_STATE_OFF   0U
-#define PM_USB_STATE_ON    1U
-#define PM_USB_STATE_MAX   2U
+#define PM_USB_STATE_UNUSED	0U
+#define PM_USB_STATE_OFF	1U
+#define PM_USB_STATE_ON		2U
 
 /* Power consumptions for USB defined by its states */
 #define DEFAULT_USB_POWER_ON	100U
 #define DEFAULT_USB_POWER_OFF	0U
 
+/* USB state transition latency values */
+#define PM_USB_UNUSED_TO_ON_LATENCY	152
+#define PM_USB_ON_TO_UNUSED_LATENCY	3
+#define PM_USB_ON_TO_OFF_LATENCY	3
+#define PM_USB_OFF_TO_ON_LATENCY	152
+
 /* USB states */
-static const u32 pmUsbStates[PM_USB_STATE_MAX] = {
-	[PM_USB_STATE_OFF] = PM_CAP_WAKEUP,
+static const u32 pmUsbStates[] = {
+	[PM_USB_STATE_UNUSED] = 0U,
+	[PM_USB_STATE_OFF] = PM_CAP_WAKEUP | PM_CAP_POWER,
 	[PM_USB_STATE_ON] = PM_CAP_WAKEUP | PM_CAP_ACCESS | PM_CAP_CONTEXT |
-			    PM_CAP_CLOCK,
+				PM_CAP_CLOCK | PM_CAP_POWER,
 };
 
 /* USB transition table (from which to which state USB can transit) */
 static const PmStateTran pmUsbTransitions[] = {
 	{
-		.fromState = PM_USB_STATE_ON,
-		.toState = PM_USB_STATE_OFF,
-		.latency = PM_DEFAULT_LATENCY,
-	}, {
 		.fromState = PM_USB_STATE_OFF,
 		.toState = PM_USB_STATE_ON,
-		.latency = PM_DEFAULT_LATENCY,
+		.latency = PM_USB_OFF_TO_ON_LATENCY,
+	}, {
+		.fromState = PM_USB_STATE_UNUSED,
+		.toState = PM_USB_STATE_ON,
+		.latency = PM_USB_UNUSED_TO_ON_LATENCY,
+	}, {
+		.fromState = PM_USB_STATE_ON,
+		.toState = PM_USB_STATE_OFF,
+		.latency = PM_USB_ON_TO_OFF_LATENCY,
+	}, {
+		.fromState = PM_USB_STATE_UNUSED,
+		.toState = PM_USB_STATE_OFF,
+		.latency = 0U,
+	}, {
+		.fromState = PM_USB_STATE_ON,
+		.toState = PM_USB_STATE_UNUSED,
+		.latency = PM_USB_ON_TO_UNUSED_LATENCY,
+
+	}, {
+		.fromState = PM_USB_STATE_OFF,
+		.toState = PM_USB_STATE_UNUSED,
+		.latency = 0U,
 	},
 };
 
@@ -82,7 +108,8 @@ static int PmUsbFsmHandler(PmSlave* const slave, const PmStateId nextState)
 
 	switch (slave->node.currState) {
 	case PM_USB_STATE_ON:
-		if (PM_USB_STATE_OFF == nextState) {
+		if ((PM_USB_STATE_OFF == nextState) ||
+		    (PM_USB_STATE_UNUSED == nextState)) {
 			/* ON -> OFF*/
 			status = usb->PwrDn();
 		} else {
@@ -90,6 +117,7 @@ static int PmUsbFsmHandler(PmSlave* const slave, const PmStateId nextState)
 		}
 		break;
 	case PM_USB_STATE_OFF:
+	case PM_USB_STATE_UNUSED:
 		if (PM_USB_STATE_ON == nextState) {
 			/* OFF -> ON */
 			status = usb->PwrUp();
@@ -119,7 +147,11 @@ static const PmSlaveFsm slaveUsbFsm = {
 	.enterState = PmUsbFsmHandler,
 };
 
-static PmGicProxyWake pmUsb0Wake = {
+static PmWakeEventGicProxy pmUsb0Wake = {
+	.wake = {
+		.derived = &pmUsb0Wake,
+		.class = &pmWakeEventClassGicProxy_g,
+	},
 	.mask = LPD_SLCR_GICP2_IRQ_MASK_SRC10_MASK |
 		LPD_SLCR_GICP2_IRQ_MASK_SRC4_MASK |
 		LPD_SLCR_GICP2_IRQ_MASK_SRC3_MASK |
@@ -130,26 +162,27 @@ static PmGicProxyWake pmUsb0Wake = {
 };
 
 static u32 PmUsbPowers[] = {
-	DEFAULT_USB_POWER_OFF,
-	DEFAULT_USB_POWER_ON,
+	[PM_USB_STATE_UNUSED] = DEFAULT_USB_POWER_OFF,
+	[PM_USB_STATE_OFF] = DEFAULT_USB_POWER_OFF,
+	[PM_USB_STATE_ON] = DEFAULT_USB_POWER_ON,
 };
 
 PmSlaveUsb pmSlaveUsb0_g = {
 	.slv = {
 		.node = {
 			.nodeId = NODE_USB_0,
-			.typeId = PM_TYPE_USB,
+			.class = &pmNodeClassSlave_g,
 			.currState = PM_USB_STATE_ON,
-			.parent = &pmPowerDomainLpd_g,
+			.parent = &pmPowerDomainLpd_g.power,
 			.clocks = NULL,
 			.derived = &pmSlaveUsb0_g,
 			.latencyMarg = MAX_LATENCY,
-			.ops = NULL,
-			.powerInfo = PmUsbPowers,
-			.powerInfoCnt = ARRAY_SIZE(PmUsbPowers),
+			.flags = 0U,
+			DEFINE_PM_POWER_INFO(PmUsbPowers),
 		},
+		.class = NULL,
 		.reqs = NULL,
-		.wake = &pmUsb0Wake,
+		.wake = &pmUsb0Wake.wake,
 		.slvFsm = &slaveUsbFsm,
 		.flags = 0U,
 	},
@@ -158,7 +191,11 @@ PmSlaveUsb pmSlaveUsb0_g = {
 	.rstId = PM_RESET_USB0_CORERESET,
 };
 
-static PmGicProxyWake pmUsb1Wake = {
+static PmWakeEventGicProxy pmUsb1Wake = {
+	.wake = {
+		.derived = &pmUsb1Wake,
+		.class = &pmWakeEventClassGicProxy_g,
+	},
 	.mask = LPD_SLCR_GICP2_IRQ_MASK_SRC11_MASK |
 		LPD_SLCR_GICP2_IRQ_MASK_SRC9_MASK |
 		LPD_SLCR_GICP2_IRQ_MASK_SRC8_MASK |
@@ -172,18 +209,18 @@ PmSlaveUsb pmSlaveUsb1_g = {
 	.slv = {
 		.node = {
 			.nodeId = NODE_USB_1,
-			.typeId = PM_TYPE_USB,
+			.class = &pmNodeClassSlave_g,
 			.currState = PM_USB_STATE_ON,
-			.parent = &pmPowerDomainLpd_g,
+			.parent = &pmPowerDomainLpd_g.power,
 			.clocks = NULL,
 			.derived = &pmSlaveUsb1_g,
 			.latencyMarg = MAX_LATENCY,
-			.ops = NULL,
-			.powerInfo = PmUsbPowers,
-			.powerInfoCnt = ARRAY_SIZE(PmUsbPowers),
+			.flags = 0U,
+			DEFINE_PM_POWER_INFO(PmUsbPowers),
 		},
+		.class = NULL,
 		.reqs = NULL,
-		.wake = &pmUsb1Wake,
+		.wake = &pmUsb1Wake.wake,
 		.slvFsm = &slaveUsbFsm,
 		.flags = 0U,
 	},
@@ -191,3 +228,5 @@ PmSlaveUsb pmSlaveUsb1_g = {
 	.PwrUp = XpbrPwrUpUsb1Handler,
 	.rstId = PM_RESET_USB1_CORERESET,
 };
+
+#endif

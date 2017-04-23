@@ -15,7 +15,14 @@ var NAVTREE =
       [ "Typedefs", "globals_type.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
-    [ "File List", "files.html", "files" ]
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xhwicap_intr_example.c", "example.html#ex1", null ],
+      [ "xhwicap_low_level_example.c", "example.html#ex2", null ],
+      [ "xhwicap_read_config_reg.c", "example.html#ex3", null ],
+      [ "xhwicap_read_frame_polled_example.c", "example.html#ex4", null ],
+      [ "xhwicap_testapp_example.c", "example.html#ex5", null ]
+    ] ]
   ] ]
 ];
 

@@ -46,6 +46,11 @@
  * ----- ---- -------- -----------------------------------------------
  * 1.0   als  10/19/15 Initial release.
  * 1.1   gm   02/01/16 Added Gtpe2Config and Gtpe4Config variables.
+ * 1.4   gm   29/11/16 Added preprocessor directives for sw footprint reduction
+ *                     Changed TX reconfig hook from TxPllRefClkDiv1Reconfig to
+ *                       TxChReconfig
+ *                     Fixed c++ compiler warnings
+ *                     Added xcvr adaptor functions for C++ compilations
  * </pre>
  *
 *******************************************************************************/
@@ -57,6 +62,7 @@
 /******************************* Include Files ********************************/
 
 #include "xvphy.h"
+#include "xvphy_i.h"
 #include "xil_assert.h"
 
 /****************************** Type Definitions ******************************/
@@ -76,14 +82,24 @@ typedef struct XVphy_GtConfigS {
 	u32 (*ClkChReconfig)(XVphy *, u8, XVphy_ChannelId);
 	u32 (*ClkCmnReconfig)(XVphy *, u8, XVphy_ChannelId);
 	u32 (*RxChReconfig)(XVphy *, u8, XVphy_ChannelId);
-	u32 (*TxPllRefClkDiv1Reconfig)(XVphy *, u8, XVphy_ChannelId);
+	u32 (*TxChReconfig)(XVphy *, u8, XVphy_ChannelId);
 
 	XVphy_GtPllDivs CpllDivs;
 	XVphy_GtPllDivs QpllDivs;
 } XVphy_GtConfig;
 
 /******************* Macros (Inline Functions) Definitions ********************/
-
+#ifdef __cplusplus
+u32 XVphy_CfgSetCdr(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId);
+u32 XVphy_CheckPllOpRange(XVphy *InstancePtr, u8 QuadId,
+							XVphy_ChannelId ChId, u64 PllClkOutFreqHz);
+u32 XVphy_OutDivChReconfig(XVphy *InstancePtr, u8 QuadId,
+							XVphy_ChannelId ChId, XVphy_DirectionType Dir);
+u32 XVphy_ClkChReconfig(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId);
+u32 XVphy_ClkCmnReconfig(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId);
+u32 XVphy_RxChReconfig(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId);
+u32 XVphy_TxChReconfig(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId);
+#else
 #define XVphy_CfgSetCdr(Ip, ...) \
 		((Ip)->GtAdaptor->CfgSetCdr(Ip, __VA_ARGS__))
 #define XVphy_CheckPllOpRange(Ip, ...) \
@@ -96,15 +112,22 @@ typedef struct XVphy_GtConfigS {
 		((Ip)->GtAdaptor->ClkCmnReconfig(Ip, __VA_ARGS__))
 #define XVphy_RxChReconfig(Ip, ...) \
 		((Ip)->GtAdaptor->RxChReconfig(Ip, __VA_ARGS__))
-#define XVphy_TxPllRefClkDiv1Reconfig(Ip, ...) \
-		((Ip)->GtAdaptor->TxPllRefClkDiv1Reconfig(Ip, __VA_ARGS__))
+#define XVphy_TxChReconfig(Ip, ...) \
+		((Ip)->GtAdaptor->TxChReconfig(Ip, __VA_ARGS__))
+#endif
 
 /*************************** Variable Declarations ****************************/
 
+#if (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTXE2)
 extern const XVphy_GtConfig Gtxe2Config;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE2)
 extern const XVphy_GtConfig Gthe2Config;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTPE2)
 extern const XVphy_GtConfig Gtpe2Config;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE3)
 extern const XVphy_GtConfig Gthe3Config;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE4)
 extern const XVphy_GtConfig Gthe4Config;
+#endif
 
 #endif /* XVPHY_GT_H_ */

@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 -17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,8 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00  kc   04/21/14 Initial release
+* 2.0   bv   12/05/16 Made compliance to MISRAC 2012 guidelines
+*       ssc  03/25/17 Set correct value for SYSMON ANALOG_BUS register
 *
 * </pre>
 *
@@ -136,7 +138,7 @@ u32 XFsbl_HookBeforeFallback(void)
 
 u32 XFsbl_HookPsuInit(void)
 {
-	u32 Status = XFSBL_SUCCESS;
+	u32 Status;
 
 	/* Add the code here */
 
@@ -150,6 +152,16 @@ u32 XFsbl_HookPsuInit(void)
 			 */
 			Status = XFSBL_PSU_INIT_FAILED + Status;
 	}
+
+	/**
+	 * PS_SYSMON_ANALOG_BUS register determines mapping between SysMon supply
+	 * sense channel to SysMon supply registers inside the IP. This register
+	 * must be programmed to complete SysMon IP configuration.
+	 * The default register configuration after power-up is incorrect.
+	 * Hence, fix this by writing the correct value - 0x3210.
+	 */
+
+	XFsbl_Out32(AMS_PS_SYSMON_ANALOG_BUS, PS_SYSMON_ANALOG_BUS_VAL);
 
 	return Status;
 }

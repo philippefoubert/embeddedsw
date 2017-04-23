@@ -87,6 +87,10 @@ XStatus XPm_SetWakeUpSource(const enum XPmNodeId target,
 
 XStatus XPm_SystemShutdown(u32 type, u32 subtype);
 
+XStatus XPm_SetConfiguration(const u32 address);
+
+XStatus XPm_InitFinalize();
+
 /* Callback API function */
 /*
  * pm_init_suspend - Init suspend callback arguments (save for custom handling)

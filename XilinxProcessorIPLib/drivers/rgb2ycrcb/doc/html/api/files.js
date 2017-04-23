@@ -1,5 +1,7 @@
 var files =
 [
+    [ "rgb2ycrcb_example.c", "rgb2ycrcb__example_8c.html", "rgb2ycrcb__example_8c" ],
+    [ "rgb2ycrcb_selftest_example.c", "rgb2ycrcb__selftest__example_8c.html", "rgb2ycrcb__selftest__example_8c" ],
     [ "xrgb2ycrcb.c", "xrgb2ycrcb_8c.html", "xrgb2ycrcb_8c" ],
     [ "xrgb2ycrcb.h", "xrgb2ycrcb_8h.html", "xrgb2ycrcb_8h" ],
     [ "xrgb2ycrcb_hw.h", "xrgb2ycrcb__hw_8h.html", "xrgb2ycrcb__hw_8h" ],

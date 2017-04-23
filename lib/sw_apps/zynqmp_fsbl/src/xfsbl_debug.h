@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,7 @@
 * Ver	Who	Date		Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00a kc	11/05/13 Initial release
+* 2.0   bv   12/05/16 Made compliance to MISRAC 2012 guidelines
 *
 * </pre>
 *
@@ -92,13 +93,8 @@ extern "C" {
 #else
 #define XFsblDbgCurrentTypes (0U)
 #endif
-
-#if 0
-__inline void XFsbl_Printf(u32 DebugType,char *Format, ...);
-#else
 #define XFsbl_Printf(DebugType,...) \
-		if (((DebugType) & XFsblDbgCurrentTypes) != 0U)  {xil_printf (__VA_ARGS__); }
-#endif
+		if(((DebugType) & XFsblDbgCurrentTypes)!=XFSBL_SUCCESS) {xil_printf (__VA_ARGS__); }
 
 #ifdef __cplusplus
 }

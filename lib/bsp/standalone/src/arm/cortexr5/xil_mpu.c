@@ -42,11 +42,9 @@
 * Ver   Who  Date     Changes
 * ----- ---- -------- ---------------------------------------------------
 * 5.00  pkp  02/10/14 Initial version
+* 6.2   mus  01/27/17 Updated to support IAR compiler
 * </pre>
 *
-* @note
-*
-* None.
 *
 ******************************************************************************/
 
@@ -101,13 +99,13 @@ static const struct {
 
 /************************** Function Prototypes ******************************/
 
-/*****************************************************************************
+/*****************************************************************************/
+/**
+* @brief    This function sets the memory attributes for a section covering
+*           1MB, of memory in the translation table.
 *
-* Set the memory attributes for a section of memory with starting address addr
-* of the region size 1MB having attributes attrib
-*
-* @param	addr is the address for which attributes are to be set.
-* @param	attrib specifies the attributes for that memory region.
+* @param	Addr: 32-bit address for which memory attributes need to be set.
+* @param	attrib: Attribute for the given memory region.
 * @return	None.
 *
 *
@@ -120,14 +118,14 @@ void Xil_SetTlbAttributes(INTPTR addr, u32 attrib)
 	Xil_SetMPURegion(Localaddr, 0x100000, attrib);
 }
 
-/*****************************************************************************
+/*****************************************************************************/
+/**
+* @brief    Set the memory attributes for a section of memory in the
+*           translation table.
 *
-* Set the memory attributes for a section of memory with starting address addr
-* of the region size size and having attributes attrib
-*
-* @param	addr is the address for which attributes are to be set.
-* @param	size is the size of the region.
-* @param	attrib specifies the attributes for that memory region.
+* @param	Addr: 32-bit address for which memory attributes need to be set..
+* @param	size: size is the size of the region.
+* @param	attrib: Attribute for the given memory region.
 * @return	None.
 *
 *
@@ -141,7 +139,11 @@ void Xil_SetMPURegion(INTPTR addr, u64 size, u32 attrib)
 
 	Xil_DCacheFlush();
 	Xil_ICacheInvalidate();
+#if defined (__GNUC__)
 	NextAvailableMemRegion = mfcp(XREG_CP15_MPU_MEMORY_REG_NUMBER);
+#elif defined (__ICCARM__)
+	 mfcp(XREG_CP15_MPU_MEMORY_REG_NUMBER,NextAvailableMemRegion);
+#endif
 	NextAvailableMemRegion++;
 	if (NextAvailableMemRegion > 16) {
 		xdbg_printf(DEBUG, "No regions available\r\n");
@@ -169,10 +171,10 @@ void Xil_SetMPURegion(INTPTR addr, u64 size, u32 attrib)
 	dsb();
 	isb();
 }
-/*****************************************************************************
-*
-* Enable MPU for Cortex R5 processor. This function invalidates I cache and
-* flush the D Caches before enabling the MPU.
+/*****************************************************************************/
+/**
+* @brief    Enable MPU for Cortex R5 processor. This function invalidates I
+*           cache and flush the D Caches, and then enables the MPU.
 *
 *
 * @param	None.
@@ -184,7 +186,11 @@ void Xil_EnableMPU(void)
 	u32 CtrlReg, Reg;
 	s32 DCacheStatus=0, ICacheStatus=0;
 	/* enable caches only if they are disabled */
+#if defined (__GNUC__)
 	CtrlReg = mfcp(XREG_CP15_SYS_CONTROL);
+#elif defined (__ICCARM__)
+	mfcp(XREG_CP15_SYS_CONTROL,CtrlReg);
+#endif
 	if ((CtrlReg & XREG_CP15_CONTROL_C_BIT) != 0x00000000U) {
 		DCacheStatus=1;
 	}
@@ -198,7 +204,11 @@ void Xil_EnableMPU(void)
 	if(ICacheStatus != 0){
 		Xil_ICacheDisable();
 	}
+#if defined (__GNUC__)
 	Reg = mfcp(XREG_CP15_SYS_CONTROL);
+#elif defined (__ICCARM__)
+	 mfcp(XREG_CP15_SYS_CONTROL,Reg);
+#endif
 	Reg |= 0x00000001U;
 	dsb();
 	mtcp(XREG_CP15_SYS_CONTROL, Reg);
@@ -212,10 +222,10 @@ void Xil_EnableMPU(void)
 	}
 }
 
-/*****************************************************************************
-*
-* Disable MPU for Cortex R5 processors. This function invalidates I cache and
-* flush the D Caches before disabling the MPU.
+/*****************************************************************************/
+/**
+* @brief    Disable MPU for Cortex R5 processors. This function invalidates I
+*           cache and flush the D Caches, and then disabes the MPU.
 *
 * @param	None.
 *
@@ -227,7 +237,12 @@ void Xil_DisableMPU(void)
 	u32 CtrlReg, Reg;
 	s32 DCacheStatus=0, ICacheStatus=0;
 	/* enable caches only if they are disabled */
+
+#if defined (__GNUC__)
 	CtrlReg = mfcp(XREG_CP15_SYS_CONTROL);
+#elif defined (__ICCARM__)
+	mfcp(XREG_CP15_SYS_CONTROL,CtrlReg);
+#endif
 	if ((CtrlReg & XREG_CP15_CONTROL_C_BIT) != 0x00000000U) {
 		DCacheStatus=1;
 	}
@@ -243,7 +258,11 @@ void Xil_DisableMPU(void)
 	}
 
 	mtcp(XREG_CP15_INVAL_BRANCH_ARRAY, 0);
+#if defined (__GNUC__)
 	Reg = mfcp(XREG_CP15_SYS_CONTROL);
+#elif defined (__ICCARM__)
+	mfcp(XREG_CP15_SYS_CONTROL,Reg);
+#endif
 	Reg &= ~(0x00000001U);
 	dsb();
 	mtcp(XREG_CP15_SYS_CONTROL, Reg);

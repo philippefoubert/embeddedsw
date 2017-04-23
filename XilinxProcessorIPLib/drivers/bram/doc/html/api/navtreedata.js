@@ -14,7 +14,11 @@ var NAVTREE =
       [ "Variables", "globals_vars.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
-    [ "File List", "files.html", "files" ]
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xbram_example.c", "example.html#ex1", null ],
+      [ "xbram_intr_example.c", "example.html#ex2", null ]
+    ] ]
   ] ]
 ];
 

@@ -44,16 +44,6 @@ typedef u8 PmProcEvent;
 /*********************************************************************
  * Macros
  ********************************************************************/
-/* Used for designated initialization */
-#define PM_PROC_APU_0   0U
-#define PM_PROC_APU_1   1U
-#define PM_PROC_APU_2   2U
-#define PM_PROC_APU_3   3U
-#define PM_PROC_APU_MAX 4U
-
-#define PM_PROC_RPU_0   0U
-#define PM_PROC_RPU_1   1U
-#define PM_PROC_RPU_MAX 2U
 
 #define DISABLE_WFI(mask)   XPfw_RMW32(PMU_LOCAL_GPI2_ENABLE, (mask), ~(mask));
 
@@ -113,11 +103,16 @@ typedef struct PmProc PmProc;
  * @master          Master channel used by this processor
  * @saveResumeAddr  Pointer to function for saving the resume address
  * @restoreResumeAddr Pointer to function for restoring resume address
+ * @init            Init handler specific to the processor
+ * @sleep           Pointer to the processor's sleep handler
+ * @wake            Pointer to the processor's wake handler
  * @wfiStatusMask   Mask in PM_IOMODULE_GPI2 register (WFI interrupt)
  * @wakeStatusMask  Mask in PM_IOMODULE_GPI1 register (GIC wake interrupt)
  * @wfiEnableMask   Mask in PM_LOCAL_GPI2_ENABLE register (WFI interrupt)
  * @wakeEnableMask  mask in PM_LOCAL_GPI1_ENABLE register (GIC wake interrupt)
  * @resumeCfg       Address of register configuring processor's resume address
+ * @pwrDnReqAddr    Address of the power down request register
+ * @pwrDnReqMask    Mask in the power down request register
  * @latencyReq      Latenct requirement as passed in by self_suspend argument
  * @pwrDnLatency    Latency (in us) for transition to OFF state
  * @pwrUpLatency    Latency (in us) for transition to ON state
@@ -125,14 +120,19 @@ typedef struct PmProc PmProc;
 typedef struct PmProc {
 	PmNode node;
 	u64 resumeAddress;
-	PmMaster* const master;
+	PmMaster* master;
 	int (*const saveResumeAddr)(PmProc* const, u64);
 	void (*const restoreResumeAddr)(PmProc* const);
+	void (*const init)(PmProc* const proc);
+	int (*const sleep)(void);
+	int (*const wake)(void);
 	const u32 wfiStatusMask;
 	const u32 wakeStatusMask;
 	const u32 wfiEnableMask;
 	const u32 wakeEnableMask;
 	const u32 resumeCfg;
+	const u32 pwrDnReqAddr;
+	const u32 pwrDnReqMask;
 	u32 latencyReq;
 	const u32 pwrDnLatency;
 	const u32 pwrUpLatency;
@@ -141,13 +141,23 @@ typedef struct PmProc {
 /*********************************************************************
  * Global data declarations
  ********************************************************************/
-extern PmProc pmApuProcs_g[PM_PROC_APU_MAX];
-extern PmProc pmRpuProcs_g[PM_PROC_RPU_MAX];
+extern PmProc pmProcApu0_g;
+extern PmProc pmProcApu1_g;
+extern PmProc pmProcApu2_g;
+extern PmProc pmProcApu3_g;
+extern PmProc pmProcRpu0_g;
+extern PmProc pmProcRpu1_g;
+
+extern PmNodeClass pmNodeClassProc_g;
 
 /*********************************************************************
  * Function declarations
  ********************************************************************/
 int PmProcFsm(PmProc* const proc, const PmProcEvent event);
+
+bool PmProcHasResumeAddr(const PmProc* const proc);
+
+PmProc* PmProcGetByWakeMask(const u32 wake);
 
 /**
  * PmProcIsForcedOff() - Check whether given processor is in forced off state

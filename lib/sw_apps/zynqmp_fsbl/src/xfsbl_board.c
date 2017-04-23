@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,8 @@
 * @file xfsbl_board.c
 *
 * This file contains board specific code of FSBL.
+* Board specific code for ZCU106 is similar to that of ZCU102, except that
+* GT mux configuration and PCIe reset are not applicable for ZCU106.
 *
 * <pre>
 * MODIFICATION HISTORY:
@@ -43,6 +45,8 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00  ssc  01/20/16 Initial release
+* 2.0   bv   12/05/16 Made compliance to MISRAC 2012 guidelines
+*                     Added ZCU106 support
 *
 * </pre>
 *
@@ -51,7 +55,7 @@
 ******************************************************************************/
 /***************************** Include Files *********************************/
 #include "xfsbl_board.h"
-#ifdef XPS_BOARD_ZCU102
+#if defined(XPS_BOARD_ZCU102) || defined(XPS_BOARD_ZCU106)
 /************************** Constant Definitions *****************************/
 
 /**************************** Type Definitions *******************************/
@@ -59,11 +63,12 @@
 /***************** Macros (Inline Functions) Definitions *********************/
 
 /************************** Function Prototypes ******************************/
-static s32 XFsbl_BoardConfig(void);
+static u32 XFsbl_BoardConfig(void);
 static void XFsbl_UsbPhyReset(void);
+#if defined(XPS_BOARD_ZCU102)
 static void XFsbl_PcieReset(void);
+#endif
 /************************** Variable Definitions *****************************/
-XIicPs I2c0InstancePtr;
 
 /*****************************************************************************/
 /**
@@ -77,18 +82,21 @@ XIicPs I2c0InstancePtr;
  * 		- errors as mentioned in xfsbl_error.h
  *
  *****************************************************************************/
-static s32 XFsbl_BoardConfig(void)
+static u32 XFsbl_BoardConfig(void)
 {
-
+	XIicPs I2c0InstancePtr;
 	u8 WriteBuffer[BUF_LEN] = {0};
 	XIicPs_Config *I2c0CfgPtr;
-	s32 Status = XFSBL_SUCCESS;
+	s32 Status;
+	u32 UStatus;
+#if defined(XPS_BOARD_ZCU102)
 	u32 ICMCfgLane[NUM_GT_LANES];
+#endif
 
 	/* Initialize the IIC0 driver so that it is ready to use */
 	I2c0CfgPtr = XIicPs_LookupConfig(XPAR_XIICPS_0_DEVICE_ID);
 	if (I2c0CfgPtr == NULL) {
-		Status = XFSBL_ERROR_I2C_INIT;
+		UStatus = XFSBL_ERROR_I2C_INIT;
 		XFsbl_Printf(DEBUG_GENERAL,"XFSBL_ERROR_I2C_INIT\r\n");
 		goto END;
 	}
@@ -96,27 +104,33 @@ static s32 XFsbl_BoardConfig(void)
 	Status = XIicPs_CfgInitialize(&I2c0InstancePtr, I2c0CfgPtr,
 			I2c0CfgPtr->BaseAddress);
 	if (Status != XST_SUCCESS) {
-		Status = XFSBL_ERROR_I2C_INIT;
+		UStatus = XFSBL_ERROR_I2C_INIT;
 		XFsbl_Printf(DEBUG_GENERAL,"XFSBL_ERROR_I2C_INIT\r\n");
 		goto END;
 	}
 
 	/* Set the IIC serial clock rate */
-	XIicPs_SetSClk(&I2c0InstancePtr, IIC_SCLK_RATE_IOEXP);
-
+	Status = XIicPs_SetSClk(&I2c0InstancePtr, IIC_SCLK_RATE_IOEXP);
+    if(Status != XST_SUCCESS) {
+	UStatus  = XFSBL_ERROR_I2C_SET_SCLK;
+	XFsbl_Printf(DEBUG_GENERAL,"XFSBL_ERROR_I2C_SET_SCLK\r\n");
+	goto END;
+    }
 	/* Configure I/O pins as Output */
 	WriteBuffer[0] = CMD_CFG_0_REG;
 	WriteBuffer[1] = DATA_OUTPUT;
 	Status = XIicPs_MasterSendPolled(&I2c0InstancePtr,
 			WriteBuffer, 2, IOEXPANDER1_ADDR);
 	if (Status != XST_SUCCESS) {
-		Status = XFSBL_ERROR_I2C_WRITE;
+		UStatus = XFSBL_ERROR_I2C_WRITE;
 		XFsbl_Printf(DEBUG_GENERAL,"XFSBL_ERROR_I2C_WRITE\r\n");
 		goto END;
 	}
 
 	/* Wait until bus is idle to start another transfer */
-	while (XIicPs_BusIsBusy(&I2c0InstancePtr));
+	while (XIicPs_BusIsBusy(&I2c0InstancePtr)>0) {
+		/*For MISRA C compliance*/
+	}
 
 	/*
 	 * Deasserting I2C_MUX_RESETB
@@ -124,7 +138,9 @@ static s32 XFsbl_BoardConfig(void)
 	 * Selecting lanes based on configuration
 	 */
 	WriteBuffer[0] = CMD_OUTPUT_0_REG;
+	WriteBuffer[1] = DATA_COMMON_CFG;
 
+#if defined(XPS_BOARD_ZCU102)
 	ICMCfgLane[0] = XFsbl_In32(SERDES_ICM_CFG0) & SERDES_ICM_CFG0_L0_ICM_CFG_MASK;
 	ICMCfgLane[1] = (XFsbl_In32(SERDES_ICM_CFG0) &
 		SERDES_ICM_CFG0_L1_ICM_CFG_MASK) >> SERDES_ICM_CFG0_L1_ICM_CFG_SHIFT;
@@ -146,12 +162,10 @@ static s32 XFsbl_BoardConfig(void)
 			&& (ICMCfgLane[3] != ICM_CFG_VAL_SATA)
 			&& (ICMCfgLane[3] != ICM_CFG_VAL_PWRDN))) {
 
-		Status = XFSBL_ERROR_GT_LANE_SELECTION;
+		UStatus = XFSBL_ERROR_GT_LANE_SELECTION;
 		XFsbl_Printf(DEBUG_GENERAL,"XFSBL_ERROR_GT_LANE_SELECTION\r\n");
 		goto END;
 	}
-
-	WriteBuffer[1] = DATA_COMMON_CFG;
 
 	/**
 	 * If any of the lanes are of PCIe or PowerDown, that particular lane
@@ -181,35 +195,44 @@ static s32 XFsbl_BoardConfig(void)
 	if (ICMCfgLane[3] == ICM_CFG_VAL_SATA) {
 		WriteBuffer[1] |= DATA_GT_L3_SATA_CFG;
 	}
+#endif
 
 	/* Send the Data */
 	Status = XIicPs_MasterSendPolled(&I2c0InstancePtr,
 			WriteBuffer, 2, IOEXPANDER1_ADDR);
 	if (Status != XST_SUCCESS) {
-		Status = XFSBL_ERROR_I2C_WRITE;
+		UStatus = XFSBL_ERROR_I2C_WRITE;
 		XFsbl_Printf(DEBUG_GENERAL,"XFSBL_ERROR_I2C_WRITE\r\n");
 		goto END;
 	}
 
 	/* Wait until bus is idle */
-	while (XIicPs_BusIsBusy(&I2c0InstancePtr));
+	while (XIicPs_BusIsBusy(&I2c0InstancePtr)>0) {
+		/*For MISRA C compliance*/
+	}
 
 	/* Change the IIC serial clock rate */
-	XIicPs_SetSClk(&I2c0InstancePtr, IIC_SCLK_RATE_I2CMUX);
+	Status = XIicPs_SetSClk(&I2c0InstancePtr, IIC_SCLK_RATE_I2CMUX);
 
+	if(Status != XST_SUCCESS) {
+		UStatus  = XFSBL_ERROR_I2C_SET_SCLK;
+		XFsbl_Printf(DEBUG_GENERAL,"XFSBL_ERROR_I2C_SET_SCLK\r\n");
+		goto END;
+	}
 	/* Set I2C Mux for channel-2 (MAXIM_PMBUS) */
 	WriteBuffer[0] = CMD_CH_2_REG;
 	Status = XIicPs_MasterSendPolled(&I2c0InstancePtr,
 			WriteBuffer, 1, PCA9544A_ADDR);
 	if (Status != XST_SUCCESS) {
-		Status = XFSBL_ERROR_I2C_WRITE;
+		UStatus = XFSBL_ERROR_I2C_WRITE;
 		XFsbl_Printf(DEBUG_GENERAL,"XFSBL_ERROR_I2C_WRITE\r\n");
 		goto END;
 	}
 
 	/* Wait until bus is idle */
-	while (XIicPs_BusIsBusy(&I2c0InstancePtr));
-
+	while (XIicPs_BusIsBusy(&I2c0InstancePtr)>0) {
+		/*For MISRA C compliance*/
+	}
 	/**
 	 * The below piece of code is needed for PL DDR to work
 	 * (to take PL DDR out of reset). Hence including this code only when
@@ -222,20 +245,23 @@ static s32 XFsbl_BoardConfig(void)
 	Status = XIicPs_MasterSendPolled(&I2c0InstancePtr,
 			WriteBuffer, 2, MAX15301_ADDR);
 	if (Status != XST_SUCCESS) {
-		Status = XFSBL_ERROR_I2C_WRITE;
+		UStatus = XFSBL_ERROR_I2C_WRITE;
 		XFsbl_Printf(DEBUG_GENERAL,"XFSBL_ERROR_I2C_WRITE\r\n");
 		goto END;
 	}
 
 	/* Wait until bus is idle */
-	while (XIicPs_BusIsBusy(&I2c0InstancePtr));
+	while (XIicPs_BusIsBusy(&I2c0InstancePtr)>0) {
+		/*For MISRA C compliance*/
+	}
 #endif
 
 	XFsbl_Printf(DEBUG_INFO,"Board Configuration successful \n\r");
+	UStatus = XFSBL_SUCCESS;
 
 END:
 
-	return Status;
+	return UStatus;
 
 }
 
@@ -248,7 +274,7 @@ END:
  * @return none
  *
  *****************************************************************************/
-void XFsbl_UsbPhyReset(void)
+static void XFsbl_UsbPhyReset(void)
 {
 
 	/* USB PHY Reset */
@@ -260,6 +286,7 @@ void XFsbl_UsbPhyReset(void)
 
 }
 
+#if defined(XPS_BOARD_ZCU102)
 /*****************************************************************************/
 /**
  * This function is used to provide PCIe reset on ZCU102 board.
@@ -269,10 +296,10 @@ void XFsbl_UsbPhyReset(void)
  * @return none
  *
  *****************************************************************************/
-void XFsbl_PcieReset(void)
+static void XFsbl_PcieReset(void)
 {
 
-	u32 RegVal = 0;
+	u32 RegVal;
 	u32 ICMCfg0L0;
 
 	ICMCfg0L0 = XFsbl_In32(SERDES_ICM_CFG0) & SERDES_ICM_CFG0_L0_ICM_CFG_MASK;
@@ -306,7 +333,7 @@ void XFsbl_PcieReset(void)
 
 }
 #endif
-
+#endif
 /*****************************************************************************/
 /**
  * This function does board specific initialization.
@@ -322,8 +349,8 @@ void XFsbl_PcieReset(void)
  *****************************************************************************/
 u32 XFsbl_BoardInit(void)
 {
-	u32 Status = XFSBL_SUCCESS;
-#ifdef XPS_BOARD_ZCU102
+	u32 Status;
+#if defined(XPS_BOARD_ZCU102) || defined(XPS_BOARD_ZCU106)
 	/* Program I2C to configure GT lanes */
 	Status = XFsbl_BoardConfig();
 	if (Status != XFSBL_SUCCESS) {
@@ -331,9 +358,14 @@ u32 XFsbl_BoardInit(void)
 	}
 
 	XFsbl_UsbPhyReset();
+#if defined(XPS_BOARD_ZCU102)
 	XFsbl_PcieReset();
-
-	END:
 #endif
+#else
+	Status = XFSBL_SUCCESS;
+	goto END;
+#endif
+
+END:
 	return Status;
 }

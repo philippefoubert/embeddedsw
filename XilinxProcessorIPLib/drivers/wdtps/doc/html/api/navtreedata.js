@@ -14,7 +14,12 @@ var NAVTREE =
       [ "Variables", "globals_vars.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
-    [ "File List", "files.html", "files" ]
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xwdtps_selftest_example.c", "example.html#ex1", null ],
+      [ "xwdtps_intr_example.c", "example.html#ex2", null ],
+      [ "xwdtps_polled_example.c", "example.html#ex3", null ]
+    ] ]
   ] ]
 ];
 

@@ -27,6 +27,8 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*********************************************************************
  * Reset lines definitions: information needed to configure reset
@@ -376,9 +378,7 @@ static const PmResetOps pmResetOpsPl = {
 static PmResetGeneric pmResetPcieCfg = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetPcieCfg,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -388,9 +388,7 @@ static PmResetGeneric pmResetPcieCfg = {
 static PmResetGeneric pmResetPcieBridge = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetPcieBridge,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -400,9 +398,7 @@ static PmResetGeneric pmResetPcieBridge = {
 static PmResetRom pmResetPcieCtrl = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetPcieCtrl,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -413,9 +409,7 @@ static PmResetRom pmResetPcieCtrl = {
 static PmResetRom pmResetDp = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetDp,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -426,9 +420,7 @@ static PmResetRom pmResetDp = {
 static PmResetGeneric pmResetSwdtCrf = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetSwdtCrf,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -438,9 +430,7 @@ static PmResetGeneric pmResetSwdtCrf = {
 static PmResetGeneric pmResetAfiFm5 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAfiFm5,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -450,9 +440,7 @@ static PmResetGeneric pmResetAfiFm5 = {
 static PmResetGeneric pmResetAfiFm4 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAfiFm4,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -462,9 +450,7 @@ static PmResetGeneric pmResetAfiFm4 = {
 static PmResetGeneric pmResetAfiFm3 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAfiFm3,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -474,9 +460,7 @@ static PmResetGeneric pmResetAfiFm3 = {
 static PmResetGeneric pmResetAfiFm2 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAfiFm2,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -486,9 +470,7 @@ static PmResetGeneric pmResetAfiFm2 = {
 static PmResetGeneric pmResetAfiFm1 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAfiFm1,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -498,9 +480,7 @@ static PmResetGeneric pmResetAfiFm1 = {
 static PmResetGeneric pmResetAfiFm0 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAfiFm0,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -510,9 +490,7 @@ static PmResetGeneric pmResetAfiFm0 = {
 static PmResetGeneric pmResetGdma = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGdma,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -522,9 +500,7 @@ static PmResetGeneric pmResetGdma = {
 static PmResetRom pmResetGpuPp1 = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpuPp1,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -535,9 +511,7 @@ static PmResetRom pmResetGpuPp1 = {
 static PmResetRom pmResetGpuPp0 = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpuPp0,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -548,9 +522,7 @@ static PmResetRom pmResetGpuPp0 = {
 static PmResetRom pmResetGpu = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpu,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -561,9 +533,7 @@ static PmResetRom pmResetGpu = {
 static PmResetGeneric pmResetGt = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGt,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -573,9 +543,7 @@ static PmResetGeneric pmResetGt = {
 static PmResetRom pmResetSata = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetSata,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_TOP,
@@ -586,9 +554,7 @@ static PmResetRom pmResetSata = {
 static PmResetGeneric pmResetAcpu3Pwron = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAcpu3Pwron,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_APU,
@@ -598,9 +564,7 @@ static PmResetGeneric pmResetAcpu3Pwron = {
 static PmResetGeneric pmResetAcpu2Pwron = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAcpu2Pwron,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_APU,
@@ -610,9 +574,7 @@ static PmResetGeneric pmResetAcpu2Pwron = {
 static PmResetGeneric pmResetAcpu1Pwron = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAcpu1Pwron,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_APU,
@@ -622,9 +584,7 @@ static PmResetGeneric pmResetAcpu1Pwron = {
 static PmResetGeneric pmResetAcpu0Pwron = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAcpu0Pwron,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_APU,
@@ -634,9 +594,7 @@ static PmResetGeneric pmResetAcpu0Pwron = {
 static PmResetGeneric pmResetApuL2 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetApuL2,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_APU,
@@ -646,9 +604,7 @@ static PmResetGeneric pmResetApuL2 = {
 static PmResetRom pmResetAcpu3 = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAcpu3,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_APU,
@@ -659,9 +615,7 @@ static PmResetRom pmResetAcpu3 = {
 static PmResetRom pmResetAcpu2 = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAcpu2,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_APU,
@@ -672,9 +626,7 @@ static PmResetRom pmResetAcpu2 = {
 static PmResetRom pmResetAcpu1 = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAcpu1,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_APU,
@@ -685,9 +637,7 @@ static PmResetRom pmResetAcpu1 = {
 static PmResetRom pmResetAcpu0 = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAcpu0,
 	},
 	.ctrlAddr = CRF_APB_RST_FPD_APU,
@@ -698,9 +648,7 @@ static PmResetRom pmResetAcpu0 = {
 static PmResetGeneric pmResetDDR = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetDDR,
 	},
 	.ctrlAddr = CRF_APB_RST_DDR_SS,
@@ -710,9 +658,7 @@ static PmResetGeneric pmResetDDR = {
 static PmResetGeneric pmResetApmFpd = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetApmFpd,
 	},
 	.ctrlAddr = CRF_APB_RST_DDR_SS,
@@ -722,9 +668,7 @@ static PmResetGeneric pmResetApmFpd = {
 static PmResetGeneric pmResetSoft = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetSoft,
 	},
 	.ctrlAddr = CRL_APB_RESET_CTRL,
@@ -734,9 +678,7 @@ static PmResetGeneric pmResetSoft = {
 static PmResetRom pmResetGem0 = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGem0,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU0,
@@ -747,9 +689,7 @@ static PmResetRom pmResetGem0 = {
 static PmResetRom pmResetGem1 = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGem1,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU0,
@@ -760,9 +700,7 @@ static PmResetRom pmResetGem1 = {
 static PmResetRom pmResetGem2 = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGem2,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU0,
@@ -773,9 +711,7 @@ static PmResetRom pmResetGem2 = {
 static PmResetRom pmResetGem3 = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGem3,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU0,
@@ -786,9 +722,7 @@ static PmResetRom pmResetGem3 = {
 static PmResetGeneric pmResetQspi = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetQspi,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -798,9 +732,7 @@ static PmResetGeneric pmResetQspi = {
 static PmResetGeneric pmResetUart0 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetUart0,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -810,9 +742,7 @@ static PmResetGeneric pmResetUart0 = {
 static PmResetGeneric pmResetUart1 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetUart1,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -822,9 +752,7 @@ static PmResetGeneric pmResetUart1 = {
 static PmResetGeneric pmResetSpi0 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetSpi0,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -834,9 +762,7 @@ static PmResetGeneric pmResetSpi0 = {
 static PmResetGeneric pmResetSpi1 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetSpi1,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -846,9 +772,7 @@ static PmResetGeneric pmResetSpi1 = {
 static PmResetGeneric pmResetSdio0 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetSdio0,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -858,9 +782,7 @@ static PmResetGeneric pmResetSdio0 = {
 static PmResetGeneric pmResetSdio1 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetSdio1,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -870,9 +792,7 @@ static PmResetGeneric pmResetSdio1 = {
 static PmResetGeneric pmResetCan0 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetCan0,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -882,9 +802,7 @@ static PmResetGeneric pmResetCan0 = {
 static PmResetGeneric pmResetCan1 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetCan1,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -894,9 +812,7 @@ static PmResetGeneric pmResetCan1 = {
 static PmResetGeneric pmResetI2C0 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetI2C0,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -906,9 +822,7 @@ static PmResetGeneric pmResetI2C0 = {
 static PmResetGeneric pmResetI2C1 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetI2C1,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -918,9 +832,7 @@ static PmResetGeneric pmResetI2C1 = {
 static PmResetGeneric pmResetTtc0 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetTtc0,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -930,9 +842,7 @@ static PmResetGeneric pmResetTtc0 = {
 static PmResetGeneric pmResetTtc1 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetTtc1,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -942,9 +852,7 @@ static PmResetGeneric pmResetTtc1 = {
 static PmResetGeneric pmResetTtc2 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetTtc2,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -954,9 +862,7 @@ static PmResetGeneric pmResetTtc2 = {
 static PmResetGeneric pmResetTtc3 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetTtc3,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -966,9 +872,7 @@ static PmResetGeneric pmResetTtc3 = {
 static PmResetGeneric pmResetSwdtCrl = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetSwdtCrl,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -978,9 +882,7 @@ static PmResetGeneric pmResetSwdtCrl = {
 static PmResetGeneric pmResetNand = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetNand,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -990,9 +892,7 @@ static PmResetGeneric pmResetNand = {
 static PmResetGeneric pmResetAdma = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAdma,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -1002,9 +902,7 @@ static PmResetGeneric pmResetAdma = {
 static PmResetGeneric pmResetGpio = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpio,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -1014,9 +912,7 @@ static PmResetGeneric pmResetGpio = {
 static PmResetGeneric pmResetIouCc = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetIouCc,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -1026,9 +922,7 @@ static PmResetGeneric pmResetIouCc = {
 static PmResetGeneric pmResetTimestamp = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetTimestamp,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_IOU2,
@@ -1038,9 +932,7 @@ static PmResetGeneric pmResetTimestamp = {
 static PmResetRom pmResetRpuR50 = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetRpuR50,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1051,9 +943,7 @@ static PmResetRom pmResetRpuR50 = {
 static PmResetRom pmResetRpuR51 = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetRpuR51,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1064,9 +954,7 @@ static PmResetRom pmResetRpuR51 = {
 static PmResetGeneric pmResetRpuAmba = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetRpuAmba,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1076,9 +964,7 @@ static PmResetGeneric pmResetRpuAmba = {
 static PmResetGeneric pmResetOcm = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetOcm,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1088,9 +974,7 @@ static PmResetGeneric pmResetOcm = {
 static PmResetGeneric pmResetRpuPge = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetRpuPge,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1100,9 +984,7 @@ static PmResetGeneric pmResetRpuPge = {
 static PmResetRom pmResetUsb0Core = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetUsb0Core,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1113,9 +995,7 @@ static PmResetRom pmResetUsb0Core = {
 static PmResetRom pmResetUsb1Core = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetUsb1Core,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1126,9 +1006,7 @@ static PmResetRom pmResetUsb1Core = {
 static PmResetGeneric pmResetUsb0Hiber = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetUsb0Hiber,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1138,9 +1016,7 @@ static PmResetGeneric pmResetUsb0Hiber = {
 static PmResetGeneric pmResetUsb1Hiber = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetUsb1Hiber,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1150,9 +1026,7 @@ static PmResetGeneric pmResetUsb1Hiber = {
 static PmResetGeneric pmResetUsb0Apb = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetUsb0Apb,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1162,9 +1036,7 @@ static PmResetGeneric pmResetUsb0Apb = {
 static PmResetGeneric pmResetUsb1Apb = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetUsb1Apb,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1174,9 +1046,7 @@ static PmResetGeneric pmResetUsb1Apb = {
 static PmResetGeneric pmResetIpi = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetIpi,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1186,9 +1056,7 @@ static PmResetGeneric pmResetIpi = {
 static PmResetGeneric pmResetApmLpd = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetApmLpd,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1198,9 +1066,7 @@ static PmResetGeneric pmResetApmLpd = {
 static PmResetGeneric pmResetRtc = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetRtc,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1220,9 +1086,7 @@ static PmResetGeneric pmResetSysmon = {
 static PmResetGeneric pmResetAfiFm6 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetAfiFm6,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1232,9 +1096,7 @@ static PmResetGeneric pmResetAfiFm6 = {
 static PmResetGeneric pmResetLpdSwdt = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetLpdSwdt,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1254,8 +1116,7 @@ static u32 PmResetPulseFpd(void)
 static PmResetRom pmResetFpd = {
 	.rst = {
 		.ops = &pmResetOpsRom,
-		.access = IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetFpd,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_TOP,
@@ -1266,9 +1127,7 @@ static PmResetRom pmResetFpd = {
 static PmResetGeneric pmResetRpuDbg1 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetRpuDbg1,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_DBG,
@@ -1278,9 +1137,7 @@ static PmResetGeneric pmResetRpuDbg1 = {
 static PmResetGeneric pmResetRpuDbg0 = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetRpuDbg0,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_DBG,
@@ -1290,9 +1147,7 @@ static PmResetGeneric pmResetRpuDbg0 = {
 static PmResetGeneric pmResetDbgLpd = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetDbgLpd,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_DBG,
@@ -1302,9 +1157,7 @@ static PmResetGeneric pmResetDbgLpd = {
 static PmResetGeneric pmResetDbgFpd = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetDbgFpd,
 	},
 	.ctrlAddr = CRL_APB_RST_LPD_DBG,
@@ -1314,9 +1167,7 @@ static PmResetGeneric pmResetDbgFpd = {
 static PmResetGeneric pmResetApll = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetApll,
 	},
 	.ctrlAddr = CRF_APB_APLL_CTRL,
@@ -1326,9 +1177,7 @@ static PmResetGeneric pmResetApll = {
 static PmResetGeneric pmResetDpll = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetDpll,
 	},
 	.ctrlAddr = CRF_APB_DPLL_CTRL,
@@ -1338,9 +1187,7 @@ static PmResetGeneric pmResetDpll = {
 static PmResetGeneric pmResetVpll = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetVpll,
 	},
 	.ctrlAddr = CRF_APB_VPLL_CTRL,
@@ -1350,9 +1197,7 @@ static PmResetGeneric pmResetVpll = {
 static PmResetGeneric pmResetIopll = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetIopll,
 	},
 	.ctrlAddr = CRL_APB_IOPLL_CTRL,
@@ -1362,9 +1207,7 @@ static PmResetGeneric pmResetIopll = {
 static PmResetGeneric pmResetRpll = {
 	.rst = {
 		.ops = &pmResetOpsGeneric,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetRpll,
 	},
 	.ctrlAddr = CRL_APB_RPLL_CTRL,
@@ -1374,9 +1217,7 @@ static PmResetGeneric pmResetRpll = {
 static PmResetGpo pmResetGpo3Pl0 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl0,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1387,9 +1228,7 @@ static PmResetGpo pmResetGpo3Pl0 = {
 static PmResetGpo pmResetGpo3Pl1 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl1,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1400,9 +1239,7 @@ static PmResetGpo pmResetGpo3Pl1 = {
 static PmResetGpo pmResetGpo3Pl2 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl2,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1413,9 +1250,7 @@ static PmResetGpo pmResetGpo3Pl2 = {
 static PmResetGpo pmResetGpo3Pl3 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl3,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1426,9 +1261,7 @@ static PmResetGpo pmResetGpo3Pl3 = {
 static PmResetGpo pmResetGpo3Pl4 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl4,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1439,9 +1272,7 @@ static PmResetGpo pmResetGpo3Pl4 = {
 static PmResetGpo pmResetGpo3Pl5 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl5,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1452,9 +1283,7 @@ static PmResetGpo pmResetGpo3Pl5 = {
 static PmResetGpo pmResetGpo3Pl6 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl6,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1465,9 +1294,7 @@ static PmResetGpo pmResetGpo3Pl6 = {
 static PmResetGpo pmResetGpo3Pl7 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl7,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1478,9 +1305,7 @@ static PmResetGpo pmResetGpo3Pl7 = {
 static PmResetGpo pmResetGpo3Pl8 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl8,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1491,9 +1316,7 @@ static PmResetGpo pmResetGpo3Pl8 = {
 static PmResetGpo pmResetGpo3Pl9 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl9,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1504,9 +1327,7 @@ static PmResetGpo pmResetGpo3Pl9 = {
 static PmResetGpo pmResetGpo3Pl10 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl10,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1517,9 +1338,7 @@ static PmResetGpo pmResetGpo3Pl10 = {
 static PmResetGpo pmResetGpo3Pl11 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl11,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1530,9 +1349,7 @@ static PmResetGpo pmResetGpo3Pl11 = {
 static PmResetGpo pmResetGpo3Pl12 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl12,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1543,9 +1360,7 @@ static PmResetGpo pmResetGpo3Pl12 = {
 static PmResetGpo pmResetGpo3Pl13 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl13,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1556,9 +1371,7 @@ static PmResetGpo pmResetGpo3Pl13 = {
 static PmResetGpo pmResetGpo3Pl14 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl14,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1569,9 +1382,7 @@ static PmResetGpo pmResetGpo3Pl14 = {
 static PmResetGpo pmResetGpo3Pl15 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl15,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1582,9 +1393,7 @@ static PmResetGpo pmResetGpo3Pl15 = {
 static PmResetGpo pmResetGpo3Pl16 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl16,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1595,9 +1404,7 @@ static PmResetGpo pmResetGpo3Pl16 = {
 static PmResetGpo pmResetGpo3Pl17 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl17,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1608,9 +1415,7 @@ static PmResetGpo pmResetGpo3Pl17 = {
 static PmResetGpo pmResetGpo3Pl18 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl18,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1621,9 +1426,7 @@ static PmResetGpo pmResetGpo3Pl18 = {
 static PmResetGpo pmResetGpo3Pl19 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl19,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1634,9 +1437,7 @@ static PmResetGpo pmResetGpo3Pl19 = {
 static PmResetGpo pmResetGpo3Pl20 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl20,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1647,9 +1448,7 @@ static PmResetGpo pmResetGpo3Pl20 = {
 static PmResetGpo pmResetGpo3Pl21 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl21,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1660,9 +1459,7 @@ static PmResetGpo pmResetGpo3Pl21 = {
 static PmResetGpo pmResetGpo3Pl22 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl22,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1673,9 +1470,7 @@ static PmResetGpo pmResetGpo3Pl22 = {
 static PmResetGpo pmResetGpo3Pl23 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl23,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1686,9 +1481,7 @@ static PmResetGpo pmResetGpo3Pl23 = {
 static PmResetGpo pmResetGpo3Pl24 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl24,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1699,9 +1492,7 @@ static PmResetGpo pmResetGpo3Pl24 = {
 static PmResetGpo pmResetGpo3Pl25 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl25,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1712,9 +1503,7 @@ static PmResetGpo pmResetGpo3Pl25 = {
 static PmResetGpo pmResetGpo3Pl26 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl26,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1725,9 +1514,7 @@ static PmResetGpo pmResetGpo3Pl26 = {
 static PmResetGpo pmResetGpo3Pl27 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl27,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1738,9 +1525,7 @@ static PmResetGpo pmResetGpo3Pl27 = {
 static PmResetGpo pmResetGpo3Pl28 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl28,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1751,9 +1536,7 @@ static PmResetGpo pmResetGpo3Pl28 = {
 static PmResetGpo pmResetGpo3Pl29 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl29,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1764,9 +1547,7 @@ static PmResetGpo pmResetGpo3Pl29 = {
 static PmResetGpo pmResetGpo3Pl30 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl30,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1777,9 +1558,7 @@ static PmResetGpo pmResetGpo3Pl30 = {
 static PmResetGpo pmResetGpo3Pl31 = {
 	.rst = {
 		.ops = &pmResetOpsGpo,
-		.access = IPI_PMU_0_IER_APU_MASK |
-				  IPI_PMU_0_IER_RPU_0_MASK |
-				  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetGpo3Pl31,
 	},
 	.ctrlAddr = PMU_IOMODULE_GPO3,
@@ -1801,9 +1580,7 @@ static u32 PmResetPulsePsOnly(void)
 static PmResetRom pmResetPsOnly = {
 	.rst = {
 		.ops = &pmResetOpsNoAssert,
-		.access = IPI_PMU_0_IER_APU_MASK|
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetPsOnly,
 	},
 	.ctrlAddr = PMU_GLOBAL_GLOBAL_RESET,
@@ -1824,9 +1601,7 @@ static u32 PmResetPulseRpuLs(void)
 static PmResetRom pmResetRpuLs = {
 	.rst = {
 		.ops = &pmResetOpsNoAssert,
-		.access = IPI_PMU_0_IER_APU_MASK |
-			  IPI_PMU_0_IER_RPU_0_MASK |
-			  IPI_PMU_0_IER_RPU_1_MASK,
+		.access = 0U,
 		.derived = &pmResetRpuLs,
 	},
 	.ctrlAddr = PMU_GLOBAL_GLOBAL_RESET,
@@ -1836,9 +1611,7 @@ static PmResetRom pmResetRpuLs = {
 
 static PmReset pmResetPl = {
 	.ops = &pmResetOpsPl,
-	.access = IPI_PMU_0_IER_APU_MASK |
-		  IPI_PMU_0_IER_RPU_0_MASK |
-		  IPI_PMU_0_IER_RPU_1_MASK,
+	.access = 0U,
 	.derived = &pmResetPl,
 };
 
@@ -1967,9 +1740,9 @@ static PmReset* const pmAllResets[] = {
  *
  * @return       Pointer to PmReset structure (or NULL if not found)
  */
-const PmReset* PmGetResetById(const u32 resetId)
+static PmReset* PmGetResetById(const u32 resetId)
 {
-	const PmReset *resetPtr = NULL;
+	PmReset* resetPtr = NULL;
 
 	if (resetId >= (ARRAY_SIZE(pmAllResets) + PM_RESET_BASE)) {
 		/* Reset id is higher than maximum */
@@ -2091,3 +1864,41 @@ void PmResetGetStatus(const PmMaster *const master, const u32 reset)
 done:
 	IPI_RESPONSE2(master->ipiMask, status, resetStatus);
 }
+
+/**
+ * PmResetSetConfig() - Set configuration for reset control
+ * @resetId     ID of the reset whose permissions should be set
+ * @permissions Permissions to set (ORed IPI masks of permissible masters)
+ *
+ * @return      XST_INVALID_PARAM if reset with given ID is not found,
+ *              XST_SUCCESS if permissions are set
+ */
+int PmResetSetConfig(const u32 resetId, const u32 permissions)
+{
+	int status = XST_SUCCESS;
+	PmReset* rst = PmGetResetById(resetId);
+
+	if (NULL == rst) {
+		status = XST_INVALID_PARAM;
+		goto done;
+	}
+
+	rst->access = permissions;
+
+done:
+	return status;
+}
+
+/**
+ * PmResetClearConfig() - Clear configuration for all resets
+ */
+void PmResetClearConfig(void)
+{
+	u32 i;
+
+	for (i = 0U; i < ARRAY_SIZE(pmAllResets); i++) {
+		pmAllResets[i]->access = 0U;
+	}
+}
+
+#endif

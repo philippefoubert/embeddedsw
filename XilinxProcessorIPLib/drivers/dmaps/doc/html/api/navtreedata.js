@@ -15,7 +15,10 @@ var NAVTREE =
       [ "Typedefs", "globals_type.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
-    [ "File List", "files.html", "files" ]
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xdmaps_example_w_intr.c", "example.html#ex1", null ]
+    ] ]
   ] ]
 ];
 

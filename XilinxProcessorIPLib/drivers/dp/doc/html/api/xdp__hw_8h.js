@@ -18,6 +18,7 @@ var xdp__hw_8h =
     [ "XDP_RX_BS_IDLE_TIME", "group__dp__v5__1.html#gae39d5dd296d92f5e326b887a56b3d428", null ],
     [ "XDP_RX_CDR_CONTROL_CONFIG", "group__dp__v5__1.html#gab5a5a81ad34a81c27af3845b9614398c", null ],
     [ "XDP_RX_CDR_CONTROL_CONFIG_DFE_CTRL_MASK", "group__dp__v5__1.html#ga4aef8ef9ca88c70634ad96ed3299e6eb", null ],
+    [ "XDP_RX_CDR_CONTROL_CONFIG_DISABLE_TIMEOUT", "group__dp__v5__1.html#ga7595dddd440bba7405d9fe6e10ee3ccc", null ],
     [ "XDP_RX_CDR_CONTROL_CONFIG_TDLOCK_DP159", "group__dp__v5__1.html#gad0f6d318038cf5e19a7f0967dee81d42", null ],
     [ "XDP_RX_CDR_CONTROL_CONFIG_TDLOCK_TO_MASK", "group__dp__v5__1.html#ga0dba026b6e48f57829853ae28d12e2f9", null ],
     [ "XDP_RX_CORE_ID", "group__dp__v5__1.html#ga9c42b90b92a1915fcca0c60493e2ec61", null ],

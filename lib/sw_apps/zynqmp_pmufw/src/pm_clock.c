@@ -27,6 +27,8 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 #include "pm_clock.h"
 #include "pm_power.h"
@@ -36,15 +38,17 @@
 #include "crf_apb.h"
 #include "crl_apb.h"
 
+#define PM_CLOCK_ACTIVE_MASK BIT(24)
+
 static const PmClockSel2Pll advSel2Pll[] = {
 	{
-		.pll = &pmSlaveApll_g,
+		.pll = &pmApll_g,
 		.select = 0U,
 	}, {
-		.pll = &pmSlaveDpll_g,
+		.pll = &pmDpll_g,
 		.select = 2U,
 	}, {
-		.pll = &pmSlaveVpll_g,
+		.pll = &pmVpll_g,
 		.select = 3U,
 	},
 };
@@ -56,13 +60,13 @@ static PmClockMux advMux = {
 
 static const PmClockSel2Pll avdSel2Pll[] = {
 	{
-		.pll = &pmSlaveApll_g,
+		.pll = &pmApll_g,
 		.select = 0U,
 	}, {
-		.pll = &pmSlaveVpll_g,
+		.pll = &pmVpll_g,
 		.select = 2U,
 	}, {
-		.pll = &pmSlaveDpll_g,
+		.pll = &pmDpll_g,
 		.select = 3U,
 	},
 };
@@ -74,13 +78,13 @@ static PmClockMux avdMux = {
 
 static const PmClockSel2Pll vdrSel2Pll[] = {
 	{
-		.pll = &pmSlaveVpll_g,
+		.pll = &pmVpll_g,
 		.select = 0U,
 	}, {
-		.pll = &pmSlaveDpll_g,
+		.pll = &pmDpll_g,
 		.select = 2U,
 	}, {
-		.pll = &pmSlaveRpll_g,
+		.pll = &pmRpll_g,
 		.select = 3U,
 	},
 };
@@ -92,10 +96,10 @@ static PmClockMux vdrMux = {
 
 static const PmClockSel2Pll dvSel2Pll[] = {
 	{
-		.pll = &pmSlaveDpll_g,
+		.pll = &pmDpll_g,
 		.select = 0U,
 	}, {
-		.pll = &pmSlaveVpll_g,
+		.pll = &pmVpll_g,
 		.select = 1U,
 	},
 };
@@ -107,13 +111,13 @@ static PmClockMux dvMux = {
 
 static const PmClockSel2Pll iovdSel2Pll[] = {
 	{
-		.pll = &pmSlaveIOpll_g,
+		.pll = &pmIOpll_g,
 		.select = 0U,
 	}, {
-		.pll = &pmSlaveVpll_g,
+		.pll = &pmVpll_g,
 		.select = 2U,
 	}, {
-		.pll = &pmSlaveDpll_g,
+		.pll = &pmDpll_g,
 		.select = 3U,
 	},
 };
@@ -125,13 +129,13 @@ static PmClockMux iovdMux = {
 
 static const PmClockSel2Pll ioadSel2Pll[] = {
 	{
-		.pll = &pmSlaveIOpll_g,
+		.pll = &pmIOpll_g,
 		.select = 0U,
 	}, {
-		.pll = &pmSlaveApll_g,
+		.pll = &pmApll_g,
 		.select = 2U,
 	}, {
-		.pll = &pmSlaveDpll_g,
+		.pll = &pmDpll_g,
 		.select = 3U,
 	},
 };
@@ -143,13 +147,13 @@ static PmClockMux ioadMux = {
 
 static const PmClockSel2Pll iodaSel2Pll[] = {
 	{
-		.pll = &pmSlaveIOpll_g,
+		.pll = &pmIOpll_g,
 		.select = 0U,
 	}, {
-		.pll = &pmSlaveDpll_g,
+		.pll = &pmDpll_g,
 		.select = 2U,
 	}, {
-		.pll = &pmSlaveApll_g,
+		.pll = &pmApll_g,
 		.select = 3U,
 	},
 };
@@ -161,10 +165,10 @@ static PmClockMux iodaMux = {
 
 static const PmClockSel2Pll iorSel2Pll[] = {
 	{
-		.pll = &pmSlaveIOpll_g,
+		.pll = &pmIOpll_g,
 		.select = 0U,
 	}, {
-		.pll = &pmSlaveRpll_g,
+		.pll = &pmRpll_g,
 		.select = 2U,
 	},
 };
@@ -176,13 +180,13 @@ static PmClockMux iorMux = {
 
 static const PmClockSel2Pll iordSel2Pll[] = {
 	{
-		.pll = &pmSlaveIOpll_g,
+		.pll = &pmIOpll_g,
 		.select = 0U,
 	}, {
-		.pll = &pmSlaveRpll_g,
+		.pll = &pmRpll_g,
 		.select = 2U,
 	}, {
-		.pll = &pmSlaveDpll_g,
+		.pll = &pmDpll_g,
 		.select = 3U,
 	},
 };
@@ -194,13 +198,13 @@ static PmClockMux iordMux = {
 
 static const PmClockSel2Pll iorvSel2Pll[] = {
 	{
-		.pll = &pmSlaveIOpll_g,
+		.pll = &pmIOpll_g,
 		.select = 0U,
 	}, {
-		.pll = &pmSlaveRpll_g,
+		.pll = &pmRpll_g,
 		.select = 2U,
 	}, {
-		.pll = &pmSlaveVpll_g,
+		.pll = &pmVpll_g,
 		.select = 3U,
 	},
 };
@@ -212,13 +216,13 @@ static PmClockMux iorvMux = {
 
 static const PmClockSel2Pll riodSel2Pll[] = {
 	{
-		.pll = &pmSlaveRpll_g,
+		.pll = &pmRpll_g,
 		.select = 0U,
 	}, {
-		.pll = &pmSlaveIOpll_g,
+		.pll = &pmIOpll_g,
 		.select = 2U,
 	}, {
-		.pll = &pmSlaveDpll_g,
+		.pll = &pmDpll_g,
 		.select = 3U,
 	},
 };
@@ -235,6 +239,7 @@ static PmClock pmClockAcpu = {
 	.ctrlAddr = CRF_APB_ACPU_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 /* Floating clock */
@@ -243,6 +248,7 @@ static PmClock pmClockDbgTrace = {
 	.ctrlAddr = CRF_APB_DBG_TRACE_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 /* Floating clock */
@@ -251,6 +257,7 @@ static PmClock pmClockDbgFpd = {
 	.ctrlAddr = CRF_APB_DBG_FPD_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockDpVideo = {
@@ -258,6 +265,7 @@ static PmClock pmClockDpVideo = {
 	.ctrlAddr = CRF_APB_DP_VIDEO_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockDpAudio = {
@@ -265,6 +273,7 @@ static PmClock pmClockDpAudio = {
 	.ctrlAddr = CRF_APB_DP_AUDIO_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockDpStc = {
@@ -272,6 +281,7 @@ static PmClock pmClockDpStc = {
 	.ctrlAddr = CRF_APB_DP_STC_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockDdr = {
@@ -279,6 +289,7 @@ static PmClock pmClockDdr = {
 	.ctrlAddr = CRF_APB_DDR_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockGpu = {
@@ -286,6 +297,7 @@ static PmClock pmClockGpu = {
 	.ctrlAddr = CRF_APB_GPU_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockSata = {
@@ -293,6 +305,7 @@ static PmClock pmClockSata = {
 	.ctrlAddr = CRF_APB_SATA_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockPcie = {
@@ -300,6 +313,7 @@ static PmClock pmClockPcie = {
 	.pll = NULL,
 	.users = NULL,
 	.ctrlAddr = CRF_APB_PCIE_REF_CTRL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockGdma = {
@@ -307,6 +321,7 @@ static PmClock pmClockGdma = {
 	.ctrlAddr = CRF_APB_GDMA_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockDpDma = {
@@ -314,6 +329,7 @@ static PmClock pmClockDpDma = {
 	.ctrlAddr = CRF_APB_DPDMA_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 /* Floating clock */
@@ -322,6 +338,7 @@ static PmClock pmClockGtgRef0 = {
 	.ctrlAddr = CRF_APB_GTGREF0_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 /* Floating clock */
@@ -330,6 +347,7 @@ static PmClock pmClockDbgTstmp = {
 	.ctrlAddr = CRF_APB_DBG_TSTMP_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 /* CRL_APB clocks */
@@ -340,6 +358,7 @@ static PmClock pmClockUsb3Dual = {
 	.ctrlAddr = CRL_APB_USB3_DUAL_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockGem0 = {
@@ -347,6 +366,7 @@ static PmClock pmClockGem0 = {
 	.ctrlAddr = CRL_APB_GEM0_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockGem1 = {
@@ -354,6 +374,7 @@ static PmClock pmClockGem1 = {
 	.ctrlAddr = CRL_APB_GEM1_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockGem2 = {
@@ -361,6 +382,7 @@ static PmClock pmClockGem2 = {
 	.ctrlAddr = CRL_APB_GEM2_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockGem3 = {
@@ -368,6 +390,7 @@ static PmClock pmClockGem3 = {
 	.ctrlAddr = CRL_APB_GEM3_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockUsb0Bus = {
@@ -375,6 +398,7 @@ static PmClock pmClockUsb0Bus = {
 	.ctrlAddr = CRL_APB_USB0_BUS_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockUsb1Bus = {
@@ -382,6 +406,7 @@ static PmClock pmClockUsb1Bus = {
 	.ctrlAddr = CRL_APB_USB1_BUS_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockQSpi = {
@@ -389,6 +414,7 @@ static PmClock pmClockQSpi = {
 	.ctrlAddr = CRL_APB_QSPI_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockSdio0 = {
@@ -396,6 +422,7 @@ static PmClock pmClockSdio0 = {
 	.ctrlAddr = CRL_APB_SDIO0_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockSdio1 = {
@@ -403,6 +430,7 @@ static PmClock pmClockSdio1 = {
 	.ctrlAddr = CRL_APB_SDIO1_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockUart0 = {
@@ -410,6 +438,7 @@ static PmClock pmClockUart0 = {
 	.ctrlAddr = CRL_APB_UART0_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockUart1 = {
@@ -417,6 +446,7 @@ static PmClock pmClockUart1 = {
 	.ctrlAddr = CRL_APB_UART1_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockSpi0 = {
@@ -424,6 +454,7 @@ static PmClock pmClockSpi0 = {
 	.ctrlAddr = CRL_APB_SPI0_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockSpi1 = {
@@ -431,6 +462,7 @@ static PmClock pmClockSpi1 = {
 	.ctrlAddr = CRL_APB_SPI1_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockCan0 = {
@@ -438,6 +470,7 @@ static PmClock pmClockCan0 = {
 	.ctrlAddr = CRL_APB_CAN0_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockCan1 = {
@@ -445,6 +478,7 @@ static PmClock pmClockCan1 = {
 	.ctrlAddr = CRL_APB_CAN1_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockCpuR5 = {
@@ -452,6 +486,7 @@ static PmClock pmClockCpuR5 = {
 	.ctrlAddr = CRL_APB_CPU_R5_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 /* Floating clock */
@@ -460,6 +495,7 @@ static PmClock pmClockIouSwitch = {
 	.ctrlAddr = CRL_APB_IOU_SWITCH_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockCsuPll = {
@@ -467,6 +503,7 @@ static PmClock pmClockCsuPll = {
 	.ctrlAddr = CRL_APB_CSU_PLL_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockPcap = {
@@ -474,6 +511,7 @@ static PmClock pmClockPcap = {
 	.ctrlAddr = CRL_APB_PCAP_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 /* Floating clock */
@@ -482,14 +520,15 @@ static PmClock pmClockLpdSwitch = {
 	.ctrlAddr = CRL_APB_LPD_SWITCH_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
-/* Floating clock */
 static PmClock pmClockLpdLsBus = {
 	.mux = &riodMux,
 	.ctrlAddr = CRL_APB_LPD_LSBUS_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 /* Floating clock */
@@ -498,6 +537,7 @@ static PmClock pmClockDbgLpd = {
 	.ctrlAddr = CRL_APB_DBG_LPD_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockNand = {
@@ -505,6 +545,7 @@ static PmClock pmClockNand = {
 	.ctrlAddr = CRL_APB_NAND_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockAdma = {
@@ -512,6 +553,7 @@ static PmClock pmClockAdma = {
 	.ctrlAddr = CRL_APB_ADMA_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockPl0 = {
@@ -519,6 +561,7 @@ static PmClock pmClockPl0 = {
 	.ctrlAddr = CRL_APB_PL0_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockPl1 = {
@@ -526,6 +569,7 @@ static PmClock pmClockPl1 = {
 	.ctrlAddr = CRL_APB_PL1_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockPl2 = {
@@ -533,6 +577,7 @@ static PmClock pmClockPl2 = {
 	.ctrlAddr = CRL_APB_PL2_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockPl3 = {
@@ -540,6 +585,7 @@ static PmClock pmClockPl3 = {
 	.ctrlAddr = CRL_APB_PL3_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockGemTsu = {
@@ -547,6 +593,7 @@ static PmClock pmClockGemTsu = {
 	.ctrlAddr = CRL_APB_GEM_TSU_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockDll = {
@@ -554,6 +601,7 @@ static PmClock pmClockDll = {
 	.ctrlAddr = CRL_APB_DLL_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 /* Floating clock */
@@ -562,6 +610,7 @@ static PmClock pmClockAms = {
 	.ctrlAddr = CRL_APB_AMS_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockI2C0 = {
@@ -569,6 +618,7 @@ static PmClock pmClockI2C0 = {
 	.ctrlAddr = CRL_APB_I2C0_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock pmClockI2C1 = {
@@ -576,6 +626,7 @@ static PmClock pmClockI2C1 = {
 	.ctrlAddr = CRL_APB_I2C1_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 /* Floating clock */
@@ -584,6 +635,7 @@ static PmClock pmClockTimeStamp = {
 	.ctrlAddr = CRL_APB_TIMESTAMP_REF_CTRL,
 	.pll = NULL,
 	.users = NULL,
+	.ctrlVal = 0U,
 };
 
 static PmClock* pmClocks[] = {
@@ -671,7 +723,7 @@ static PmClockHandle pmClockHandles[] = {
 		.nextNode = NULL,
 	}, {
 		.clock = &pmClockSata,
-		.node = &pmSlaveSata_g.slv.node,
+		.node = &pmSlaveSata_g.node,
 		.nextClock = NULL,
 		.nextNode = NULL,
 	}, {
@@ -766,7 +818,7 @@ static PmClockHandle pmClockHandles[] = {
 		.nextNode = NULL,
 	}, {
 		.clock = &pmClockCpuR5,
-		.node = &pmPowerIslandRpu_g.node,
+		.node = &pmPowerIslandRpu_g.power.node,
 		.nextClock = NULL,
 		.nextNode = NULL,
 	}, {
@@ -777,6 +829,26 @@ static PmClockHandle pmClockHandles[] = {
 	}, {
 		.clock = &pmClockPcap,
 		.node = &pmSlavePcap_g.node,
+		.nextClock = NULL,
+		.nextNode = NULL,
+	}, {
+		.clock = &pmClockLpdLsBus,
+		.node = &pmSlaveTtc0_g.node,
+		.nextClock = NULL,
+		.nextNode = NULL,
+	}, {
+		.clock = &pmClockLpdLsBus,
+		.node = &pmSlaveTtc1_g.node,
+		.nextClock = NULL,
+		.nextNode = NULL,
+	}, {
+		.clock = &pmClockLpdLsBus,
+		.node = &pmSlaveTtc2_g.node,
+		.nextClock = NULL,
+		.nextNode = NULL,
+	}, {
+		.clock = &pmClockLpdLsBus,
+		.node = &pmSlaveTtc3_g.node,
 		.nextClock = NULL,
 		.nextNode = NULL,
 	}, {
@@ -791,22 +863,22 @@ static PmClockHandle pmClockHandles[] = {
 		.nextNode = NULL,
 	}, {
 		.clock = &pmClockPl0,
-		.node = &pmPowerDomainPld_g.node,
+		.node = &pmPowerDomainPld_g.power.node,
 		.nextClock = NULL,
 		.nextNode = NULL,
 	}, {
 		.clock = &pmClockPl1,
-		.node = &pmPowerDomainPld_g.node,
+		.node = &pmPowerDomainPld_g.power.node,
 		.nextClock = NULL,
 		.nextNode = NULL,
 	}, {
 		.clock = &pmClockPl2,
-		.node = &pmPowerDomainPld_g.node,
+		.node = &pmPowerDomainPld_g.power.node,
 		.nextClock = NULL,
 		.nextNode = NULL,
 	}, {
 		.clock = &pmClockPl3,
-		.node = &pmPowerDomainPld_g.node,
+		.node = &pmPowerDomainPld_g.power.node,
 		.nextClock = NULL,
 		.nextNode = NULL,
 	}, {
@@ -852,6 +924,7 @@ static PmClockHandle pmClockHandles[] = {
 	},
 };
 
+#ifdef DEBUG_CLK
 /**
  * PmClockGetUseCount() - Get the use count for the clock
  * @clk		Clock whose use count shall be counted
@@ -864,19 +937,15 @@ static u32 PmClockGetUseCount(const PmClock* const clk)
 	PmClockHandle* ch = clk->users;
 
 	while (NULL != ch) {
-		bool depends = PmNodeDependsOnClock(ch->node);
-
-		if (true == depends) {
+		if (0U != (NODE_LOCKED_CLOCK_FLAG & ch->node->flags)) {
 			useCnt++;
 		}
-
 		ch = ch->nextNode;
 	}
 
 	return useCnt;
 }
 
-#ifdef DEBUG_CLK
 static const char* PmStrClk(const PmClock* const clk)
 {
 	if (clk == &pmClockAcpu) {
@@ -990,7 +1059,7 @@ void PmClockDump(const PmClock* const clk)
 	fw_printf("\t%s #%lu { ", PmStrClk(clk), clkUseCnt);
 
 	while (NULL != ch) {
-		bool used = PmNodeDependsOnClock(ch->node);
+		bool used = 0U != (NODE_LOCKED_CLOCK_FLAG & ch->node->flags);
 
 		if (true == used) {
 			if (clk->users != ch) {
@@ -1004,11 +1073,11 @@ void PmClockDump(const PmClock* const clk)
 	fw_printf(" }\r\n");
 }
 
-void PmClockDumpChildren(const PmSlavePll* const pll)
+void PmClockDumpChildren(const PmPll* const pll)
 {
 	u32 i;
 
-	fw_printf("%s #%ld:\r\n", PmStrNode(pll->slv.node.nodeId), pll->useCount);
+	fw_printf("%s #%ld:\r\n", PmStrNode(pll->node.nodeId), pll->useCount);
 
 	for (i = 0U; i < ARRAY_SIZE(pmClocks); i++) {
 		if (pll != pmClocks[i]->pll) {
@@ -1020,11 +1089,11 @@ void PmClockDumpChildren(const PmSlavePll* const pll)
 
 void PmClockDumpTree(void)
 {
-	PmClockDumpChildren(&pmSlaveApll_g);
-	PmClockDumpChildren(&pmSlaveVpll_g);
-	PmClockDumpChildren(&pmSlaveDpll_g);
-	PmClockDumpChildren(&pmSlaveRpll_g);
-	PmClockDumpChildren(&pmSlaveIOpll_g);
+	PmClockDumpChildren(&pmApll_g);
+	PmClockDumpChildren(&pmVpll_g);
+	PmClockDumpChildren(&pmDpll_g);
+	PmClockDumpChildren(&pmRpll_g);
+	PmClockDumpChildren(&pmIOpll_g);
 }
 #endif
 
@@ -1035,10 +1104,10 @@ void PmClockDumpTree(void)
  *
  * @return	Pointer to the PLL parent of the clock
  */
-static PmSlavePll* PmClockGetParent(PmClock* const clock, const u32 sel)
+static PmPll* PmClockGetParent(PmClock* const clock, const u32 sel)
 {
 	u32 i;
-	PmSlavePll* parent = NULL;
+	PmPll* parent = NULL;
 
 	for (i = 0U; i < clock->mux->size; i++) {
 		if (sel == clock->mux->inputs[i].select) {
@@ -1051,9 +1120,9 @@ static PmSlavePll* PmClockGetParent(PmClock* const clock, const u32 sel)
 }
 
 /**
- * PmClockInitList() - Init and link clock handles into clock's/node's lists
+ * PmClockConstructList() - Link clock handles into clock's/node's lists
  */
-void PmClockInitList(void)
+void PmClockConstructList(void)
 {
 	u32 i;
 
@@ -1071,38 +1140,63 @@ void PmClockInitList(void)
 }
 
 /**
- * PmClockInitData() - Initialize clock data structures based on HW setting
- * @note	Must execute only once upon the system init
+ * @PmClockIsActive() Check if all clocks for a given node are active
+ * @node	Node whose clocks need to be checked
+ *
+ * @return XST_SUCCESS if all clocks are active
+ *         XST_FAILURE if any one of the clocks is not active
  */
-void PmClockInitData(void)
+s32 PmClockIsActive(PmNode* const node)
 {
-	u32 i;
+	s32 Status = XST_SUCCESS;
+	PmClockHandle* ch = node->clocks;
+	PmDbg("%s\r\n", PmStrNode(node->nodeId));
 
-	PmPllClearUseCount();
-
-	/* Read the current hardware configuration for all clocks */
-	for (i = 0U; i < ARRAY_SIZE(pmClocks); i++) {
-		PmClock* const clk = pmClocks[i];
-		const u32 val = XPfw_Read32(clk->ctrlAddr);
-		u32 clkUseCnt;
-
-		clk->pll = PmClockGetParent(clk, val & PM_CLOCK_MUX_SELECT_MASK);
-
-		/* If parent is not a known pll it's the oscillator clock */
-		if (NULL == clk->pll) {
-			continue;
+	while (NULL != ch) {
+		if ((XPfw_Read32(ch->clock->ctrlAddr) & PM_CLOCK_ACTIVE_MASK) !=
+				PM_CLOCK_ACTIVE_MASK) {
+			Status = XST_FAILURE;
+			break;
 		}
-
-		/*
-		 * Increase the use count of the PLL parent by the number of
-		 * nodes that are in a state that requires clock to be running.
-		 */
-		clkUseCnt = PmClockGetUseCount(clk);
-		clk->pll->useCount += clkUseCnt;
+		ch = ch->nextClock;
 	}
+
+	return Status;
+}
+
+/**
+ * @PmClockSave() - Save control register values for clocks used by the node
+ * @node	Node whose clock control regs need to be saved
+ */
+void PmClockSave(PmNode* const node)
+{
+	PmClockHandle* ch = node->clocks;
+	PmDbg("%s\r\n", PmStrNode(node->nodeId));
+
+	while (NULL != ch) {
+		ch->clock->ctrlVal = XPfw_Read32(ch->clock->ctrlAddr);
+		ch = ch->nextClock;
+	}
+}
+
+/**
+ * PmClockRestore() - Restore control register values for clocks of the node
+ * @node	Node whose clock control registers need to be restored
+ */
+void PmClockRestore(PmNode* const node)
+{
+	PmClockHandle* ch = node->clocks;
+
 #ifdef DEBUG_CLK
-	PmClockDumpTree();
+	PmDbg("%s\r\n", PmStrNode(node->nodeId));
 #endif
+	while (NULL != ch) {
+		/* Restore the clock configuration if needed */
+		if (0U != ch->clock->ctrlVal) {
+			XPfw_Write32(ch->clock->ctrlAddr, ch->clock->ctrlVal);
+		}
+		ch = ch->nextClock;
+	}
 }
 
 /**
@@ -1112,32 +1206,40 @@ void PmClockInitData(void)
  *		if a PLL parent needed to be locked and the locking has failed.
  * @note	The dependency toward a PLL parent is automatically resolved
  */
-int PmClockRequest(const PmNode* const node)
+int PmClockRequest(PmNode* const node)
 {
 	PmClockHandle* ch = node->clocks;
-	int totStatus = XST_SUCCESS;
+	int status = XST_SUCCESS;
 
+	if (0U != (NODE_LOCKED_CLOCK_FLAG & node->flags)) {
+		PmDbg("Warning %s double request\r\n", PmStrNode(node->nodeId));
+		goto done;
+	}
 #ifdef DEBUG_CLK
 	PmDbg("%s\r\n", PmStrNode(node->nodeId));
 #endif
 	while (NULL != ch) {
-		int status = XST_SUCCESS;
-		u32 clkUseCnt = PmClockGetUseCount(ch->clock);
+		const u32 val = XPfw_Read32(ch->clock->ctrlAddr);
+		const u32 sel = val & PM_CLOCK_MUX_SELECT_MASK;
 
-		if ((0U == clkUseCnt) && (NULL != ch->clock->pll)) {
-			/* This node is the first one to depend on the PLL */
-			status = PmPllRequest(ch->clock->pll);
+		ch->clock->pll = PmClockGetParent(ch->clock, sel);
+
+		/* If parent is not a known pll it's the oscillator clock */
+		if (NULL == ch->clock->pll) {
+			continue;
 		}
 
-		/* If requesting the PLL failed, remember to return the error */
+		status = PmPllRequest(ch->clock->pll);
 		if (XST_SUCCESS != status) {
-			totStatus = status;
+			goto done;
 		}
 
 		ch = ch->nextClock;
 	}
+	node->flags |= NODE_LOCKED_CLOCK_FLAG;
 
-	return totStatus;
+done:
+	return status;
 }
 
 /**
@@ -1147,21 +1249,27 @@ int PmClockRequest(const PmNode* const node)
  * @note	If a PLL parent of a released clock have no other users, the
  *		PM framework will suspend that PLL.
  */
-void PmClockRelease(const PmNode* const node)
+void PmClockRelease(PmNode* const node)
 {
 	PmClockHandle* ch = node->clocks;
 
+	if (0U == (NODE_LOCKED_CLOCK_FLAG & node->flags)) {
+		PmDbg("Warning %s double release\r\n", PmStrNode(node->nodeId));
+		goto done;
+	}
 #ifdef DEBUG_CLK
 	PmDbg("%s\r\n", PmStrNode(node->nodeId));
 #endif
 	while (NULL != ch) {
-		u32 clkUseCnt = PmClockGetUseCount(ch->clock);
-
-		if ((0U == clkUseCnt) && (NULL != ch->clock->pll)) {
+		if (NULL != ch->clock->pll) {
 			PmPllRelease(ch->clock->pll);
 		}
 		ch = ch->nextClock;
 	}
+	node->flags &= ~NODE_LOCKED_CLOCK_FLAG;
+
+done:
+	return;
 }
 
 /**
@@ -1188,22 +1296,22 @@ void PmClockSnoop(const u32 addr, const u32 mask, const u32 val)
 	/* Find if a clock multiplexer is changed */
 	for (i = 0U; i < ARRAY_SIZE(pmClocks); i++) {
 		PmClock* const clk = pmClocks[i];
-		PmSlavePll* const prevPll = clk->pll;
-		u32 clkUseCnt = PmClockGetUseCount(clk);
+		PmPll* const prevPll = clk->pll;
+		const u32 sel = val & PM_CLOCK_MUX_SELECT_MASK;
 
 		if (addr != clk->ctrlAddr) {
 			continue;
 		}
 
-		clk->pll = PmClockGetParent(clk, val & PM_CLOCK_MUX_SELECT_MASK);
+		clk->pll = PmClockGetParent(clk, sel);
 
 		/* If the PLL source has not changed go to done */
 		if (clk->pll == prevPll) {
 			goto done;
 		}
 
-		if (0U != clkUseCnt) {
-			/* Release previously used PLL */
+		/* Release previously used PLL */
+		if (NULL != prevPll) {
 			PmPllRelease(prevPll);
 		}
 
@@ -1216,3 +1324,5 @@ void PmClockSnoop(const u32 addr, const u32 mask, const u32 val)
 done:
 	return;
 }
+
+#endif

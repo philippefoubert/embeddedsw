@@ -27,6 +27,8 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*********************************************************************
  * Definitions of commonly used functions for debugging PMU Power
@@ -67,6 +69,8 @@ const char* PmStrNode(const u32 node)
 		return "NODE_RPU_1";
 	case NODE_PL:
 		return "NODE_PL";
+	case NODE_PLD:
+		return "NODE_PLD";
 	case NODE_FPD:
 		return "NODE_FPD";
 	case NODE_OCM_BANK_0:
@@ -155,12 +159,22 @@ const char* PmStrNode(const u32 node)
 		return "NODE_QSPI";
 	case NODE_GPIO:
 		return "NODE_GPIO";
-	case NODE_AFI:
-		return "NODE_AFI";
 	case NODE_DDR:
 		return "NODE_DDR";
 	case NODE_IPI_APU:
 		return "NODE_IPI_APU";
+	case NODE_IPI_RPU_0:
+		return "NODE_IPI_RPU_0";
+	case NODE_IPI_RPU_1:
+		return "NODE_IPI_RPU_1";
+	case NODE_IPI_PL_0:
+		return "NODE_IPI_PL_0";
+	case NODE_IPI_PL_1:
+		return "NODE_IPI_PL_1";
+	case NODE_IPI_PL_2:
+		return "NODE_IPI_PL_2";
+	case NODE_IPI_PL_3:
+		return "NODE_IPI_PL_3";
 	case NODE_GPU:
 		return "NODE_GPU";
 	case NODE_PCIE:
@@ -171,6 +185,10 @@ const char* PmStrNode(const u32 node)
 		return "NODE_RTC";
 	case NODE_LPD:
 		return "NODE_LPD";
+	case NODE_VCU:
+		return "NODE_VCU";
+	case NODE_EXTERN:
+		return "NODE_EXTERN";
 	default:
 		return "ERROR_NODE";
 	}
@@ -219,14 +237,5 @@ const char* PmStrReason(const u32 reason)
 }
 
 #endif /* DEBUG_PM */
-void ddr_io_retention_set(bool en)
-{
-	u32 r = Xil_In32(PMU_GLOBAL_DDR_CNTRL);
-	if (0U != en) {
-		r |= PMU_GLOBAL_DDR_CNTRL_RET_MASK;
-	} else {
-		r &= ~PMU_GLOBAL_DDR_CNTRL_RET_MASK;
-	}
-	Xil_Out32(PMU_GLOBAL_DDR_CNTRL, r);
-}
 
+#endif

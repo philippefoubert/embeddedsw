@@ -1,6 +1,8 @@
 var NAVTREEINDEX0 =
 {
 "annotated.html":[0,0],
+"example.html":[3],
+"example.html#ex1":[3,0],
 "files.html":[2],
 "functions.html":[0,1,0],
 "functions_vars.html":[0,1,1],
@@ -247,7 +249,5 @@ var NAVTREEINDEX0 =
 "group__tpg__v3__0.html#ggacd31acaea34a0ee434bb96a76ab6c519a4f517d88bfbbf045fb884b62924ead52":[2,1,26,4],
 "group__tpg__v3__0.html#ggacd31acaea34a0ee434bb96a76ab6c519a61abca56e7814bf7f38959b7dee0c2b1":[2,1,26,2],
 "group__tpg__v3__0.html#ggacd31acaea34a0ee434bb96a76ab6c519a6abd81eb7c177f39a4f52b24f031e6e1":[2,1,26,1],
-"group__tpg__v3__0.html#ggacd31acaea34a0ee434bb96a76ab6c519a84de6bffb2d37a212620ac5e78bfe937":[2,1,26,0],
-"group__tpg__v3__0.html#ggacd31acaea34a0ee434bb96a76ab6c519ae0ce0a01bcdc0106017a4333e846b8bc":[2,1,26,3],
-"index.html":[]
+"group__tpg__v3__0.html#ggacd31acaea34a0ee434bb96a76ab6c519a84de6bffb2d37a212620ac5e78bfe937":[2,1,26,0]
 };

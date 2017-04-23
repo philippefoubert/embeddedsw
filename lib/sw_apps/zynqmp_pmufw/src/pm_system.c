@@ -27,93 +27,193 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*********************************************************************
  * Contains system-level PM functions and state
  ********************************************************************/
 
-#include "pm_core.h"
 #include "pm_system.h"
 #include "pm_common.h"
 #include "crl_apb.h"
 #include "pm_callbacks.h"
 #include "xpfw_resets.h"
+#include "pm_requirement.h"
+#include "pm_sram.h"
+#include "pm_ddr.h"
+#include "pm_periph.h"
 
 /*********************************************************************
  * Structure definitions
  ********************************************************************/
 /**
  * PmSystem - System level information
- * @masters             ORed ipi masks of masters available in the system (to be
- *                      updated based on specific configuration)
- * @permissions         ORed ipi masks of masters which are allowed to request
- *                      system shutdown/restart
+ * @psRestartPerms	ORed IPI masks of masters allowed to restart PS
+ * @systemRestartPerms	ORed IPI masks of masters allowed to restart system
  */
 typedef struct {
-	u32 masters;
-	u32 permissions;
+	u32 psRestartPerms;
+	u32 systemRestartPerms;
 } PmSystem;
+
+/**
+ * PmSystemRequirement - System level requirements (not assigned to any master)
+ * @slave	Slave for which the requirements are set
+ * @caps	Capabilities of the slave that are required by the system
+ */
+typedef struct PmSystemRequirement {
+	PmSlave* const slave;
+	u32 caps;
+} PmSystemRequirement;
 
 /*********************************************************************
  * Data initialization
  ********************************************************************/
 
-/* By default all masters are allowed to request shutdown. */
-PmSystem pmSystem = {
-	.masters = IPI_PMU_0_IER_APU_MASK |
-		   IPI_PMU_0_IER_RPU_0_MASK,
-	.permissions = IPI_PMU_0_IER_APU_MASK |
-		       IPI_PMU_0_IER_RPU_0_MASK,
+PmSystem pmSystem;
+
+/*
+ * These requirements are needed for the system to operate:
+ * - OCM bank(s) store FSBL which is needed to restart APU, and should never be
+ *   powered down unless the whole system goes down.
+ */
+PmSystemRequirement pmSystemReqs[] = {
+	{
+		.slave = &pmSlaveOcm0_g.slv,
+		.caps = PM_CAP_CONTEXT,
+	}, {
+		.slave = &pmSlaveOcm1_g.slv,
+		.caps = PM_CAP_CONTEXT,
+	}, {
+		.slave = &pmSlaveOcm2_g.slv,
+		.caps = PM_CAP_CONTEXT,
+	},{
+		.slave = &pmSlaveOcm3_g.slv,
+		.caps = PM_CAP_CONTEXT,
+	},{
+		.slave = &pmSlaveDdr_g,
+		.caps = PM_CAP_CONTEXT,
+	},
+#ifdef DEBUG_MODE
+#if (STDOUT_BASEADDRESS == XPAR_PSU_UART_0_BASEADDR)
+	{
+		.slave = &pmSlaveUart0_g,
+		.caps = PM_CAP_ACCESS,
+	},
+#endif
+#if (STDOUT_BASEADDRESS == XPAR_PSU_UART_1_BASEADDR)
+	{
+		.slave = &pmSlaveUart1_g,
+		.caps = PM_CAP_ACCESS,
+	},
+#endif
+#endif
 };
 
 /*********************************************************************
  * Function definitions
  ********************************************************************/
+
 /**
- * PmSystemProcessShutdown() - Process shutdown by initiating suspend requests
- * @master      Master which requested system shutdown
- * @type        Shutdown type
- * @subtype     Shutdown subtype
+ * PmSystemRequirementAdd() - Add requirements of the system
+ * @return	XST_SUCCESS if requirements are added, XST_FAILURE otherwise
  */
-void PmSystemProcessShutdown(const PmMaster *master, u32 type, u32 subtype)
+int PmSystemRequirementAdd(void)
 {
-	PmDbg("\r\n");
+	int status;
+	u32 i;
 
-	if (PMF_SHUTDOWN_TYPE_SHUTDOWN == type) {
-		u32 dummy;
+	for (i = 0U; i < ARRAY_SIZE(pmSystemReqs); i++) {
+		PmRequirement* req;
 
-		if (PMF_SHUTDOWN_SUBTYPE_SYSTEM == subtype) {
-			PmForcePowerDownInt(NODE_PL, &dummy);
+		req = PmRequirementAdd(NULL, pmSystemReqs[i].slave);
+		if (NULL == req) {
+			status = XST_FAILURE;
+			goto done;
 		}
 
-		PmForcePowerDownInt(NODE_FPD, &dummy);
-		PmForcePowerDownInt(NODE_LPD, &dummy);
-	}
-
-	if (PMF_SHUTDOWN_TYPE_RESET == type) {
-		if (PMF_SHUTDOWN_SUBTYPE_SYSTEM == subtype) {
-			/* assert soft reset */
-			XPfw_RMW32(CRL_APB_RESET_CTRL,
-				   CRL_APB_RESET_CTRL_SOFT_RESET_MASK,
-				   CRL_APB_RESET_CTRL_SOFT_RESET_MASK);
+		status = PmCheckCapabilities(req->slave, pmSystemReqs[i].caps);
+		if (XST_SUCCESS != status) {
+			status = XST_FAILURE;
+			goto done;
 		}
-
-		if (PMF_SHUTDOWN_SUBTYPE_PS_ONLY == subtype) {
-			XPfw_ResetPsOnly();
-		}
+		req->info |= PM_SYSTEM_USING_SLAVE_MASK;
+		req->preReq = pmSystemReqs[i].caps;
+		req->currReq = pmSystemReqs[i].caps;
+		req->nextReq = pmSystemReqs[i].caps;
+		req->defaultReq = pmSystemReqs[i].caps;
+		req->latencyReq = MAX_LATENCY;
 	}
 
-	while (true) {
-		mb_sleep();
-	}
+done:
+	return status;
 }
 
 /**
- * PmSystemRequestNotAllowed() - Check whether the master is allowed to request
- *                               system level transition
- * @master      Pointer to the master whose permissions are to be checked
+ * PmSystemGetRequirement() - Get system-level requirement for given slave
+ * @slave	Slave in question
+ *
+ * @return	Capabilities of the slave the are required for the system
  */
-inline bool PmSystemRequestNotAllowed(const PmMaster* const master)
+static u32 PmSystemGetRequirement(const PmSlave* const slave)
 {
-	return 0U == (master->ipiMask & pmSystem.permissions);
+	u32 i;
+	u32 caps = 0U;
+
+	for (i = 0U; i < ARRAY_SIZE(pmSystemReqs); i++) {
+		if (slave == pmSystemReqs[i].slave) {
+			caps = pmSystemReqs[i].caps;
+			break;
+		}
+	}
+
+	return caps;
 }
+
+/**
+ * PmSystemPrepareForRestart() - Prepare for restarting the master
+ * @master	Master to be restarted
+ */
+void PmSystemPrepareForRestart(const PmMaster* const master)
+{
+	PmRequirement* req;
+
+	if (master != &pmMasterApu_g) {
+		goto done;
+	}
+
+	/* Change system requirement for DDR to hold it ON while restarting */
+	req = PmRequirementGetNoMaster(&pmSlaveDdr_g);
+	if ((NULL != req) && (0U == (PM_CAP_ACCESS & req->currReq))) {
+		req->currReq |= PM_CAP_ACCESS;
+	}
+
+done:
+	return;
+}
+
+/**
+ * PmSystemRestartDone() - Done restarting the master
+ * @master	Master which is restarted
+ */
+void PmSystemRestartDone(const PmMaster* const master)
+{
+	PmRequirement* req;
+	u32 caps;
+
+	if (master != &pmMasterApu_g) {
+		goto done;
+	}
+
+	/* Change system requirement for DDR to hold it ON while restarting */
+	req = PmRequirementGetNoMaster(&pmSlaveDdr_g);
+	caps = PmSystemGetRequirement(&pmSlaveDdr_g);
+	if ((NULL != req) && (0U == (PM_CAP_ACCESS & caps))) {
+		req->currReq &= ~PM_CAP_ACCESS;
+	}
+
+done:
+	return;
+}
+#endif

@@ -35,6 +35,7 @@ BEGIN driver cfa
   OPTION supported_peripherals = (v_cfa);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+  OPTION VERSION = 7.1;
   OPTION NAME = cfa;
 
 END driver

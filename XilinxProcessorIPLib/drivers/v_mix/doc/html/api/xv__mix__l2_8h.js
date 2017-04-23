@@ -1,12 +1,12 @@
 var xv__mix__l2_8h =
 [
-    [ "XVMix_GetBackgndColor", "group__v__mix.html#gaed64156aafb0f07df60161d77f7ff296", null ],
+    [ "XVMix_GetBackgndColor", "group__v__mix.html#ga365f0a6f06d5d3cad954fcf67c74124c", null ],
     [ "XVMix_GetLayerInterfaceType", "group__v__mix.html#ga61712123a1ec7d4f21b3e6245fb1e422", null ],
     [ "XVMix_GetNumLayers", "group__v__mix.html#gab0893c45f2ea0018724305170296e926", null ],
     [ "XVMix_IsAlphaEnabled", "group__v__mix.html#ga4e3f6aec16afcf025476f4a331741d82", null ],
     [ "XVMix_IsLayerInterfaceStream", "group__v__mix.html#ga33dca66e76d77f9384a0fee6b662cd25", null ],
     [ "XVMix_IsLogoColorKeyEnabled", "group__v__mix.html#ga13bf8d0cb911a015fce2f4a5d85c2646", null ],
-    [ "XVMix_IsLogoEnabled", "group__v__mix.html#ga559b098d8389538f2fca6680695d8ede", null ],
+    [ "XVMix_IsLogoEnabled", "group__v__mix.html#ga213581e68e05ded964cd81e67dd6dda9", null ],
     [ "XVMix_IsLogoPixAlphaEnabled", "group__v__mix.html#ga2dfd82fb182e252dfe664826a8a6c4d6", null ],
     [ "XVMix_IsScalingEnabled", "group__v__mix.html#ga4082688759c43f2f4d6411fa01c1bd6c", null ],
     [ "XVMix_Callback", "group__v__mix.html#ga204f242a8a6c81d792c2cabc025564fb", null ],

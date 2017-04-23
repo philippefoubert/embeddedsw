@@ -157,6 +157,15 @@
 *            the distributor is enabled or not and if not, it does the
 *            standard Distributor initialization.
 *            This fixes the CR#952962.
+* 3.6   ms   01/23/17 Modified xil_printf statement in main function for all
+*                     examples to ensure that "Successfully ran" and "Failed"
+*                     strings are available in all examples. This is a fix
+*                     for CR-965028.
+*       kvn  02/17/17 Add support for changing GIC CPU master at run time.
+*       kvn  02/28/17 Make the CpuId as static variable and Added new
+*                     XScugiC_GetCpuId to access CpuId.
+*       ms   03/17/17 Added readme.txt file in examples folder for doxygen
+*                     generation.
 *
 * </pre>
 *
@@ -322,6 +331,9 @@ void XScuGic_GetPriorityTriggerType(XScuGic *InstancePtr, u32 Int_Id,
 void XScuGic_SetPriorityTriggerType(XScuGic *InstancePtr, u32 Int_Id,
 					u8 Priority, u8 Trigger);
 void XScuGic_InterruptMaptoCpu(XScuGic *InstancePtr, u8 Cpu_Id, u32 Int_Id);
+void XScuGic_Stop(XScuGic *InstancePtr);
+void XScuGic_SetCpuID(u32 CpuCoreId);
+u32 XScuGic_GetCpuID(void);
 /*
  * Initialization functions in xscugic_sinit.c
  */

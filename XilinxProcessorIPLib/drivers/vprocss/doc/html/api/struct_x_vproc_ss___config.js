@@ -5,6 +5,7 @@ var struct_x_vproc_ss___config =
     [ "Csc", "struct_x_vproc_ss___config.html#a83a1c418e04ad75f33ba6297ddffb4c9", null ],
     [ "Deint", "struct_x_vproc_ss___config.html#a91cc153579f91eff07ae147ea1503889", null ],
     [ "DeviceId", "struct_x_vproc_ss___config.html#ab318d58134699fa863c0eb32224c7a27", null ],
+    [ "HasMADI", "struct_x_vproc_ss___config.html#a2ce599393210c26d085875f2d5a7e25e", null ],
     [ "HCrsmplr", "struct_x_vproc_ss___config.html#a0b75199199889e666ef6593f005609ff", null ],
     [ "HighAddress", "struct_x_vproc_ss___config.html#a54f3cda6d7a4cda0564c0346c255418f", null ],
     [ "Hscale", "struct_x_vproc_ss___config.html#a49cce61f7784539662034c4fc070e491", null ],

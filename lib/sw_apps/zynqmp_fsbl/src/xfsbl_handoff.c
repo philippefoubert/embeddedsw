@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,7 +43,13 @@
  * Ver   Who  Date        Changes
  * ----- ---- -------- -------------------------------------------------------
  * 1.00  kc   10/21/13 Initial release
- *
+ * 2.0   bv   12/05/16 Made compliance to MISRAC 2012 guidelines
+ *       vns           Added support for HIVEC.
+ *       bo   01/25/17 During handoff again R5 is restored to LOVEC.
+ *       sc   02/04/17 Lock XMPU/XPPU for further access but by default
+ *                     it is by passed.
+ *       bv   03/17/17 Modified such that XFsbl_PmInit is done only duing
+ *                     system reset
  * </pre>
  *
  * @note
@@ -69,10 +75,15 @@
 #define APU_CONFIG_0_AA64N32_MASK_CPU2 (0x4U)
 #define APU_CONFIG_0_AA64N32_MASK_CPU3 (0x8U)
 
-#define APU_CONFIG_0_VINITHI_MASK_CPU0  (0x10)
-#define APU_CONFIG_0_VINITHI_MASK_CPU1  (0x20)
-#define APU_CONFIG_0_VINITHI_MASK_CPU2  (0x40)
-#define APU_CONFIG_0_VINITHI_MASK_CPU3  (0x80)
+#define APU_CONFIG_0_VINITHI_MASK_CPU0  (u32)(0x100U)
+#define APU_CONFIG_0_VINITHI_MASK_CPU1  (u32)(0x200U)
+#define APU_CONFIG_0_VINITHI_MASK_CPU2  (u32)(0x400U)
+#define APU_CONFIG_0_VINITHI_MASK_CPU3  (u32)(0x800U)
+
+#define APU_CONFIG_0_VINITHI_SHIFT_CPU0	(8U)
+#define APU_CONFIG_0_VINITHI_SHIFT_CPU1	(9U)
+#define APU_CONFIG_0_VINITHI_SHIFT_CPU2	(10U)
+#define APU_CONFIG_0_VINITHI_SHIFT_CPU3	(11U)
 
 #define OTHER_CPU_HANDOFF				(0x0U)
 #define A53_0_64_HANDOFF_TO_A53_0_32	(0x1U)
@@ -86,8 +97,12 @@
 
 static u32 XFsbl_SetCpuPwrSettings (u32 CpuSettings, u32 Flags);
 static void XFsbl_UpdateResetVector (u64 HandOffAddress, u32 CpuSettings,
-		u32 HandoffType);
-static int XFsbl_Is32BitCpu(u32 CpuSettings);
+		u32 HandoffType, u32 Vector);
+static u32 XFsbl_Is32BitCpu(u32 CpuSettings);
+static u32 XFsbl_CheckEarlyHandoffCpu(u32 CpuId);
+#ifdef XFSBL_PROT_BYPASS
+static void XFsbl_ProtectionConfig(void);
+#endif
 
 /**
  * Functions defined in xfsbl_handoff.S
@@ -95,18 +110,19 @@ static int XFsbl_Is32BitCpu(u32 CpuSettings);
 extern void XFsbl_Exit(PTRSIZE HandoffAddress, u32 Flags);
 
 /************************** Variable Definitions *****************************/
-/**
- * Variabled defined in xfsbl_partition_load.c
- */
-extern u8 TcmVectorArray[32];
+
+#ifdef ARMR5
+/* Variables defined in xfsbl_partition_load.c */
+extern u8 R5LovecBuffer[32];
 extern u32 TcmSkipLength;
 extern PTRSIZE TcmSkipAddress;
+#endif
 
-int XFsbl_Is32BitCpu(u32 CpuSettings)
+static u32 XFsbl_Is32BitCpu(u32 CpuSettings)
 {
-	int Status;
-	u32 CpuId=0U;
-        u32 ExecState=0U;
+	u32 Status;
+	u32 CpuId;
+	u32 ExecState;
 
         CpuId = CpuSettings & XIH_PH_ATTRB_DEST_CPU_MASK;
         ExecState = CpuSettings & XIH_PH_ATTRB_A53_EXEC_ST_MASK;
@@ -146,20 +162,19 @@ int XFsbl_Is32BitCpu(u32 CpuSettings)
 
 static u32 XFsbl_SetCpuPwrSettings (u32 CpuSettings, u32 Flags)
 {
-	u32 RegValue=0U;
-	u32 Status=XFSBL_SUCCESS;
-	u32 CpuId=0U;
-	u32 ExecState=0U;
-	u32 PwrStateMask = 0;
+	u32 RegValue;
+	u32 Status;
+	u32 CpuId;
+	u32 ExecState;
+	u32 PwrStateMask;
 
-	CpuId = CpuSettings & XIH_PH_ATTRB_DEST_CPU_MASK;
-	ExecState = CpuSettings & XIH_PH_ATTRB_A53_EXEC_ST_MASK;
 	/**
 	 * Reset the CPU
 	 */
 	if ((Flags & XFSBL_CPU_SWRST) != 0U)
 	{
-
+	CpuId = CpuSettings & XIH_PH_ATTRB_DEST_CPU_MASK;
+		ExecState = CpuSettings & XIH_PH_ATTRB_A53_EXEC_ST_MASK;
 		switch(CpuId)
 		{
 
@@ -370,7 +385,6 @@ static u32 XFsbl_SetCpuPwrSettings (u32 CpuSettings, u32 Flags)
 			 * Provide some delay,
 			 * so that clock propogates properly.
 			 */
-			//Status = usleep(0x50U);
 			(void)usleep(0x50U);
 
 
@@ -427,7 +441,6 @@ static u32 XFsbl_SetCpuPwrSettings (u32 CpuSettings, u32 Flags)
 			 * Provide some delay,
 			 * so that clock propogates properly.
 			 */
-			//Status = usleep(0x50U);
 			(void)usleep(0x50U);
 
 			/**
@@ -489,7 +502,6 @@ static u32 XFsbl_SetCpuPwrSettings (u32 CpuSettings, u32 Flags)
 			 * Provide some delay,
 			 * so that clock propogates properly.
 			 */
-			//Status = usleep(0x50U);
 			(void )usleep(0x50U);
 
 			/**
@@ -524,6 +536,10 @@ static u32 XFsbl_SetCpuPwrSettings (u32 CpuSettings, u32 Flags)
 			break;
 		}
 
+	}
+	else
+	{
+		Status = XFSBL_SUCCESS;
 	}
 END:
 	return Status;
@@ -579,67 +595,76 @@ void XFsbl_HandoffExit(u64 HandoffAddress, u32 Flags)
 *
 *****************************************************************************/
 static void XFsbl_UpdateResetVector (u64 HandOffAddress, u32 CpuSettings,
-		u32 HandoffType)
+		u32 HandoffType, u32 Vector)
 {
-	u32 HandOffAddressLow=0U;
-	u32 HandOffAddressHigh=0U;
-	u32 LowAddressReg=0U;
-	u32 HighAddressReg=0U;
+	u32 HandOffAddressLow;
+	u32 HandOffAddressHigh;
+	u32 LowAddressReg;
+	u32 HighAddressReg;
 	u32 CpuId;
-	u32 RegVal=0U;
-	u32 ExecState=0U;
+	u32 RegVal;
+	u32 ExecState;
 
 	CpuId = CpuSettings & XIH_PH_ATTRB_DEST_CPU_MASK;
 	ExecState = CpuSettings & XIH_PH_ATTRB_A53_EXEC_ST_MASK;
 
 	/**
-	 * Put R5 or A53-32 in Lovec
+	 * Put R5 or A53-32 in Lovec/Hivec
 	 */
-	if (CpuId == XIH_PH_ATTRB_DEST_CPU_R5_0
-			|| CpuId == XIH_PH_ATTRB_DEST_CPU_R5_L) {
+	if ((CpuId == XIH_PH_ATTRB_DEST_CPU_R5_0)
+			|| (CpuId == XIH_PH_ATTRB_DEST_CPU_R5_L)) {
 		RegVal = XFsbl_In32(RPU_RPU_0_CFG);
 		RegVal &= ~RPU_RPU_0_CFG_VINITHI_MASK;
+		RegVal |= (Vector << RPU_RPU_0_CFG_VINITHI_SHIFT);
 		XFsbl_Out32(RPU_RPU_0_CFG, RegVal);
 	}
 
-	if (CpuId == XIH_PH_ATTRB_DEST_CPU_R5_1
-			|| CpuId == XIH_PH_ATTRB_DEST_CPU_R5_L) {
+	else if ((CpuId == XIH_PH_ATTRB_DEST_CPU_R5_1)
+			|| (CpuId == XIH_PH_ATTRB_DEST_CPU_R5_L)) {
 		RegVal = XFsbl_In32(RPU_RPU_1_CFG);
 		RegVal &= ~RPU_RPU_1_CFG_VINITHI_MASK;
+		RegVal |= (Vector << RPU_RPU_1_CFG_VINITHI_SHIFT);
 		XFsbl_Out32(RPU_RPU_1_CFG, RegVal);
 	}
 
-	if (CpuId == XIH_PH_ATTRB_DEST_CPU_A53_0
-			&& ExecState == XIH_PH_ATTRB_A53_EXEC_ST_AA32) {
+	else if ((CpuId == XIH_PH_ATTRB_DEST_CPU_A53_0)
+		&& (ExecState == XIH_PH_ATTRB_A53_EXEC_ST_AA32)) {
 		RegVal = XFsbl_In32(APU_CONFIG_0);
 		RegVal &= ~APU_CONFIG_0_VINITHI_MASK_CPU0;
+		RegVal |= (Vector << APU_CONFIG_0_VINITHI_SHIFT_CPU0);
 		XFsbl_Out32(APU_CONFIG_0, RegVal);
 	}
 
-	if (CpuId == XIH_PH_ATTRB_DEST_CPU_A53_1
-			&& ExecState == XIH_PH_ATTRB_A53_EXEC_ST_AA32) {
+	else if ((CpuId == XIH_PH_ATTRB_DEST_CPU_A53_1)
+		&& (ExecState == XIH_PH_ATTRB_A53_EXEC_ST_AA32)) {
 		RegVal = XFsbl_In32(APU_CONFIG_0);
 		RegVal &= ~APU_CONFIG_0_VINITHI_MASK_CPU1;
+		RegVal |= (Vector << APU_CONFIG_0_VINITHI_SHIFT_CPU1);
 		XFsbl_Out32(APU_CONFIG_0, RegVal);
 	}
 
-	if (CpuId == XIH_PH_ATTRB_DEST_CPU_A53_2
-				&& ExecState == XIH_PH_ATTRB_A53_EXEC_ST_AA32) {
+	else if ((CpuId == XIH_PH_ATTRB_DEST_CPU_A53_2)
+			&& (ExecState == XIH_PH_ATTRB_A53_EXEC_ST_AA32)) {
 		RegVal = XFsbl_In32(APU_CONFIG_0);
 		RegVal &= ~APU_CONFIG_0_VINITHI_MASK_CPU2;
+		RegVal |= (Vector << APU_CONFIG_0_VINITHI_SHIFT_CPU2);
 		XFsbl_Out32(APU_CONFIG_0, RegVal);
 		}
 
-	if (CpuId == XIH_PH_ATTRB_DEST_CPU_A53_3
-				&& ExecState == XIH_PH_ATTRB_A53_EXEC_ST_AA32) {
+	else if ((CpuId == XIH_PH_ATTRB_DEST_CPU_A53_3)
+		&& (ExecState == XIH_PH_ATTRB_A53_EXEC_ST_AA32)) {
 		RegVal = XFsbl_In32(APU_CONFIG_0);
 		RegVal &= ~APU_CONFIG_0_VINITHI_MASK_CPU3;
+		RegVal |= (Vector << APU_CONFIG_0_VINITHI_SHIFT_CPU3);
 		XFsbl_Out32(APU_CONFIG_0, RegVal);
 	}
+	else
+	{
+		/* for MISRA C compliance */
+	}
 
-
-	if (!XFsbl_Is32BitCpu(CpuSettings)
-			&& HandoffType != A53_0_32_HANDOFF_TO_A53_0_64)
+	if ((XFsbl_Is32BitCpu(CpuSettings)==FALSE)
+			&& (HandoffType != A53_0_32_HANDOFF_TO_A53_0_64))
 	{
 		/**
 		 * for A53 cpu, write 64bit handoff address
@@ -671,6 +696,8 @@ static void XFsbl_UpdateResetVector (u64 HandOffAddress, u32 CpuSettings,
 				/**
 				 * error can be triggered here
 				 */
+				LowAddressReg = 0U;
+				HighAddressReg = 0U;
 				break;
 		}
 		XFsbl_Out32(LowAddressReg, HandOffAddressLow);
@@ -696,23 +723,28 @@ static void XFsbl_UpdateResetVector (u64 HandOffAddress, u32 CpuSettings,
  *
  *****************************************************************************/
 
-u32 XFsbl_Handoff (XFsblPs * FsblInstancePtr, u32 PartitionNum, u32 EarlyHandoff)
+u32 XFsbl_Handoff (const XFsblPs * FsblInstancePtr, u32 PartitionNum, u32 EarlyHandoff)
 {
-	u32 Status=XFSBL_SUCCESS;
-	u32 CpuIndex=0U;
-	u32 CpuId=0U;
-	u32 ExecState=0U;
-	u32 CpuSettings=0U;
-	u64 HandoffAddress=0U;
+	u32 Status;
+	u32 CpuIndex;
+	u32 CpuId;
+	u32 ExecState;
+	u32 CpuSettings;
+	u64 HandoffAddress;
 	u64 RunningCpuHandoffAddress=0U;
 	u32 RunningCpuExecState=0U;
-	s32 RunningCpuHandoffAddressPresent=FALSE;
-	u32 CpuNeedsEarlyHandoff = FALSE;
+	u32 RunningCpuHandoffAddressPresent=FALSE;
+	u32 CpuNeedsEarlyHandoff;
+	const XFsblPs_PartitionHeader * PartitionHeader;
 
 	static u32 CpuIndexEarlyHandoff = 0;
 
 	/* Restoring the SD card detection signal */
 	XFsbl_Out32(IOU_SLCR_SD_CDN_CTRL, 0X0U);
+	PartitionHeader =
+			&FsblInstancePtr->ImageHeader.PartitionHeader[PartitionNum];
+
+	if(FsblInstancePtr->ResetReason != XFSBL_APU_ONLY_RESET){
 
 	Status = XFsbl_PmInit();
 	if (Status != XFSBL_SUCCESS) {
@@ -721,6 +753,13 @@ u32 XFsbl_Handoff (XFsblPs * FsblInstancePtr, u32 PartitionNum, u32 EarlyHandoff
 		goto END;
 	}
 
+	/* FSBL shall bypass XPPU and FPD XMPU configuration BY DEFAULT.
+	*  This means though the Isolation configuration through hdf is used throughout the
+	*  software flow, for the hardware, isolation will only be limited to just OCM.
+	*/
+#ifdef XFSBL_PROT_BYPASS
+	XFsbl_ProtectionConfig();
+#else
 	/* Apply protection configuration */
 	Status = (u32)psu_protection();
 	if (Status != XFSBL_SUCCESS) {
@@ -728,7 +767,18 @@ u32 XFsbl_Handoff (XFsblPs * FsblInstancePtr, u32 PartitionNum, u32 EarlyHandoff
 		XFsbl_Printf(DEBUG_GENERAL, "XFSBL_ERROR_PROTECTION_CFG\r\n");
 		goto END;
 	}
+
+	/* Lock XMPU/XPPU for further access */
+	Status = (u32)psu_protection_lock();
+	if (Status != XFSBL_SUCCESS) {
+		Status = XFSBL_ERROR_PROTECTION_CFG;
+		XFsbl_Printf(DEBUG_GENERAL, "XFSBL_ERROR_PROTECTION_CFG\r\n");
+		goto END;
+	}
+#endif
 	XFsbl_Printf(DEBUG_GENERAL, "Protection configuration applied\r\n");
+
+	}
 
 	/**
 	 * if JTAG bootmode, be in while loop as of now
@@ -743,7 +793,7 @@ u32 XFsbl_Handoff (XFsblPs * FsblInstancePtr, u32 PartitionNum, u32 EarlyHandoff
 		XFsbl_Out32(XFSBL_ERROR_STATUS_REGISTER_OFFSET,
 		    XFSBL_COMPLETED);
 
-		if (XGet_Zynq_UltraMp_Platform_info() == 0X2U)
+		if (XGet_Zynq_UltraMp_Platform_info() == (u32)(0X2U))
 		{
 			/**
 			 * Flush the L1 data cache and L2 cache, Disable Data Cache
@@ -801,6 +851,10 @@ u32 XFsbl_Handoff (XFsblPs * FsblInstancePtr, u32 PartitionNum, u32 EarlyHandoff
 	if (EarlyHandoff == TRUE) {
 		CpuIndex = CpuIndexEarlyHandoff;
 	}
+	else
+	{
+		CpuIndex = 0U;
+	}
 
 	while (CpuIndex < FsblInstancePtr->HandoffCpuNo)
 	{
@@ -820,7 +874,7 @@ u32 XFsbl_Handoff (XFsblPs * FsblInstancePtr, u32 PartitionNum, u32 EarlyHandoff
 		 *
 		 */
 		CpuNeedsEarlyHandoff = XFsbl_CheckEarlyHandoffCpu(CpuId);
-		if (((EarlyHandoff == TRUE) && (CpuNeedsEarlyHandoff == TRUE)) ||
+		if (((CpuNeedsEarlyHandoff == TRUE) && (EarlyHandoff == TRUE)) ||
 				((EarlyHandoff != TRUE) && (CpuNeedsEarlyHandoff != TRUE)) ||
 				(((EarlyHandoff != TRUE) && (CpuNeedsEarlyHandoff == TRUE)) &&
 						(CpuId == FsblInstancePtr->ProcessorID))) {
@@ -869,7 +923,9 @@ u32 XFsbl_Handoff (XFsblPs * FsblInstancePtr, u32 PartitionNum, u32 EarlyHandoff
 				 * Update the handoff address at reset vector address
 				 */
 				XFsbl_UpdateResetVector(HandoffAddress, CpuSettings,
-						OTHER_CPU_HANDOFF);
+						OTHER_CPU_HANDOFF,
+						XFsbl_GetVectorLocation(PartitionHeader) >>
+							XIH_ATTRB_VECTOR_LOCATION_SHIFT);
 
 				XFsbl_Printf(DEBUG_INFO,"CPU 0x%0lx reset release, "
 						"Exec State 0x%0lx, HandoffAddress: %0lx\n\r",
@@ -884,12 +940,13 @@ u32 XFsbl_Handoff (XFsblPs * FsblInstancePtr, u32 PartitionNum, u32 EarlyHandoff
 				{
 					goto END;
 				}
-
 			} else {
 				/**
 				 * Update the running cpu handoff address
 				 */
-				RunningCpuHandoffAddressPresent = TRUE;
+				if(RunningCpuHandoffAddressPresent == FALSE) {
+					RunningCpuHandoffAddressPresent = TRUE;
+				}
 				RunningCpuHandoffAddress = (u64 )
 				FsblInstancePtr->HandoffValues[CpuIndex].HandoffAddress;
 				RunningCpuExecState = ExecState;
@@ -955,15 +1012,24 @@ u32 XFsbl_Handoff (XFsblPs * FsblInstancePtr, u32 PartitionNum, u32 EarlyHandoff
 	}
 
 
+
+#ifdef ARMR5
+
 	/**
 	 * Remove the R5 vectors from TCM and load APP data
 	 * if present
 	 */
-	if (TcmSkipLength != 0U)
-	{
-		XFsbl_MemCpy((u8 *)TcmSkipAddress, TcmVectorArray,
-				TcmSkipLength);
+
+	if (TcmSkipLength != 0U) {
+		/* Restore R5LovecBuffer to LOVEC
+		 * This will store partitions vectors to LOVEC
+		 * TcmSkipAddress is always 0x0,TcmSkipLength is 32.
+		 */
+		(void)XFsbl_MemCpy((u8*)TcmSkipAddress,(u8*)R5LovecBuffer,TcmSkipLength);
+		XFsbl_Printf(DEBUG_DETAILED,"XFsbl_Handoff:Restored R5LovecBuffer to LOVEC for R5.\n\r");
+
 	}
+#endif
 
 
 	/**
@@ -1011,7 +1077,7 @@ END:
  * @return	TRUE if this CPU needs early handoff, and FALSE if not
  *
  *****************************************************************************/
-u32 XFsbl_CheckEarlyHandoffCpu(u32 CpuId)
+static u32 XFsbl_CheckEarlyHandoffCpu(u32 CpuId)
 {
 	u32 CpuNeedEarlyHandoff = FALSE;
 #if defined(XFSBL_EARLY_HANDOFF)
@@ -1090,3 +1156,22 @@ u32 XFsbl_CheckEarlyHandoff(XFsblPs * FsblInstancePtr, u32 PartitionNum)
 #endif
 	return Status;
 }
+
+#ifdef XFSBL_PROT_BYPASS
+/****************************************************************************/
+/**
+*
+* @param
+*
+* @return
+*
+* @note
+*
+*
+*****************************************************************************/
+static void XFsbl_ProtectionConfig(void)
+{
+	psu_apply_master_tz();
+	psu_ocm_protection();
+}
+#endif

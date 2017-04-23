@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,8 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.0   ssc  01/20/16 Initial release
+* 2.0   bv   12/05/16 Made compliance to MISRAC 2012 guidelines
+*                     Added ZCU106 support
 *
 * </pre>
 *
@@ -59,19 +61,13 @@ extern "C" {
 
 /***************************** Include Files *********************************/
 #include "xfsbl_hw.h"
-#ifdef XPS_BOARD_ZCU102
+#if defined(XPS_BOARD_ZCU102) || defined(XPS_BOARD_ZCU106)
 #include "xiicps.h"
 /************************** Constant Definitions *****************************/
 #define GPIO_MIO31_MASK	0x00000020U
 
 #define CRL_APB_BOOTMODE_1_HI 	0x00000202U
 #define CRL_APB_BOOTMODE_1_LO 	0x00000002U
-
-#define ICM_CFG0_PCIE_PCIE	0x00000011U
-#define ICM_CFG1_PCIE_PCIE	0x00000011U
-#define ICM_CFG0_PCIE_DP	0x00000041U
-#define ICM_CFG1_USB_SATA	0x00000023U
-#define ICM_CFG0_DP_DP		0x00000044U
 
 #define IIC_SCLK_RATE_IOEXP		400000
 #define IIC_SCLK_RATE_I2CMUX 	600000

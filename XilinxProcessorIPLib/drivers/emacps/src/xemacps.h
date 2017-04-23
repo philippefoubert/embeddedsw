@@ -316,6 +316,12 @@
  *                     there is no error. CR# 869403
  *            08/10/15 Update upper 32 bit tx and rx queue ptr registers.
  * 3.2   hk   02/22/16 Added SGMII support for Zynq Ultrascale+ MPSoC.
+ * 3.4   ms   01/23/17 Modified xil_printf statement in main function for all
+ *                     examples to ensure that "Successfully ran" and "Failed"
+ *                     strings are available in all examples. This is a fix
+ *                     for CR-965028.
+ *       ms   03/17/17 Modified text file in examples folder for doxygen
+ *                     generation.
  * </pre>
  *
  ****************************************************************************/

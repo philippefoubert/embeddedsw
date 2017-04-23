@@ -153,9 +153,12 @@
 
 #define PHY_DETECT_REG  						1
 #define PHY_IDENTIFIER_1_REG					2
+#define PHY_IDENTIFIER_2_REG					3
 #define PHY_DETECT_MASK 					0x1808
 #define PHY_MARVELL_IDENTIFIER				0x0141
 #define PHY_TI_IDENTIFIER					0x2000
+#define PHY_XILINX_PCS_PMA_ID1			0x0174
+#define PHY_XILINX_PCS_PMA_ID2			0x0C00
 
 #define XEMACPS_GMII2RGMII_SPEED1000_FD		0x140
 #define XEMACPS_GMII2RGMII_SPEED100_FD		0x2100
@@ -167,9 +170,13 @@
 #define PHY_RGMIIDCTL	0x86
 #define PHY_RGMIICTL	0x32
 #define PHY_STS			0x11
+#define PHY_TI_CR		0x10
+#define PHY_TI_CFG4		0x31
 
 #define PHY_REGCR_ADDR	0x001F
 #define PHY_REGCR_DATA	0x401F
+#define PHY_TI_CRVAL	0x5048
+#define PHY_TI_CFG4RESVDBIT7	0x80
 
 /* Frequency setting */
 #define SLCR_LOCK_ADDR			(XPS_SYS_CTRL_BASEADDR + 0x4)
@@ -197,15 +204,39 @@
 u32_t phymapemac0[32];
 u32_t phymapemac1[32];
 
+#if defined (PCM_PMA_CORE_PRESENT) || defined (CONFIG_LINKSPEED_AUTODETECT)
 static u32_t get_IEEE_phy_speed(XEmacPs *xemacpsp, u32_t phy_addr);
+#endif
 static void SetUpSLCRDivisors(u32_t mac_baseaddr, s32_t speed);
+#if defined (CONFIG_LINKSPEED1000) || defined (CONFIG_LINKSPEED100) \
+	|| defined (CONFIG_LINKSPEED10)
 static u32_t configure_IEEE_phy_speed(XEmacPs *xemacpsp, u32_t phy_addr, u32_t speed);
+#endif
 
 #ifdef PCM_PMA_CORE_PRESENT
 u32_t phy_setup (XEmacPs *xemacpsp, u32_t phy_addr)
 {
 	u32_t link_speed;
 	u16_t regval;
+	u16_t phy_id;
+
+	if(phy_addr == 0) {
+		for (phy_addr = 31; phy_addr > 0; phy_addr--) {
+			XEmacPs_PhyRead(xemacpsp, phy_addr, PHY_IDENTIFIER_1_REG,
+					&phy_id);
+
+			if (phy_id == PHY_XILINX_PCS_PMA_ID1) {
+				XEmacPs_PhyRead(xemacpsp, phy_addr, PHY_IDENTIFIER_2_REG,
+						&phy_id);
+				if (phy_id == PHY_XILINX_PCS_PMA_ID2) {
+					/* Found a valid PHY address */
+					LWIP_DEBUGF(NETIF_DEBUG, ("XEmacPs detect_phy: PHY detected at address %d.\r\n",
+							phy_addr));
+					break;
+				}
+			}
+		}
+	}
 
 	link_speed = get_IEEE_phy_speed(xemacpsp, phy_addr);
 	if (link_speed == 1000)
@@ -318,7 +349,6 @@ void detect_phy(XEmacPs *xemacpsp)
 u32_t phy_setup (XEmacPs *xemacpsp, u32_t phy_addr)
 {
 	u32_t link_speed;
-	u16_t regval;
 	u32_t conv_present = 0;
 	u32_t convspeeddupsetting = 0;
 	u32_t convphyaddr = 0;
@@ -375,14 +405,13 @@ u32_t phy_setup (XEmacPs *xemacpsp, u32_t phy_addr)
 	return link_speed;
 }
 
+#if defined CONFIG_LINKSPEED_AUTODETECT
 static u32_t get_TI_phy_speed(XEmacPs *xemacpsp, u32_t phy_addr)
 {
-	u16_t temp;
 	u16_t control;
 	u16_t status;
 	u16_t status_speed;
 	u32_t timeout_counter = 0;
-	u32_t temp_speed;
 	u32_t phyregtemp;
 	int i;
 	u32_t RetStatus;
@@ -414,9 +443,8 @@ static u32_t get_TI_phy_speed(XEmacPs *xemacpsp, u32_t phy_addr)
 	}
 
 	/* FIFO depth */
-	XEmacPs_PhyWrite(xemacpsp, phy_addr, 0x10, 0x5048);
-	XEmacPs_PhyWrite(xemacpsp, phy_addr, 0x10, phyregtemp);
-	RetStatus = XEmacPs_PhyRead(xemacpsp, phy_addr, 0x10, (u16_t *)&phyregtemp);
+	XEmacPs_PhyWrite(xemacpsp, phy_addr, PHY_TI_CR, PHY_TI_CRVAL);
+	RetStatus = XEmacPs_PhyRead(xemacpsp, phy_addr, PHY_TI_CR, (u16_t *)&phyregtemp);
 	if (RetStatus != XST_SUCCESS) {
 		xil_printf("Error writing to 0x10 \n\r");
 		return XST_FAILURE;
@@ -462,6 +490,17 @@ static u32_t get_TI_phy_speed(XEmacPs *xemacpsp, u32_t phy_addr)
 		xil_printf("Error in tuning");
 		return XST_FAILURE;
 	}
+
+	/* SW workaround for unstable link when RX_CTRL is not STRAP MODE 3 or 4 */
+	XEmacPs_PhyWrite(xemacpsp, phy_addr, PHY_REGCR, PHY_REGCR_ADDR);
+	XEmacPs_PhyWrite(xemacpsp, phy_addr, PHY_ADDAR, PHY_TI_CFG4);
+	XEmacPs_PhyWrite(xemacpsp, phy_addr, PHY_REGCR, PHY_REGCR_DATA);
+	RetStatus = XEmacPs_PhyRead(xemacpsp, phy_addr, PHY_ADDAR, (u16_t *)&phyregtemp);
+	phyregtemp &= ~(PHY_TI_CFG4RESVDBIT7);
+	XEmacPs_PhyWrite(xemacpsp, phy_addr, PHY_REGCR, PHY_REGCR_ADDR);
+	XEmacPs_PhyWrite(xemacpsp, phy_addr, PHY_ADDAR, PHY_TI_CFG4);
+	XEmacPs_PhyWrite(xemacpsp, phy_addr, PHY_REGCR, PHY_REGCR_DATA);
+	RetStatus = XEmacPs_PhyWrite(xemacpsp, phy_addr, PHY_ADDAR, phyregtemp);
 
 	XEmacPs_PhyRead(xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG, &control);
 	control |= IEEE_ASYMMETRIC_PAUSE_MASK;
@@ -518,7 +557,6 @@ static u32_t get_Marvell_phy_speed(XEmacPs *xemacpsp, u32_t phy_addr)
 	u16_t status_speed;
 	u32_t timeout_counter = 0;
 	u32_t temp_speed;
-	u32_t phyregtemp;
 
 	xil_printf("Start PHY autonegotiation \r\n");
 
@@ -615,7 +653,10 @@ static u32_t get_IEEE_phy_speed(XEmacPs *xemacpsp, u32_t phy_addr)
 
 	return RetStatus;
 }
+#endif
 
+#if defined (CONFIG_LINKSPEED1000) || defined (CONFIG_LINKSPEED100) \
+	|| defined (CONFIG_LINKSPEED10)
 static u32_t configure_IEEE_phy_speed(XEmacPs *xemacpsp, u32_t phy_addr, u32_t speed)
 {
 	u16_t control;
@@ -703,17 +744,20 @@ static u32_t configure_IEEE_phy_speed(XEmacPs *xemacpsp, u32_t phy_addr, u32_t s
 	}
 	return 0;
 }
+#endif
 #endif /*PCM_PMA_CORE_PRESENT*/
 
 static void SetUpSLCRDivisors(u32_t mac_baseaddr, s32_t speed)
 {
 	volatile u32_t slcrBaseAddress;
-	u32_t SlcrDiv0;
-	u32_t SlcrDiv1;
+	u32_t SlcrDiv0 = 0;
+	u32_t SlcrDiv1 = 0;
 	u32_t SlcrTxClkCntrl;
 	u32_t gigeversion;
 	volatile u32_t CrlApbBaseAddr;
-	u32_t CrlApbDiv0, CrlApbDiv1, CrlApbGemCtrl;
+	u32_t CrlApbDiv0 = 0;
+	u32_t CrlApbDiv1 = 0;
+	u32_t CrlApbGemCtrl;
 
 	gigeversion = ((Xil_In32(mac_baseaddr + 0xFC)) >> 16) & 0xFFF;
 	if (gigeversion == 2) {
@@ -768,12 +812,17 @@ static void SetUpSLCRDivisors(u32_t mac_baseaddr, s32_t speed)
 #endif
 			}
 		}
-		SlcrTxClkCntrl = *(volatile u32_t *)(UINTPTR)(slcrBaseAddress);
-		SlcrTxClkCntrl &= EMACPS_SLCR_DIV_MASK;
-		SlcrTxClkCntrl |= (SlcrDiv1 << 20);
-		SlcrTxClkCntrl |= (SlcrDiv0 << 8);
-		*(volatile u32_t *)(UINTPTR)(slcrBaseAddress) = SlcrTxClkCntrl;
-		*(volatile u32_t *)(SLCR_LOCK_ADDR) = SLCR_LOCK_KEY_VALUE;
+
+		if (SlcrDiv0 != 0 && SlcrDiv1 != 0) {
+			SlcrTxClkCntrl = *(volatile u32_t *)(UINTPTR)(slcrBaseAddress);
+			SlcrTxClkCntrl &= EMACPS_SLCR_DIV_MASK;
+			SlcrTxClkCntrl |= (SlcrDiv1 << 20);
+			SlcrTxClkCntrl |= (SlcrDiv0 << 8);
+			*(volatile u32_t *)(UINTPTR)(slcrBaseAddress) = SlcrTxClkCntrl;
+			*(volatile u32_t *)(SLCR_LOCK_ADDR) = SLCR_LOCK_KEY_VALUE;
+		} else {
+			xil_printf("Clock Divisors incorrect - Please check\r\n");
+		}
 	} else if (gigeversion > 2) {
 		/* Setup divisors in CRL_APB for Zynq Ultrascale+ MPSoC */
 		if (mac_baseaddr == ZYNQMP_EMACPS_0_BASEADDR) {
@@ -854,12 +903,16 @@ static void SetUpSLCRDivisors(u32_t mac_baseaddr, s32_t speed)
 			}
 		}
 
-		CrlApbGemCtrl = *(volatile u32_t *)(UINTPTR)(CrlApbBaseAddr);
-		CrlApbGemCtrl &= ~CRL_APB_GEM_DIV0_MASK;
-		CrlApbGemCtrl |= CrlApbDiv0 << CRL_APB_GEM_DIV0_SHIFT;
-		CrlApbGemCtrl &= ~CRL_APB_GEM_DIV1_MASK;
-		CrlApbGemCtrl |= CrlApbDiv1 << CRL_APB_GEM_DIV1_SHIFT;
-		*(volatile u32_t *)(UINTPTR)(CrlApbBaseAddr) = CrlApbGemCtrl;
+		if (CrlApbDiv0 != 0 && CrlApbDiv1 != 0) {
+			CrlApbGemCtrl = *(volatile u32_t *)(UINTPTR)(CrlApbBaseAddr);
+			CrlApbGemCtrl &= ~CRL_APB_GEM_DIV0_MASK;
+			CrlApbGemCtrl |= CrlApbDiv0 << CRL_APB_GEM_DIV0_SHIFT;
+			CrlApbGemCtrl &= ~CRL_APB_GEM_DIV1_MASK;
+			CrlApbGemCtrl |= CrlApbDiv1 << CRL_APB_GEM_DIV1_SHIFT;
+			*(volatile u32_t *)(UINTPTR)(CrlApbBaseAddr) = CrlApbGemCtrl;
+		} else {
+			xil_printf("Clock Divisors incorrect - Please check\r\n");
+		}
 	}
 
 	return;

@@ -123,6 +123,12 @@
 * 1.1 sss 08/17/16 Added 64 bit support
 *     sss 08/26/16 Add "Command Queue Vacancy" API
 *                  API for getting pixel format
+*     ms  01/23/17 Modified xil_printf statement in main function for all
+*                  examples to ensure that "Successfully ran" and "Failed"
+*                  strings are available in all examples. This is a fix
+*                  for CR-965028.
+*     ms  03/17/17 Added readme.txt file in examples folder for doxygen
+*                  generation.
 * </pre>
 *
 ******************************************************************************/

@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +44,8 @@
 * ----- ---- -------- -------------------------------------------------------
 * 1.00  kc   10/21/13 Initial release
 * 1.00  ba   02/22/16 Added performance measurement feature.
+* 2.0   bv   12/02/16 Made compliance to MISRAC 2012 guidelines
+*                     Added warm restart support
 *
 * </pre>
 *
@@ -63,10 +65,11 @@
 /***************** Macros (Inline Functions) Definitions *********************/
 
 /************************** Function Prototypes ******************************/
+static void XFsbl_UpdateMultiBoot(u32 MultiBootValue);
+static void XFsbl_FallBack(void);
 
 /************************** Variable Definitions *****************************/
-XFsblPs FsblInstancePtr;
-
+XFsblPs FsblInstance={0x3U, XFSBL_SUCCESS, 0U, 0U, 0U};
 /*****************************************************************************/
 /** This is the FSBL main function and is implemented stage wise.
  *
@@ -95,9 +98,7 @@ int main(void )
 	/**
 	 * Initialize globals.
 	 */
-	FsblInstancePtr.ErrorCode = FsblStatus;
-
-	while (1) {
+	while (FsblStage<=XFSBL_STAGE_DEFAULT) {
 
 		switch (FsblStage)
 		{
@@ -107,9 +108,8 @@ int main(void )
 				/**
 				 * Initialize the system
 				 */
-				XFsbl_CfgInitialize(&FsblInstancePtr);
 
-				FsblStatus = XFsbl_Initialize(&FsblInstancePtr);
+				FsblStatus = XFsbl_Initialize(&FsblInstance);
 				if (XFSBL_SUCCESS != FsblStatus)
 				{
 					FsblStatus += XFSBL_ERROR_STAGE_1;
@@ -145,7 +145,7 @@ int main(void )
 				 *  partition header
 				 */
 
-				FsblStatus = XFsbl_BootDeviceInitAndValidate(&FsblInstancePtr);
+				FsblStatus = XFsbl_BootDeviceInitAndValidate(&FsblInstance);
 				if ( (XFSBL_SUCCESS != FsblStatus) &&
 						(XFSBL_STATUS_JTAG != FsblStatus) )
 				{
@@ -188,7 +188,7 @@ int main(void )
 				 *  partition header
 				 *  partition parameters
 				 */
-				FsblStatus = XFsbl_PartitionLoad(&FsblInstancePtr,
+				FsblStatus = XFsbl_PartitionLoad(&FsblInstance,
 								  PartitionNum);
 				if (XFSBL_SUCCESS != FsblStatus)
 				{
@@ -206,10 +206,10 @@ int main(void )
 					 * Check loading all partitions is completed
 					 */
 
-					FsblStatus = XFsbl_CheckEarlyHandoff(&FsblInstancePtr, PartitionNum);
+					FsblStatus = XFsbl_CheckEarlyHandoff(&FsblInstance, PartitionNum);
 
 					if (PartitionNum <
-						(FsblInstancePtr.ImageHeader.ImageHeaderTable.NoOfPartitions-1U))
+						(FsblInstance.ImageHeader.ImageHeaderTable.NoOfPartitions-1U))
 					{
 						if (TRUE == FsblStatus) {
 							EarlyHandoff = TRUE;
@@ -229,7 +229,7 @@ int main(void )
 						XFsbl_Printf(DEBUG_INFO,"All Partitions Loaded \n\r");
 
 #ifdef XFSBL_PERF
-						XFsbl_MeasurePerfTime(FsblInstancePtr.PerfTime.tFsblStart);
+						XFsbl_MeasurePerfTime(FsblInstance.PerfTime.tFsblStart);
 						XFsbl_Printf(DEBUG_PRINT_ALWAYS, ": Total Time \n\r");
 						XFsbl_Printf(DEBUG_PRINT_ALWAYS, "Note: Total execution time includes print times \n\r");
 #endif
@@ -252,7 +252,7 @@ int main(void )
 				 * xip
 				 * ps7 post config
 				 */
-				FsblStatus = XFsbl_Handoff(&FsblInstancePtr, PartitionNum, EarlyHandoff);
+				FsblStatus = XFsbl_Handoff(&FsblInstance, PartitionNum, EarlyHandoff);
 
 				if (XFSBL_STATUS_CONTINUE_PARTITION_LOAD == FsblStatus) {
 					XFsbl_Printf(DEBUG_INFO,"Early handoff to a application complete \n\r");
@@ -310,7 +310,9 @@ int main(void )
 			}break;
 
 		} /* End of switch(FsblStage) */
-
+		if(FsblStage==XFSBL_STAGE_DEFAULT) {
+			break;
+		}
 	} /* End of while(1)  */
 
 	/**
@@ -328,7 +330,7 @@ int main(void )
 
 void XFsbl_PrintFsblBanner(void )
 {
-	u32 PlatInfo;
+	s32 PlatInfo;
 	/**
 	 * Print the FSBL Banner
 	 */
@@ -339,13 +341,29 @@ void XFsbl_PrintFsblBanner(void )
 	XFsbl_Printf(DEBUG_PRINT_ALWAYS,
                  "Release %d.%d   %s  -  %s\r\n",
                  SDK_RELEASE_YEAR, SDK_RELEASE_QUARTER,__DATE__,__TIME__);
+
+	if(FsblInstance.ResetReason == XFSBL_PS_ONLY_RESET) {
+		XFsbl_Printf(DEBUG_GENERAL,"Reset Mode	:	PS Only Reset\r\n");
+	}
+	else if(FsblInstance.ResetReason == XFSBL_APU_ONLY_RESET)
+	{
+		XFsbl_Printf(DEBUG_GENERAL,"Reset Mode	:	APU Only Reset\r\n");
+	}
+	else if(FsblInstance.ResetReason == XFSBL_SYSTEM_RESET)
+	{
+		XFsbl_Printf(DEBUG_GENERAL,"Reset Mode	:	System Reset\r\n");
+	}
+	else
+	{
+		/*MISRAC compliance*/
+	}
 #endif
 
 	/**
 	 * Print the platform
 	 */
 
-	PlatInfo = XGet_Zynq_UltraMp_Platform_info();
+	PlatInfo = (s32)XGet_Zynq_UltraMp_Platform_info();
 	if (PlatInfo == XPLAT_ZYNQ_ULTRA_MPQEMU)
 	{
 		XFsbl_Printf(DEBUG_GENERAL, "Platform: QEMU, ");
@@ -379,7 +397,7 @@ void XFsbl_PrintFsblBanner(void )
  *****************************************************************************/
 void XFsbl_ErrorLockDown(u32 ErrorStatus)
 {
-	u32 BootMode=0U;
+	u32 BootMode;
 
 	/**
 	 * Print the FSBL error
@@ -392,7 +410,7 @@ void XFsbl_ErrorLockDown(u32 ErrorStatus)
 	 * and Fsbl instance structure
 	 */
 	XFsbl_Out32(XFSBL_ERROR_STATUS_REGISTER_OFFSET, ErrorStatus);
-	FsblInstancePtr.ErrorCode = ErrorStatus;
+	FsblInstance.ErrorCode = ErrorStatus;
 
 	/**
 	 * Read Boot Mode register
@@ -442,7 +460,7 @@ void XFsbl_ErrorLockDown(u32 ErrorStatus)
  *
  * @note We will not return from this function as it does soft reset
  *****************************************************************************/
-void XFsbl_FallBack(void)
+static void XFsbl_FallBack(void)
 {
 	u32 RegValue;
 
@@ -452,14 +470,14 @@ void XFsbl_FallBack(void)
 #endif
 
 	/* Hook before FSBL Fallback */
-	XFsbl_HookBeforeFallback();
+	(void)XFsbl_HookBeforeFallback();
 
 	/* Read the Multiboot register */
 	RegValue = XFsbl_In32(CSU_CSU_MULTI_BOOT);
 
 	XFsbl_Printf(DEBUG_GENERAL,"Performing FSBL FallBack\n\r");
 
-	XFsbl_UpdateMultiBoot(RegValue+1);
+	XFsbl_UpdateMultiBoot(RegValue+1U);
 
 	return;
 }
@@ -480,7 +498,7 @@ void XFsbl_FallBack(void)
  * @note We will not return from this function as it does soft reset
  *****************************************************************************/
 
-void XFsbl_UpdateMultiBoot(u32 MultiBootValue)
+static void XFsbl_UpdateMultiBoot(u32 MultiBootValue)
 {
 	u32 RegValue;
 
@@ -491,7 +509,7 @@ void XFsbl_UpdateMultiBoot(u32 MultiBootValue)
 	 * Hence, just for 1.0 Silicon, bypass the RPLL clock before giving
 	 * System Reset.
 	 */
-	if (XGetPSVersion_Info() == XPS_VERSION_1)
+	if (XGetPSVersion_Info() == (u32)XPS_VERSION_1)
 	{
 		RegValue = XFsbl_In32(CRL_APB_RPLL_CTRL) |
 				CRL_APB_RPLL_CTRL_BYPASS_MASK;
@@ -502,6 +520,8 @@ void XFsbl_UpdateMultiBoot(u32 MultiBootValue)
 	dsb();
 	isb();
 
+	if(FsblInstance.ResetReason != XFSBL_APU_ONLY_RESET) {
+
 	/* Soft reset the system */
 	XFsbl_Printf(DEBUG_GENERAL,"Performing System Soft Reset\n\r");
 	RegValue = XFsbl_In32(CRL_APB_RESET_CTRL);
@@ -509,7 +529,16 @@ void XFsbl_UpdateMultiBoot(u32 MultiBootValue)
 			RegValue|CRL_APB_RESET_CTRL_SOFT_RESET_MASK);
 
 	/* wait here until reset happens */
-	while(1);
+	while(1) {
+	;
+	}
+	}
+	else
+	{
+		for(;;){
+			/*We should not be here*/
+		}
+	}
 
 	return;
 

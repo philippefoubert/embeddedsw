@@ -279,6 +279,7 @@ XStatus emacps_sgsend(xemacpsif_s *xemacpsif, struct pbuf *p)
 	u32_t bdindex;
 	u32_t lev;
 	u32_t index;
+	u32_t max_fr_size;
 
 	lev = mfcpsr();
 	mtcpsr(lev | 0x000000C0);
@@ -312,8 +313,14 @@ XStatus emacps_sgsend(xemacpsif_s *xemacpsif, struct pbuf *p)
 		   variable. */
 		Xil_DCacheFlushRange((UINTPTR)q->payload, (UINTPTR)q->len);
 		XEmacPs_BdSetAddressTx(txbd, (UINTPTR)q->payload);
-		if (q->len > (XEMACPS_MAX_FRAME_SIZE - 18))
-			XEmacPs_BdSetLength(txbd, (XEMACPS_MAX_FRAME_SIZE - 18) & 0x3FFF);
+
+#ifdef ZYNQMP_USE_JUMBO
+		max_fr_size = MAX_FRAME_SIZE_JUMBO - 18;
+#else
+		max_fr_size = XEMACPS_MAX_FRAME_SIZE - 18;
+#endif
+		if (q->len > max_fr_size)
+			XEmacPs_BdSetLength(txbd, max_fr_size & 0x3FFF);
 		else
 			XEmacPs_BdSetLength(txbd, q->len & 0x3FFF);
 
@@ -372,7 +379,11 @@ void setup_rx_bds(xemacpsif_s *xemacpsif, XEmacPs_BdRing *rxring)
 	freebds = XEmacPs_BdRingGetFreeCnt (rxring);
 	while (freebds > 0) {
 		freebds--;
+#ifdef ZYNQMP_USE_JUMBO
+		p = pbuf_alloc(PBUF_RAW, MAX_FRAME_SIZE_JUMBO, PBUF_POOL);
+#else
 		p = pbuf_alloc(PBUF_RAW, XEMACPS_MAX_FRAME_SIZE, PBUF_POOL);
+#endif
 		if (!p) {
 #if LINK_STATS
 			lwip_stats.link.memerr++;
@@ -390,16 +401,22 @@ void setup_rx_bds(xemacpsif_s *xemacpsif, XEmacPs_BdRing *rxring)
 		status = XEmacPs_BdRingToHw(rxring, 1, rxbd);
 		if (status != XST_SUCCESS) {
 			LWIP_DEBUGF(NETIF_DEBUG, ("Error committing RxBD to hardware: "));
-			if (status == XST_DMA_SG_LIST_ERROR)
+			if (status == XST_DMA_SG_LIST_ERROR) {
 				LWIP_DEBUGF(NETIF_DEBUG, ("XST_DMA_SG_LIST_ERROR: this function was called out of sequence with XEmacPs_BdRingAlloc()\r\n"));
-			else
+			}
+			else {
 				LWIP_DEBUGF(NETIF_DEBUG, ("set of BDs was rejected because the first BD did not have its start-of-packet bit set, or the last BD did not have its end-of-packet bit set, or any one of the BD set has 0 as length value\r\n"));
+			}
 
 			pbuf_free(p);
 			XEmacPs_BdRingUnAlloc(rxring, 1, rxbd);
 			return;
 		}
+#ifdef ZYNQMP_USE_JUMBO
+		Xil_DCacheInvalidateRange((UINTPTR)p->payload, (UINTPTR)MAX_FRAME_SIZE_JUMBO);
+#else
 		Xil_DCacheInvalidateRange((UINTPTR)p->payload, (UINTPTR)XEMACPS_MAX_FRAME_SIZE);
+#endif
 		bdindex = XEMACPS_BD_TO_INDEX(rxring, rxbd);
 		temp = (u32 *)rxbd;
 		if (bdindex == (XLWIP_CONFIG_N_RX_DESC - 1)) {
@@ -465,7 +482,11 @@ void emacps_recv_handler(void *arg)
 			/*
 			 * Adjust the buffer size to the actual number of bytes received.
 			 */
+#ifdef ZYNQMP_USE_JUMBO
+			rx_bytes = XEmacPs_GetRxFrameSize(&xemacpsif->emacps, curbdptr);
+#else
 			rx_bytes = XEmacPs_BdGetLength(curbdptr);
+#endif
 			pbuf_realloc(p, rx_bytes);
 
 			/* store it in the receive queue,
@@ -635,7 +656,11 @@ XStatus init_dma(struct xemac_s *xemac)
 	 * Allocate RX descriptors, 1 RxBD at a time.
 	 */
 	for (i = 0; i < XLWIP_CONFIG_N_RX_DESC; i++) {
+#ifdef ZYNQMP_USE_JUMBO
+		p = pbuf_alloc(PBUF_RAW, MAX_FRAME_SIZE_JUMBO, PBUF_POOL);
+#else
 		p = pbuf_alloc(PBUF_RAW, XEMACPS_MAX_FRAME_SIZE, PBUF_POOL);
+#endif
 		if (!p) {
 #if LINK_STATS
 			lwip_stats.link.memerr++;
@@ -668,7 +693,11 @@ XStatus init_dma(struct xemac_s *xemac)
 		temp++;
 		*temp = 0;
 		dsb();
+#ifdef ZYNQMP_USE_JUMBO
+		Xil_DCacheInvalidateRange((UINTPTR)p->payload, (UINTPTR)MAX_FRAME_SIZE_JUMBO);
+#else
 		Xil_DCacheInvalidateRange((UINTPTR)p->payload, (UINTPTR)XEMACPS_MAX_FRAME_SIZE);
+#endif
 		XEmacPs_BdSetAddressRx(rxbd, (UINTPTR)p->payload);
 
 		rx_pbufs_storage[index + bdindex] = (UINTPTR)p;

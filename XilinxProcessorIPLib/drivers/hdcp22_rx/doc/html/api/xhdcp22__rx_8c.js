@@ -21,7 +21,7 @@ var xhdcp22__rx_8c =
     [ "XHdcp22Rx_LogRd", "group__hdcp22__rx__v2__0.html#ga743ad88922a6b15e5aea5e1cb9f04aa0", null ],
     [ "XHdcp22Rx_LogReset", "group__hdcp22__rx__v2__0.html#ga315e3715814bcf73e5ceca9e8bb2a9fc", null ],
     [ "XHdcp22Rx_LogWr", "group__hdcp22__rx__v2__0.html#ga75e2458da2561aa5143698657aa5e604", null ],
-    [ "XHdcp22Rx_Poll", "group__hdcp22__rx__v2__0.html#ga0d6b6640420f939121e89214eeb9acf8", null ],
+    [ "XHdcp22Rx_Poll", "group__hdcp22__rx__v2__0.html#ga47b59a5f9c314a6accc90e836f198730", null ],
     [ "XHdcp22Rx_Reset", "group__hdcp22__rx__v2__0.html#gab0e1f5a3406d126f288a721c2b866955", null ],
     [ "XHdcp22Rx_SetCallback", "group__hdcp22__rx__v2__0.html#ga59d922ad6c0dcdabc012fd4fbe4e84e0", null ],
     [ "XHdcp22Rx_SetDdcError", "group__hdcp22__rx__v2__0.html#ga69bb699d6fcee2a6cdab30ac68bed43f", null ],

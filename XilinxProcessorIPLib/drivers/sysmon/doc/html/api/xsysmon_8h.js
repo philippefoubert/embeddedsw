@@ -79,7 +79,7 @@ var xsysmon_8h =
     [ "XSM_SEQ_MODE_SIMUL", "group__sysmon__v7__1.html#gacac995b84cec0748dde6c82998337b72", null ],
     [ "XSM_SEQ_MODE_SINGCHAN", "group__sysmon__v7__1.html#ga3c4487fa8b08f41c807433ef456abc75", null ],
     [ "XSysMon_IsDrpBusy", "group__sysmon__v7__1.html#ga3b2cfa1e10636a54c490f2e43d19d599", null ],
-    [ "XSysMon_IsDrpLocked", "group__sysmon__v7__1.html#ga7104654af94990995b892bfe673d0140", null ],
+    [ "XSysMon_IsDrpLocked", "group__sysmon__v7__1.html#ga63f1a8eed662201ee54f733d5ff64632", null ],
     [ "XSysMon_IsEventSamplingModeSet", "group__sysmon__v7__1.html#ga1d57ea7cf0aa423dc29cf14d8a45ddcf", null ],
     [ "XSysMon_RawToTemperature", "group__sysmon__v7__1.html#ga251f2e509945b445a655fbc885f6a934", null ],
     [ "XSysMon_RawToVoltage", "group__sysmon__v7__1.html#ga2b75d20fe44358333e528a14340568ce", null ],

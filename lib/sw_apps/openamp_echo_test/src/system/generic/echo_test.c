@@ -83,7 +83,7 @@
 #define LPRINTF(format, ...) xil_printf(format, ##__VA_ARGS__)
 #define LPERROR(format, ...) LPRINTF("ERROR: " format, ##__VA_ARGS__)
 
-/* Global functions and variables */
+/* External functions */
 extern int init_system(void);
 extern void cleanup_system(void);
 
@@ -91,14 +91,26 @@ extern void cleanup_system(void);
 static struct rpmsg_endpoint *rp_ept;
 static struct remote_proc *proc = NULL;
 static struct rsc_table_info rsc_info;
-
 static int evt_chnl_deleted = 0;
+static int evt_virtio_rst = 0;
+
+static void virtio_rst_cb(struct hil_proc *hproc, int id)
+{
+	/* hil_proc only supports single virtio device */
+	(void)id;
+
+	if (!proc || proc->proc != hproc || !proc->rdev)
+		return;
+
+	LPRINTF("Resetting RPMsg\n");
+	evt_virtio_rst = 1;
+}
 
 /*-----------------------------------------------------------------------------*
  *  RPMSG callbacks setup by remoteproc_resource_init()
  *-----------------------------------------------------------------------------*/
 static void rpmsg_read_cb(struct rpmsg_channel *rp_chnl, void *data, int len,
-                void * priv, unsigned long src)
+			  void *priv, unsigned long src)
 {
 	(void)priv;
 	(void)src;
@@ -109,7 +121,7 @@ static void rpmsg_read_cb(struct rpmsg_channel *rp_chnl, void *data, int len,
 		return;
 	}
 
-	/* send back the data */
+	/* Send data back to master */
 	if (RPMSG_SUCCESS != rpmsg_send(rp_chnl, data, len)) {
 		LPERROR("rpmsg_send failed\n");
 	}
@@ -118,7 +130,7 @@ static void rpmsg_read_cb(struct rpmsg_channel *rp_chnl, void *data, int len,
 static void rpmsg_channel_created(struct rpmsg_channel *rp_chnl)
 {
 	rp_ept = rpmsg_create_ept(rp_chnl, rpmsg_read_cb, RPMSG_NULL,
-				RPMSG_ADDR_ANY);
+				  RPMSG_ADDR_ANY);
 }
 
 static void rpmsg_channel_deleted(struct rpmsg_channel *rp_chnl)
@@ -127,6 +139,7 @@ static void rpmsg_channel_deleted(struct rpmsg_channel *rp_chnl)
 
 	rpmsg_destroy_ept(rp_ept);
 	rp_ept = NULL;
+	evt_chnl_deleted = 1;
 }
 
 /*-----------------------------------------------------------------------------*
@@ -147,13 +160,40 @@ int app(struct hil_proc *hproc)
 		LPERROR("Failed  to initialize remoteproc resource.\n");
 		return -1;
 	}
+	LPRINTF("Init remoteproc resource succeeded\n");
 
-	LPRINTF("Init remoteproc resource done\n");
+	hil_set_vdev_rst_cb(hproc, 0, virtio_rst_cb);
 
 	LPRINTF("Waiting for events...\n");
-	do {
+	while(1) {
 		hil_poll(proc->proc, 0);
-	} while (!evt_chnl_deleted);
+
+		/* we got a shutdown request, exit */
+		if (evt_chnl_deleted) {
+			break;
+		}
+
+		if (evt_virtio_rst) {
+			/* vring rst callback, reset rpmsg */
+			LPRINTF("De-initializing RPMsg\n");
+			rpmsg_deinit(proc->rdev);
+			proc->rdev = NULL;
+
+			LPRINTF("Reinitializing RPMsg\n");
+			status = rpmsg_init(hproc, &proc->rdev,
+					    rpmsg_channel_created,
+					    rpmsg_channel_deleted,
+					    rpmsg_read_cb,
+					    1);
+			if (status != RPROC_SUCCESS) {
+				LPERROR("Reinit RPMsg failed\n");
+				break;
+			}
+			LPRINTF("Reinit RPMsg succeeded\n");
+			evt_chnl_deleted=0;
+			evt_virtio_rst = 0;
+		}
+	}
 
 	/* disable interrupts and free resources */
 	LPRINTF("De-initializating remoteproc resource\n");
@@ -174,14 +214,15 @@ int main(void)
 
 	LPRINTF("Starting application...\n");
 
-	/* Initialize HW and SW components/objects */
+	/* Initialize HW system components */
 	init_system();
 
 	hproc = platform_create_proc(proc_id);
 	if (!hproc) {
 		LPERROR("Failed to create proc platform data.\n");
 	} else {
-		rsc_info.rsc_tab = get_resource_table((int)rsc_id, &rsc_info.size);
+		rsc_info.rsc_tab = get_resource_table(
+			(int)rsc_id, &rsc_info.size);
 		if (!rsc_info.rsc_tab) {
 			LPERROR("Failed to get resource table data.\n");
 		} else {

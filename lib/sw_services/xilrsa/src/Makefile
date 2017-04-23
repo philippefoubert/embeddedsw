@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (C) 2014 Xilinx, Inc.  All rights reserved.
+# Copyright (C) 2014 - 2016 Xilinx, Inc.  All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,12 +34,14 @@ COMPILER=
 ARCHIVER=
 CP=cp
 COMPILER_FLAGS=
+LIB=librsa.a
 
 RELEASEDIR=../../../lib
 INCLUDEDIR=../../../include
 INCLUDES=-I./include/ -I${INCLUDEDIR} 
 LIBRSA_DIR = .
-
+OUTS = *.o
+OBJECTS =	$(addsuffix .o, $(basename $(wildcard *.c)))
 EXPORT_INCLUDE_DIR = $(LIBRSA_DIR)/include
 			
 libs:
@@ -50,4 +52,7 @@ include: xilrsa_includes
 
 xilrsa_includes: 
 	cp -r ${EXPORT_INCLUDE_DIR}/xilrsa.h ${INCLUDEDIR}
-	
+
+clean:
+	rm -rf $(LIBRSA_DIR)/$(OBJECTS)
+	rm -rf $(RELEASEDIR)/$(LIB)

@@ -46,6 +46,9 @@
  * ----- ---- -------- -----------------------------------------------
  * 1.0   vkd  10/19/15 Initial release.
  * 1.2   gm   08/26/16 Suppressed warning messages due to unused arguments
+ * 1.4   gm   29/11/16 Added preprocessor directives for sw footprint reduction
+ *                     Added XVphy_GtUserRdyEnable for TX and RX in
+ *                        XVphy_DpInitialize API
  * </pre>
  *
 *******************************************************************************/
@@ -53,9 +56,11 @@
 /******************************* Include Files ********************************/
 
 #include "xparameters.h"
+#if defined (XPAR_XDP_0_DEVICE_ID)
 #include "xstatus.h"
 #include "xvphy_dp.h"
 #include "xvphy.h"
+#include "xvphy_i.h"
 #include "string.h"
 
 /**************************** Function Definitions ****************************/
@@ -199,6 +204,10 @@ u32 XVphy_DpInitialize(XVphy *InstancePtr, XVphy_Config *CfgPtr, u8 QuadId,
 			1);
 	XVphy_SetRxLpm(InstancePtr, QuadId, XVPHY_CHANNEL_ID_CHA, XVPHY_DIR_RX,
 			1);
+    XVphy_GtUserRdyEnable(InstancePtr, QuadId, XVPHY_CHANNEL_ID_CHA,
+            XVPHY_DIR_TX, TRUE);
+    XVphy_GtUserRdyEnable(InstancePtr, QuadId, XVPHY_CHANNEL_ID_CHA,
+            XVPHY_DIR_RX, TRUE);
 
 	XVphy_PllInitialize(InstancePtr, QuadId, XVPHY_CHANNEL_ID_CHA,
 			QpllRefClkSel, CpllRefClkSel, TxPllSelect, RxPllSelect);
@@ -358,3 +367,4 @@ void XVphy_DpDebugInfo(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId)
 
 	print(" \n\r");
 }
+#endif

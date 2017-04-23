@@ -40,7 +40,7 @@ var bigdigits_8h =
     [ "mpSetBit", "bigdigits_8h.html#aa139b4a934c93413cb9656d47852b56e", null ],
     [ "mpSetDigit", "bigdigits_8h.html#a2671ebc7457e56163d198ebaf3fb8cd6", null ],
     [ "mpSetEqual", "bigdigits_8h.html#a22e470736c2390dda457bf8fbd92ca20", null ],
-    [ "mpSetZero", "bigdigits_8h.html#add5bd92aae1e43600418b63fa0f10e2c", null ],
+    [ "mpSetZero", "bigdigits_8h.html#a6033aa03068f258fcfb159b2a756a49a", null ],
     [ "mpShiftLeft", "bigdigits_8h.html#abcbf4392a96918071c1ea5a357c5a004", null ],
     [ "mpShiftRight", "bigdigits_8h.html#a42ad0c66dd24a99d990344b4ce03ff68", null ],
     [ "mpShortAdd", "bigdigits_8h.html#adf93fae14e496cb8282205e99e671706", null ],

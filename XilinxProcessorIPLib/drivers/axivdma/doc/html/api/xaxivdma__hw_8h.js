@@ -48,7 +48,7 @@ var xaxivdma__hw_8h =
     [ "XAXIVDMA_PARKPTR_READSTR_MASK", "group__axivdma__v6__0.html#ga3326b79c706c90993eea1033edc5f304", null ],
     [ "XAXIVDMA_PARKPTR_WRTREF_MASK", "group__axivdma__v6__0.html#ga9656852c690e3a7e5253fe67b87f10cf", null ],
     [ "XAXIVDMA_PARKPTR_WRTSTR_MASK", "group__axivdma__v6__0.html#gafdf5ab4a765d1ed93a697b276d832b7d", null ],
-    [ "XAxiVdma_ReadReg", "group__axivdma__v6__0.html#gaf573ed8e7f474ba68daa5e8070b976a0", null ],
+    [ "XAxiVdma_ReadReg", "group__axivdma__v6__0.html#gac657067221649df8f259f9215bfba75e", null ],
     [ "XAXIVDMA_REGINDEX_MASK", "group__axivdma__v6__0.html#gad0d12f32fff3037d4b1316350e02fef6", null ],
     [ "XAXIVDMA_RX_OFFSET", "group__axivdma__v6__0.html#gab97c05cd73a22a627177554199efb526", null ],
     [ "XAXIVDMA_S2MM_ADDR_OFFSET", "group__axivdma__v6__0.html#ga8daae8241a3aeae54627939188febf71", null ],
@@ -84,5 +84,5 @@ var xaxivdma__hw_8h =
     [ "XAXIVDMA_VERSION_REV_MASK", "group__axivdma__v6__0.html#gae651c29e871bbdd802cecc9fb45948b3", null ],
     [ "XAXIVDMA_VSIZE_MASK", "group__axivdma__v6__0.html#ga8394a54d3cfaf11b3b824059d760d5d8", null ],
     [ "XAXIVDMA_VSIZE_OFFSET", "group__axivdma__v6__0.html#ga4feada9ad41cf079a8c9b7c6aebfecff", null ],
-    [ "XAxiVdma_WriteReg", "group__axivdma__v6__0.html#gaaa7bae0ada2e94f563704a8ae4cabfde", null ]
+    [ "XAxiVdma_WriteReg", "group__axivdma__v6__0.html#ga28900a15d22fc5a3729dfa102f5cbec9", null ]
 ];

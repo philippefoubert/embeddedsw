@@ -60,6 +60,11 @@
 * Ver Who Date     Changes
 * --- --- -------- ------------------------------------------------------------
 * 1.0 vsa 07/21/15 Initial release
+* 1.1 ms  01/23/17 Modified xil_printf statement in main function to
+*                  ensure that "Successfully ran" and "Failed" strings
+*                  are available in all examples. This is a fix for
+*                  CR-965028.
+* 1.2 vsa 03/02/17 Added Word Count corruption interrupt
 * </pre>
 *
 ******************************************************************************/
@@ -196,12 +201,11 @@ int main()
 
 	Status = CsiSs_IntrExample(XCSISS_DEVICE_ID);
 	if (Status != XST_SUCCESS) {
-		xil_printf("MIPI CSI Rx Subsystem interrupt example "
-				"failed.");
+		xil_printf("MIPI CSI Rx Subsystem interrupt example failed.");
 		return XST_FAILURE;
 	}
 
-	xil_printf("MIPI CSI Rx Subsystem interrupt example passed\n\r");
+	xil_printf("Successfully ran MIPI CSI Rx Subsystem interrupt example\n\r");
 
 	return XST_SUCCESS;
 }
@@ -633,6 +637,10 @@ void CsiSs_ErrEventHandler(void *InstancePtr, u32 Mask)
 
 	xil_printf("+===> Other Errors detected.\n\r");
 	interrupt_counts++;
+
+	if (Mask & XCSISS_ISR_WC_MASK) {
+		xil_printf("Word count corruption Error\n\r");
+	}
 
 	if (Mask & XCSISS_ISR_ILC_MASK) {
 		xil_printf("Incorrect Lane Count Error \n\r");

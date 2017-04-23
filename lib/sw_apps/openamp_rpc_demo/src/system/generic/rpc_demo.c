@@ -79,7 +79,6 @@
 #include "rsc_table.h"
 #include "platform_info.h"
 
-
 #define REDEF_O_CREAT 100
 #define REDEF_O_EXCL 200
 #define REDEF_O_RDONLY 0
@@ -108,7 +107,7 @@ static struct rsc_table_info rsc_info;
  *  RPMSG callbacks setup by remoteproc_resource_init()
  *-----------------------------------------------------------------------------*/
 static void rpmsg_read_cb(struct rpmsg_channel *rp_chnl, void *data, int len,
-                void * priv, unsigned long src)
+			  void *priv, unsigned long src)
 {
 	(void)rp_chnl;
 	(void)data;
@@ -131,6 +130,7 @@ static void rpmsg_channel_deleted(struct rpmsg_channel *rp_chnl)
 
 static void shutdown_cb(struct rpmsg_channel *rp_chnl)
 {
+	(void)rp_chnl;
 	chnl_is_alive = 0;
 }
 
@@ -152,12 +152,12 @@ int app (struct hil_proc *hproc)
 	/* Initialize framework */
 	LPRINTF("Try to init remoteproc resource\n");
 	status = remoteproc_resource_init(&rsc_info, hproc,
-						rpmsg_channel_created,
-						rpmsg_channel_deleted, rpmsg_read_cb,
-						&proc, 0);
+					  rpmsg_channel_created,
+					  rpmsg_channel_deleted, rpmsg_read_cb,
+					  &proc, 0);
 	if (RPROC_SUCCESS != status) {
 		LPERROR("Failed  to initialize remoteproc resource.\n");
-        return -1;
+		return -1;
 	}
 
 	LPRINTF("Init remoteproc resource done\n");
@@ -198,7 +198,7 @@ int app (struct hil_proc *hproc)
 	bytes_read = read(fd, rbuff, 1024);
 	*(char *)(&rbuff[0] + bytes_read + 1) = 0;
 	printf("\r\nRemote>Read from fd = %d, size = %d, printing contents below .. %s\r\n",
-	     fd, bytes_read, rbuff);
+		fd, bytes_read, rbuff);
 	close(fd);
 	printf("\r\nRemote>Closed fd = %d\r\n", fd);
 
@@ -275,7 +275,8 @@ int main(void)
 	if (!hproc) {
 		LPERROR("Failed to create hil proc.\n");
 	} else {
-		rsc_info.rsc_tab = get_resource_table((int)rsc_id, &rsc_info.size);
+		rsc_info.rsc_tab =
+			get_resource_table((int)rsc_id, &rsc_info.size);
 		if (!rsc_info.rsc_tab) {
 			LPERROR("Failed to get resource table data.\n");
 		} else {

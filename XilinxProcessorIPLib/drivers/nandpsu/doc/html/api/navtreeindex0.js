@@ -1,6 +1,8 @@
 var NAVTREEINDEX0 =
 {
 "annotated.html":[0,0],
+"example.html":[3],
+"example.html#ex1":[3,0],
 "files.html":[2],
 "functions.html":[0,1,0],
 "functions_func.html":[0,1,1],
@@ -247,7 +249,5 @@ var NAVTREEINDEX0 =
 "group__nandpsu__v1__0.html#gaadf5933321faab54c9b4a9745b2c0288":[2,5,94],
 "group__nandpsu__v1__0.html#gab1218c07eb4ca421ebebe66ad437e70f":[2,5,97],
 "group__nandpsu__v1__0.html#gab5f11ea56bdac764873705a28405205f":[2,5,44],
-"group__nandpsu__v1__0.html#gab6a60ad45ff02404e8a578a75e406d30":[2,7,16],
-"group__nandpsu__v1__0.html#gab6eff2647f2f5aa81b257379c2816db0":[2,5,79],
-"group__nandpsu__v1__0.html#gab8dd0c75824e4e2287de9934909e049a":[2,7,3]
+"group__nandpsu__v1__0.html#gab6a60ad45ff02404e8a578a75e406d30":[2,7,16]
 };

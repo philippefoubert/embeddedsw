@@ -13,7 +13,10 @@ var NAVTREE =
       [ "Functions", "globals_func.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
-    [ "File List", "files.html", "files" ]
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xdphy_example_selftest.c", "example.html#ex1", null ]
+    ] ]
   ] ]
 ];
 

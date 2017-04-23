@@ -1,5 +1,7 @@
 var xhdcp1x_8h =
 [
+    [ "UNUSED", "group__hdcp1x__v4__0.html#ga86d500a34c624c2cae56bc25a31b12f3", null ],
+    [ "XHDCP1X_ADDITIONAL_DEBUG", "group__hdcp1x__v4__0.html#gae92ed496207273f8076318d29087f004", null ],
     [ "XHDCP1X_H", "group__hdcp1x__v4__0.html#gaf843d589f3817803c0b55743ed4681a8", null ],
     [ "XHDCP1X_KSV_SIZE", "group__hdcp1x__v4__0.html#gadc5bb3b8c7dfb1a9b6ce34853cd04823", null ],
     [ "XHDCP1X_RPTR_MAX_CASCADE", "group__hdcp1x__v4__0.html#ga217bbf2604a76a1003c907376d4b8710", null ],
@@ -60,6 +62,7 @@ var xhdcp1x_8h =
     [ "XHdcp1x_SetCallback", "group__hdcp1x__v4__0.html#ga145ec2236143e47dd0bb8e31fbf690e4", null ],
     [ "XHdcp1x_SetDebugLogMsg", "group__hdcp1x__v4__0.html#ga0d8820c98c821780e9cbede688cc2957", null ],
     [ "XHdcp1x_SetDebugPrintf", "group__hdcp1x__v4__0.html#gac2d6cb2bf146bfd87fc255200b09cd79", null ],
+    [ "XHdcp1x_SetHdmiMode", "group__hdcp1x__v4__0.html#gae607ce47975decbc6e4e45d51889dc19", null ],
     [ "XHdcp1x_SetKeySelect", "group__hdcp1x__v4__0.html#ga405e80474c58ef82e4c27ab99ae70f54", null ],
     [ "XHdcp1x_SetKsvRevokeCheck", "group__hdcp1x__v4__0.html#ga4dc3ae5f39d71120d46f7dacf1f61b4e", null ],
     [ "XHdcp1x_SetLaneCount", "group__hdcp1x__v4__0.html#ga230854e10d59500a41137b4f5951042b", null ],

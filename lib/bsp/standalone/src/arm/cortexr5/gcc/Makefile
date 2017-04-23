@@ -46,13 +46,17 @@ ECC_FLAGS	+= -nostartfiles\
 		  -mfloat-abi=soft\
 		  -mfpu=vfpv3-d16
 endif
+ECC_FLAGS_NO_FLTO1 = $(subst -flto,,$(ECC_FLAGS))
+ECC_FLAGS_NO_FLTO = $(subst -ffat-lto-objects,,$(ECC_FLAGS_NO_FLTO1))
+
 
 RELEASEDIR=../../../lib
 INCLUDEDIR=../../../include
 INCLUDES=-I./. -I${INCLUDEDIR}
 
 OUTS = *.o
-
+OBJECTS =	$(addsuffix .o, $(basename $(wildcard *.c)))
+ASSEMBLY_OBJECTS  = $(addsuffix .o, $(basename $(wildcard *.S)))
 INCLUDEFILES=*.h
 INCLUDEFILES+=includes_ps/*.h
 
@@ -60,7 +64,8 @@ libs: $(LIBS)
 
 standalone_libs: $(LIBSOURCES)
 	echo "Compiling standalone R5"
-	$(CC) $(CC_FLAGS) $(ECC_FLAGS) $(INCLUDES) $^
+	$(CC) $(CC_FLAGS) $(ECC_FLAGS) $(INCLUDES) $(filter-out _exit.c, $^)
+	$(CC) $(CC_FLAGS) $(ECC_FLAGS_NO_FLTO) $(INCLUDES) _exit.c
 	$(AR) -r ${RELEASEDIR}/${LIB} ${OUTS}
 
 .PHONY: include
@@ -70,5 +75,5 @@ standalone_includes:
 	${CP} ${INCLUDEFILES} ${INCLUDEDIR}
 
 clean:
-	rm -rf ${OUTS}
-	$(MAKE) -C COMPILER_FLAGS="$(COMPILER_FLAGS)" EXTRA_COMPILER_FLAGS="$(EXTRA_COMPILER_FLAGS)" COMPILER="$(CC)" ARCHIVER="$(AR)" clean
+	rm -rf ${OBJECTS}
+	rm -rf ${ASSEMBLY_OBJECTS}

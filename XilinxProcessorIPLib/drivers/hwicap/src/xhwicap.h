@@ -183,6 +183,12 @@
 *                      Updated XHI_NUM_WORDS_FRAME_INCL_NULL_FRAME to 202
 *                      CR# 909615.
 * 10.2   mi   09/22/16 Fixed compilation warnings.
+* 11.0  ms    01/23/17 Added xil_printf statement in main function for all
+*                      examples to ensure that "Successfully ran" and "Failed"
+*                      strings are available in all examples. This is a fix
+*                      for CR-965028.
+*       ms    03/17/17 Added readme.txt file in examples folder for doxygen
+*                      generation.
 *
 * </pre>
 *
@@ -202,6 +208,15 @@ extern "C" {
 #include "xparameters.h"
 
 /************************** Constant Definitions ****************************/
+#define DEVICE_TYPE_7SERIES		1
+#define DEVICE_TYPE_ULTRA		2
+#define DEVICE_TYPE_ULTRA_PLUS		3
+
+#define NUM_7SERIES_IDCODES		32
+#define NUM_ULTRA_SERIES_IDCODES	13
+#define NUM_ULTRA_PLUS_SERIES_IDCODES	12
+
+#define PCAP_CR_OFFSET         0xFFCA3008 /**< PCAP CR Register */
 
 /************************** Type Definitions ********************************/
 
@@ -252,6 +267,7 @@ typedef struct {
 	u32 IsReady;		     /**< Device is initialized and ready */
 	int IsPolled;		     /**< Device is in polled mode */
 	u32 DeviceIdCode;	     /**< IDCODE of targeted device */
+	u32 DeviceFamily;		 /**< Targeted device family */
 	u32 BytesPerFrame;	     /**< Number of Bytes per minor Frame */
 	u32 WordsPerFrame;	     /**< Number of Words per minor Frame */
 

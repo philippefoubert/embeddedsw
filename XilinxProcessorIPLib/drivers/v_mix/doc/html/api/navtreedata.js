@@ -15,7 +15,11 @@ var NAVTREE =
       [ "Enumerations", "globals_enum.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
-    [ "File List", "files.html", "files" ]
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "main.c", "example.html#ex1", null ],
+      [ "vmix_example.tcl", "example.html#ex2", null ]
+    ] ]
   ] ]
 ];
 

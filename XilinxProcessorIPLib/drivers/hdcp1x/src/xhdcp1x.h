@@ -718,6 +718,7 @@
 *                       Extended support for Repeater functionality.
 * 4.0   yas    08/16/16 Used UINTPTR instead of u32 for BaseAddress
 *                       XHdcp1x_CfgInitialize
+* 4.1   yas    11/10/16 Added function XHdcp1x_SetHdmiMode.
 * </pre>
 *
 ******************************************************************************/
@@ -754,6 +755,11 @@ extern "C" {
 							  *  for HDCP
 							  *  functions */
 
+#define UNUSED(x)  ((void)x) /**< Used to remove warnings for
+			       *  unused variables. */
+#define XHDCP1X_ADDITIONAL_DEBUG  0 /**< Adds extra functions for
+				      *  additional debugging. */
+
 /**************************** Type Definitions *******************************/
 
 /**
@@ -768,7 +774,7 @@ enum XHdcp1x_Rx_StateType {
 	XHDCP1X_RX_STATE_AUTHENTICATED,
 	XHDCP1X_RX_STATE_LINKINTEGRITYFAILED,
 	XHDCP1X_RX_STATE_PHYDOWN,
-} ;
+};
 
 /**
  * This enumerates the Event Types for HDCP Transmitter state machine.
@@ -1002,6 +1008,8 @@ typedef struct {
 	u16 Flags;		/**< The interface flags */
 	u16 PendingEvents;	/**< The bit map of pending events */
 	u64 EncryptionMap;	/**< The configured encryption map */
+	u16 WaitForReadyPollCntFlag; /**< Count of the times we have
+				  * polled the BCaps every 100ms interval. */
 	XHdcp1x_TxStats Stats;	/**< The interface's statistics */
 	XHdcp1x_Callback AuthenticatedCallback;	/**< Authentication callback */
 	void *AuthenticatedCallbackRef;	/**< Authentication reference */
@@ -1245,6 +1253,7 @@ void XHdcp1x_SetTopology(XHdcp1x *InstancePtr,
 void XHdcp1x_SetTopologyKSVList(XHdcp1x *InstancePtr, u8 *ListPtr,
 		u32 ListSize);
 void XHdcp1x_SetTopologyUpdate(XHdcp1x *InstancePtr);
+void XHdcp1x_SetHdmiMode(XHdcp1x *InstancePtr, u8 Value);
 
 #ifdef __cplusplus
 }

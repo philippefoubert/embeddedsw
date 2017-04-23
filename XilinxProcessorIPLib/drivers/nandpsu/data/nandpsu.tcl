@@ -36,6 +36,7 @@
 # Ver   Who  Date     Changes
 # ----- ---- -------- -----------------------------------------------
 # 1.00a nm   05/06/14 Created
+# 1.2   ms   02/12/17 Fix for compilation warning.
 #
 ##############################################################################
 
@@ -44,7 +45,7 @@
 proc generate {drv_handle} {
     ::hsi::utils::define_zynq_include_file $drv_handle "xparameters.h" "XNandPsu" "NUM_INSTANCES" "DEVICE_ID" "C_S_AXI_BASEADDR" "C_S_AXI_HIGHADDR"
 
-    ::hsi::utils::define_zynq_config_file $drv_handle "xnandps_g.c" "XNandPsu" "DEVICE_ID" "C_S_AXI_BASEADDR"
+    ::hsi::utils::define_zynq_config_file $drv_handle "xnandpsu_g.c" "XNandPsu" "DEVICE_ID" "C_S_AXI_BASEADDR"
 
     ::hsi::utils::define_zynq_canonical_xpars $drv_handle "xparameters.h" "XNandPsu" "DEVICE_ID" "C_S_AXI_BASEADDR" "C_S_AXI_HIGHADDR"
 }

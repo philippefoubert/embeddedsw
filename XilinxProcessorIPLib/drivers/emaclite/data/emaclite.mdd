@@ -41,6 +41,7 @@ BEGIN driver emaclite
   OPTION supported_peripherals = (axi_ethernetlite);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+  OPTION VERSION = 4.3;
   OPTION NAME = emaclite;
 
 END driver

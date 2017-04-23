@@ -108,6 +108,12 @@
 * Ver Who Date     Changes
 * --- --- -------- ------------------------------------------------------------
 * 1.0 sss 07/15/16 Initial release
+*     ms  01/23/17 Modified xil_printf statement in main function for all
+*                  examples to ensure that "Successfully ran" and "Failed"
+*                  strings are available in all examples. This is a fix
+*                  for CR-965028.
+*     ms  03/17/17 Added readme.txt file in examples folder for doxygen
+*                  generation.
 * </pre>
 *
 ******************************************************************************/

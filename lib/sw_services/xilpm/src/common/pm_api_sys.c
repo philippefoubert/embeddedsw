@@ -87,6 +87,8 @@ XStatus XPm_InitXilpm(XIpiPsu *IpiInst)
 		goto done;
 	}
 
+	XPm_ClientSetPrimaryMaster();
+
 	primary_master->ipi = IpiInst;
 done:
 	return status;
@@ -107,9 +109,14 @@ done:
  ****************************************************************************/
 enum XPmBootStatus XPm_GetBootStatus(void)
 {
-	u32 pwrdn_req = pm_read(MASTER_PWRCTL);
+	u32 pwrdn_req;
+
+	XPm_ClientSetPrimaryMaster();
+
+	pwrdn_req = pm_read(primary_master->pwrctl);
 	if (0 != (pwrdn_req & primary_master->pwrdn_mask)) {
-		pm_write(MASTER_PWRCTL, pwrdn_req & (~primary_master->pwrdn_mask));
+		pwrdn_req &= ~primary_master->pwrdn_mask;
+		pm_write(primary_master->pwrctl, pwrdn_req);
 		return PM_RESUME;
 	} else {
 		return PM_INITIAL_BOOT;
@@ -297,6 +304,63 @@ XStatus XPm_SelfSuspend(const enum XPmNodeId nid,
 		return ret;
 	/* Wait for PMU to finish handling request */
 	return pm_ipi_buff_read32(master, NULL, NULL, NULL);
+}
+
+/****************************************************************************/
+/**
+ * @brief  This function is called to configure the power management
+ * framework. The call triggers power management controller to load the
+ * configuration object and configure itself according to the content of the
+ * object.
+ *
+ * @param  address Start address of the configuration object
+ *
+ * @return XST_SUCCESS if successful, otherwise an error code
+ *
+ * @note   The provided address must be in 32-bit address space which is
+ * accessible by the PMU.
+ *
+ ****************************************************************************/
+XStatus XPm_SetConfiguration(const u32 address)
+{
+	XStatus status;
+	u32 payload[PAYLOAD_ARG_CNT];
+
+	/* Send request to the PMU */
+	PACK_PAYLOAD1(payload, PM_SET_CONFIGURATION, address);
+	status = pm_ipi_send(primary_master, payload);
+
+	if (XST_SUCCESS != status)
+		return status;
+
+	return pm_ipi_buff_read32(primary_master, NULL, NULL, NULL);
+}
+
+/****************************************************************************/
+/**
+ * @brief  This function is called to notify the power management controller
+ * about the completed power management initialization.
+ *
+ * @return XST_SUCCESS if successful, otherwise an error code
+ *
+ * @note   It is assumed that all used nodes are requested when this call is
+ * made. The power management controller may power down the nodes which are
+ * not requested after this call is processed.
+ *
+ ****************************************************************************/
+XStatus XPm_InitFinalize(void)
+{
+	XStatus status;
+	u32 payload[PAYLOAD_ARG_CNT];
+
+	/* Send request to the PMU */
+	PACK_PAYLOAD0(payload, PM_INIT_FINALIZE);
+	status = pm_ipi_send(primary_master, payload);
+
+	if (XST_SUCCESS != status)
+		return status;
+
+	return pm_ipi_buff_read32(primary_master, NULL, NULL, NULL);
 }
 
 /****************************************************************************/

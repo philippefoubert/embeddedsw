@@ -14,7 +14,11 @@ var NAVTREE =
       [ "Typedefs", "globals_type.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
-    [ "File List", "files.html", "files" ]
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xllfifo_interrupt_example.c", "example.html#ex1", null ],
+      [ "xllfifo_polling_example.c", "example.html#ex2", null ]
+    ] ]
   ] ]
 ];
 

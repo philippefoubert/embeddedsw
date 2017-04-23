@@ -50,6 +50,13 @@
 #		      update the extra compiler flag for particular compiler only
 #		      when some flag apart from default while generating BSP.
 #		      These modifications fix CR#951335
+# 2.4   pkp  12/23/16 Updated tcl to check each extra compiler flag individually
+#		      for linaro toolchain and if any default flags are missing,
+#		      it adds the required flags. This change allows users
+#		      to modify default flag value. This change fixes CR#965023.
+# 2.4   mus  01/24/17 Updated tcl to add "-Wall -Wextra" flags to extra compiler
+#                     flags for gcc.
+# 2.4   mus  02/20/17 Updated tcl to guard xparameters.h by protection macros
 ##############################################################################
 #uses "xillib.tcl"
 
@@ -75,15 +82,41 @@ proc xdefine_cortexa9_params {drvhandle} {
     set extra_flags [::common::get_property VALUE [hsi::get_comp_params -filter { NAME == extra_compiler_flags } ] ]
     if {[string compare -nocase $compiler_name "arm-none-eabi-gcc"] == 0} {
 	set temp_flag $extra_flags
-	if {[string compare -nocase $temp_flag "-mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -nostartfiles"] != 0} {
-		regsub -- {-mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -nostartfiles } $temp_flag {} temp_flag
-		set extra_flags "-mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -nostartfiles $temp_flag"
+	if {[string compare -nocase $temp_flag "-mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -nostartfiles -Wall -Wextra "] != 0} {
+		set flagindex [string first {-mcpu=cortex-a9} $temp_flag 0]
+		if { $flagindex == -1 } {
+		    set temp_flag "$temp_flag -mcpu=cortex-a9"
+		}
+
+		set flagindex [string first {-mfpu=} $temp_flag 0]
+		if { $flagindex == -1 } {
+		    set temp_flag "$temp_flag -mfpu=vfpv3"
+		}
+
+		set flagindex [string first {-mfloat-abi=} $temp_flag 0]
+		if { $flagindex == -1 } {
+		    set temp_flag "$temp_flag -mfloat-abi=hard"
+		}
+
+		set flagindex [string first {-nostartfiles} $temp_flag 0]
+		if { $flagindex == -1 } {
+		    set temp_flag "$temp_flag -nostartfiles"
+		}
+		set flagindex [string first {-Wall} $temp_flag 0]
+		if { $flagindex == -1 } {
+                    set temp_flag "$temp_flag -Wall"
+		}
+		set flagindex [string first {-Wextra} $temp_flag 0]
+		if { $flagindex == -1 } {
+		    set temp_flag "$temp_flag -Wextra"
+		}
+		set extra_flags $temp_flag
 		common::set_property -name VALUE -value $extra_flags -objects  [hsi::get_comp_params -filter { NAME == extra_compiler_flags } ]
 	}
    } elseif {[string compare -nocase $compiler_name "iccarm"] == 0} {
 	set temp_flag $extra_flags
 	if {[string compare -nocase $temp_flag "--debug"] != 0} {
-		regsub -- {-mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -nostartfiles} $temp_flag "" temp_flag
+		regsub -- {-mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -nostartfiles -Wall -Wextra} $temp_flag "" temp_flag
 		regsub -- {--debug } $temp_flag "" temp_flag
 		set extra_flags "--debug $temp_flag"
 		common::set_property -name VALUE -value $extra_flags -objects  [hsi::get_comp_params -filter { NAME == extra_compiler_flags } ]
@@ -100,7 +133,7 @@ proc xdefine_cortexa9_params {drvhandle} {
 	    || [string compare -nocase $compiler_name "armcc"] == 0} {
 	set temp_flag $extra_flags
 	if {[string compare -nocase $temp_flag "-g"] != 0} {
-		regsub -- {-mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -nostartfiles} $temp_flag {} temp_flag
+		regsub -- {-mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -nostartfiles -Wall -Wextra} $temp_flag {} temp_flag
 		regsub -- {-g } $temp_flag "" temp_flag
 		set extra_flags "-g $temp_flag"
 		common::set_property -name VALUE -value $extra_flags -objects  [hsi::get_comp_params -filter { NAME == extra_compiler_flags }]
@@ -125,6 +158,9 @@ proc xdefine_cortexa9_params {drvhandle} {
     set lprocs [lsort $lprocs]
 
     set config_inc [::hsi::utils::open_include_file "xparameters.h"]
+    puts $config_inc "#ifndef XPARAMETERS_H   /* prevent circular inclusions */"
+    puts $config_inc "#define XPARAMETERS_H   /* by using protection macros */"
+    puts $config_inc ""
     puts $config_inc "/* Definition for CPU ID */"
 
     foreach periph $periphs {
@@ -209,3 +245,14 @@ proc xdefine_addr_params_for_ext_intf {drvhandle file_name} {
     close $file_handle
 }
 
+proc post_generate_final {drv_handle} {
+
+	set type [get_property CLASS $drv_handle]
+	if {[string equal $type "driver"]} {
+	   return
+	}
+
+	set file_handle [::hsi::utils::open_include_file "xparameters.h"]
+	puts $file_handle "#endif  /* end of protection macro */"
+	close $file_handle
+}

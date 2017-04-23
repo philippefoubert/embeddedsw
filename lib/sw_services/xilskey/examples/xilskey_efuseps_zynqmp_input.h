@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -50,17 +50,17 @@
 *	TRUE will permanently disables the writing to FUSE_AES block.
 *	FALSE will not modify this control bit of eFuse.
 *
-*	#define XSK_EFUSEPs_FORCE_USE_AES_ONLY		FALSE
+*	#define XSK_EFUSEPS_ENC_ONLY		FALSE
 *	TRUE will permanently enables encrypted booting only using the Fuse
-*	key.
+*	key. It forces to use AES key from eFUSE.
 *	FALSE will not modify this control bit of eFuse.
 *
 *	#define XSK_EFUSEPS_BBRAM_DISABLE		FALSE
 *	TRUE will permanently disables the BBRAM key.
 *	FALSE will not modify this control bit of eFuse.
 *
-*	#define XSK_EFUSEPS_ERR_OUTOF_PMU_DISABLE	FALSE
-*	TRUE will permanently disables the error output from the PMU.
+*	#define XSK_EFUSEPS_ERR_DISABLE	FALSE
+*	TRUE will permanently disables the error messages in JTAG status register.
 *	FALSE will not modify this control bit of eFuse.
 *
 *	#define XSK_EFUSEPS_JTAG_DISABLE		FALSE
@@ -71,16 +71,11 @@
 *	TRUE will permanently disables DFT boot mode.
 *	FALSE will not modify this control bit of eFuse.
 *
-*	#define XSK_EFUSEPS_PROG_GATE_0_DISABLE		FALSE
+*	#define XSK_EFUSEPS_PROG_GATE_DISABLE		FALSE
 *	TRUE will permanently disables PROG_GATE feature in PPD.
-*	FALSE will not modify this control bit of eFuse.
-*
-*	#define XSK_EFUSEPS_PROG_GATE_1_DISABLE		FALSE
-*	TRUE will permanently disables PROG_GATE feature in PPD.
-*	FALSE will not modify this control bit of eFuse.
-*
-*	#define XSK_EFUSEPS_PROG_GATE_2_DISABLE		FALSE
-*	TRUE will permanently disables PROG_GATE feature in PPD.
+*	If you set this then the PROG_GATE can never be activated
+*	and the PL will always be reset when the PS goes down.
+*	Also prevents reboot into JTAG mode after a secure lock down.
 *	FALSE will not modify this control bit of eFuse.
 *
 *	#define XSK_EFUSEPS_SECURE_LOCK			FALSE
@@ -96,7 +91,7 @@
 *	TRUE will permanently disables writing to PPK0 efuses.
 *	FALSE will not modify this control bit of eFuse.
 *
-*	#define XSK_EFUSEPS_PPK0_REVOKE			FALSE
+*	#define XSK_EFUSEPS_PPK0_INVLD			FALSE
 *	TRUE will permanently revokes PPK0.
 *	FALSE will not modify this control bit of eFuse.
 *
@@ -104,9 +99,27 @@
 *	TRUE will permanently disables writing PPK1 efuses.
 *	FALSE will not modify this control bit of eFuse.
 *
-*	#define XSK_EFUSEPS_PPK1_REVOKE			FALSE
+*	#define XSK_EFUSEPS_PPK1_INVLD			FALSE
 *	TRUE will permanently revokes PPK1.
 *	FALSE will not modify this control bit of eFuse.
+*
+*	#define XSK_EFUSEPS_LBIST_EN			FALSE
+*	TRUE will permanently enables logic BIST to be run during boot.
+*	FALSE will not modify this control bit of eFUSE.
+*
+*	#define XSK_EFUSEPS_LPD_SC_EN			FALSE
+*	TRUE will permanently enables zeroization of registers in Low Power
+*	Domain(LPD) during boot.
+*	FALSE will not modify this control bit of eFUSE.
+*
+*	#define XSK_EFUSEPS_FPD_SC_EN			FALSE
+*	TRUE will permanently enables zeroization of registers in Full Power
+*	Domain(FPD) during boot.
+*	FALSE will not modify this control bit of eFUSE.
+*
+*	#define XSK_EFUSEPS_PBR_BOOT_ERR		FALSE
+*	TRUE will permanently enables the boot halt when there is any PMU error.
+*	FALSE will not modify this control bit of eFUSE.
 *
 *	#define XSK_EFUSEPS_USER_WRLK_0			FALSE
 *	TRUE will permanently disables writing to USER_0 efuses.
@@ -342,6 +355,16 @@
 *                        library accepts separate requests for programming
 *                        and reading USER FUSES(0 to 7). Provided single bit
 *                        programming feature for USER FUSEs.
+* 6.2   vns     03/10/17 Modified XSK_EFUSEPs_FORCE_USE_AES_ONLY->
+*                        XSK_EFUSEPS_ENC_ONLY,
+*                        XSK_EFUSEPS_ERR_OUTOF_PMU_DISABLE ->
+*                        XSK_EFUSEPS_ERR_DISABLE,
+*                        XSK_EFUSEPS_PPK0_REVOKE->XSK_EFUSEPS_PPK0_INVLD
+*                        XSK_EFUSEPS_PPK1_REVOKE->XSK_EFUSEPS_PPK1_INVLD
+*                        Added support for programming LBIST, LPD and FPD
+*                        SC enable bits by providing corresponding macros
+*                        Removed 3 macros for PROG GATE disable, now it can
+*                        programmed by setting only one macro.
 *
 * </pre>
 *
@@ -371,20 +394,22 @@ extern "C" {
  */
 #define XSK_EFUSEPS_AES_RD_LOCK			FALSE
 #define XSK_EFUSEPS_AES_WR_LOCK			FALSE
-#define XSK_EFUSEPs_FORCE_USE_AES_ONLY		FALSE
+#define XSK_EFUSEPS_ENC_ONLY		FALSE
 #define XSK_EFUSEPS_BBRAM_DISABLE		FALSE
-#define XSK_EFUSEPS_ERR_OUTOF_PMU_DISABLE	FALSE
+#define XSK_EFUSEPS_ERR_DISABLE			FALSE
 #define XSK_EFUSEPS_JTAG_DISABLE		FALSE
 #define XSK_EFUSEPS_DFT_DISABLE			FALSE
-#define XSK_EFUSEPS_PROG_GATE_0_DISABLE		FALSE
-#define XSK_EFUSEPS_PROG_GATE_1_DISABLE		FALSE
-#define XSK_EFUSEPS_PROG_GATE_2_DISABLE		FALSE
+#define XSK_EFUSEPS_PROG_GATE_DISABLE		FALSE
 #define XSK_EFUSEPS_SECURE_LOCK			FALSE
 #define XSK_EFUSEPS_RSA_ENABLE			FALSE
 #define XSK_EFUSEPS_PPK0_WR_LOCK		FALSE
-#define XSK_EFUSEPS_PPK0_REVOKE			FALSE
+#define XSK_EFUSEPS_PPK0_INVLD			FALSE
 #define XSK_EFUSEPS_PPK1_WR_LOCK		FALSE
-#define XSK_EFUSEPS_PPK1_REVOKE			FALSE
+#define XSK_EFUSEPS_PPK1_INVLD			FALSE
+#define XSK_EFUSEPS_LBIST_EN			FALSE
+#define XSK_EFUSEPS_LPD_SC_EN			FALSE
+#define XSK_EFUSEPS_FPD_SC_EN			FALSE
+#define XSK_EFUSEPS_PBR_BOOT_ERR		FALSE
 
 /**
  * Following is the define to select if the user wants to program

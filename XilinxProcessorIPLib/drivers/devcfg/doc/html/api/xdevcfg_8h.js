@@ -3,7 +3,7 @@ var xdevcfg_8h =
     [ "XDcfg_GetPsVersion", "group__devcfg__v3__3.html#ga24929684d9a57ee5943c5379ba21114b", null ],
     [ "XDcfg_ReadMultiBootConfig", "group__devcfg__v3__3.html#ga49f0c43c6fdeb7eff99095fffc5c18e9", null ],
     [ "XDcfg_SelectIcapInterface", "group__devcfg__v3__3.html#ga16c0f3e337e8ebeb09d71c8b717a9018", null ],
-    [ "XDcfg_SelectPcapInterface", "group__devcfg__v3__3.html#ga36775aac99e72ec7459fba541e90c5be", null ],
+    [ "XDcfg_SelectPcapInterface", "group__devcfg__v3__3.html#ga7a3a846dfaf3161443364bca917f7c34", null ],
     [ "XDcfg_Unlock", "group__devcfg__v3__3.html#ga2ed83e25f13a262faf75dfd55bae3522", null ],
     [ "XDcfg_IntrHandler", "group__devcfg__v3__3.html#gacaa24b2920f1bc5b56662062f2c380e0", null ],
     [ "XDcfg_CfgInitialize", "group__devcfg__v3__3.html#gafcaaa8ac67cf7316c54d1cba36e83e08", null ],

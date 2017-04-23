@@ -20,7 +20,7 @@ var xuartps_8h =
     [ "XUARTPS_FORMAT_NO_PARITY", "group__uartps__v3__1.html#gadacbaf7f47beeebb7301b6d50b74f6c1", null ],
     [ "XUARTPS_FORMAT_ODD_PARITY", "group__uartps__v3__1.html#ga86879c57efb1b9351a5ee4f7043054dc", null ],
     [ "XUARTPS_FORMAT_SPACE_PARITY", "group__uartps__v3__1.html#gab23f88cb97896fab3586f9a90145e559", null ],
-    [ "XUartPs_GetChannelStatus", "group__uartps__v3__1.html#ga431e717426b1a0804eb4accc50b48b05", null ],
+    [ "XUartPs_GetChannelStatus", "group__uartps__v3__1.html#ga8c50cd4a1f7a342dcdf6d7ab1640b1b9", null ],
     [ "XUartPs_GetModeControl", "group__uartps__v3__1.html#gacd6fb80e110f22c2d305c3152cbe9e22", null ],
     [ "XUartPs_IsTransmitEmpty", "group__uartps__v3__1.html#ga9a3d03d5794a4d8cdda2fa2c4ba8e174", null ],
     [ "XUARTPS_OPER_MODE_AUTO_ECHO", "group__uartps__v3__1.html#ga59bf55affd72ca3bd5824c921926527b", null ],

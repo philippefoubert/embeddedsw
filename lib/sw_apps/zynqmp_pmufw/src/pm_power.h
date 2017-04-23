@@ -39,10 +39,15 @@
 #include "pm_common.h"
 #include "pm_node.h"
 #include "pm_master.h"
+#include "xpfw_rom_interface.h"
+
+typedef struct PmPowerClass PmPowerClass;
+typedef struct PmSlaveTcm PmSlaveTcm;
 
 /*********************************************************************
  * Macros
  ********************************************************************/
+
 /* States of power island/domain */
 #define PM_PWR_STATE_OFF    0U
 #define PM_PWR_STATE_ON     1U
@@ -58,41 +63,81 @@
  *           is controlled within its transition actions. Otherwise, this power
  *           structure must exist.
  * @node     Node structure of this power entity
+ * @class    If power node has derived structure this is the pointer the class
  * @children Pointer to the array of children
+ * @powerUp  Handler for powering up the node
+ * @powerDown Handler for powering down the node
  * @pwrDnLatency Latency (in us) for transition to OFF state
  * @pwrUpLatency Latency (in us) for transition to ON state
  * @childCnt Number of childs in children array
- * @permissions ORed flags of masters which are allowed to directly control the
- *              state of the power node
- * @requests ORed flags of masters which have requested the power node
+ * @forcePerms  ORed masks of masters which are allowed to force power down this
+ *              power node
+ * @useCount    How many nodes currently use this power node
  */
 typedef struct PmPower {
 	PmNode node;
+	PmPowerClass* const class;
 	PmNode** const children;
+	int (*const powerUp)(void);
+	int (*const powerDown)(void);
 	const u32 pwrDnLatency;
 	const u32 pwrUpLatency;
-	u32 permissions;
-	u32 requests;
+	u32 forcePerms;
 	const u8 childCnt;
+	u8 useCount;
 } PmPower;
+
+/**
+ * PmPowerDomain - Structure for power domains (do not have power parent)
+ * @power		Basic power structure
+ * @supplyCheckHook	PMU-ROM hook to check power supply on power up
+ * @supplyCheckHookId	PMU-ROM service ID for the supply check
+ */
+typedef struct PmPowerDomain {
+	PmPower power;
+	u32 (*const supplyCheckHook)(const XpbrServHndlr_t RomHandler);
+	enum xpbr_serv_ext_id supplyCheckHookId;
+} PmPowerDomain;
+
+/**
+ * PmPowerIslandRpu - Structure for RPU power island
+ * @power	Basic power structure
+ * @deps	ORed IDs of TCMs which currently depend on the island's state
+ */
+typedef struct PmPowerIslandRpu {
+	PmPower power;
+	u8 deps;
+} PmPowerIslandRpu;
+
+/**
+ * PmPowerClass - Power class to model properties of PmPower derived objects
+ * @construct	Constructor for the power node, call only once on startup
+ * @forceDown	Puts power node in the lowest power state
+ */
+typedef struct PmPowerClass {
+	void (*const construct)(PmPower* const power);
+	void (*const forceDown)(PmPower* const power);
+} PmPowerClass;
 
 /*********************************************************************
  * Global data declarations
  ********************************************************************/
-extern PmPower pmPowerIslandRpu_g;
 extern PmPower pmPowerIslandApu_g;
-extern PmPower pmPowerDomainFpd_g;
-extern PmPower pmPowerDomainLpd_g;
-extern PmPower pmPowerDomainPld_g;
+extern PmPowerIslandRpu pmPowerIslandRpu_g;
+extern PmPowerDomain pmPowerDomainFpd_g;
+extern PmPowerDomain pmPowerDomainLpd_g;
+extern PmPowerDomain pmPowerDomainPld_g;
+
+extern PmNodeClass pmNodeClassPower_g;
 
 /*********************************************************************
  * Function declarations
  ********************************************************************/
-void PmOpportunisticSuspend(PmPower* const power);
-int PmTriggerPowerUp(PmPower* const power);
-int PmForceDownTree(PmPower* const root);
+void PmPowerReleaseParent(PmNode* const node);
+void PmPowerReleaseRpu(PmSlaveTcm* const tcm);
 
-int PmPowerRequest(const PmMaster* const master, PmPower* const power);
-int PmPowerRelease(const PmMaster* const master, PmPower* const power);
+int PmPowerRequestRpu(PmSlaveTcm* const tcm);
+int PmPowerRequestParent(PmNode* const node);
+int PmPowerUpdateLatencyReq(const PmNode* const node);
 
 #endif

@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright (C) 2016 Xilinx, Inc.  All rights reserved.
+ * Copyright (C) 2016 - 17 Xilinx, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,6 +48,9 @@
  * Ver   Who   Date     Changes
  * ----- ---  -------- -------------------------------------------------------
  * 6.1   rp   17/10/16 First release.
+ * 6.2   vns  02/18/17 Modified Encrypt API call due to change in Xilsecure
+ *            03/10/17 Added Support for programming and reading PUF reserved
+ *                     bit
  * </pre>
  *
  * @note
@@ -320,6 +323,7 @@ int main() {
 		PgmPufSecureBits.SynInvalid = XSK_PUF_SYN_INVALID;
 		PgmPufSecureBits.SynWrLk = XSK_PUF_SYN_WRLK;
 		PgmPufSecureBits.RegisterDis = XSK_PUF_REGISTER_DISABLE;
+		PgmPufSecureBits.Reserved = XSK_PUF_RESERVED;
 		Status = XilSKey_Write_Puf_EfusePs_SecureBits(
 					&(PgmPufSecureBits));
 		if (Status != XST_SUCCESS) {
@@ -360,6 +364,12 @@ int main() {
 	else {
 		xil_printf("Writing to the PUF syndrome eFuses is not"
 						" locked\n\r");
+	}
+	if (PufSecureBits.Reserved == TRUE) {
+		xil_printf("Reserved bit is programmed\n\r");
+	}
+	else {
+		xil_printf("Reserved bit is not programmed\n\r");
 	}
 
 #endif
@@ -866,7 +876,7 @@ static u32 XilSKey_Puf_Encrypt_Key()
 
 	/* Request to encrypt the AES key using PUF Key	 */
 	xPuf_printf(XPUF_DEBUG_GENERAL, "App: AES encryption \r\n");
-	XSecure_AesEncrypt(&AesInstance, &PufInstance.BlackKey[0],
+	XSecure_AesEncryptData(&AesInstance, &PufInstance.BlackKey[0],
 			&PufInstance.RedKey[0], 32);
 	xPuf_printf(XPUF_DEBUG_GENERAL, "App: Encrypted key generated\r\n");
 #if defined		XPUF_INFO_ON_UART

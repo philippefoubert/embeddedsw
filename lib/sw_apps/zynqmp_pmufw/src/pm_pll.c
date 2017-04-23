@@ -27,37 +27,24 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*********************************************************************
  * Contains:
- * - PLL slave implementation
- * - PLL slave's FSM implementation - only tracks the PLL usage status
- *   (used/unused).
- * - Functions for saving and restoring PLLs' context
- *
- * Note: PMU does not control states of PLLs. When none of FPD PLLs
- * is used and FPD is going to be powered down, PMU saves context of
- * PLLs in FPD and asserts their reset. After powering up FPD, PMU
- * restores the state of PLL based on saved context only when PLL is
- * needed for the use.
+ * PLL management implementation based on the use count (the number of
+ * nodes whose clocks are driven by the PLL)
  *********************************************************************/
 
 #include "pm_pll.h"
-#include "pm_master.h"
 #include "pm_power.h"
 #include "crf_apb.h"
 #include "crl_apb.h"
 #include "xpfw_util.h"
 
 /* PLL states: */
-/*
- * PLL is not used by any master, so it can be powered down and it's power
- * parent can be powered down as well.
- */
-#define PM_PLL_STATE_UNUSED	0U
-/* PLL is used by at least one master which is controlling state of PLL */
-#define PM_PLL_STATE_USED	1U
-#define PM_PLL_STATE_MAX	2U
+#define PM_PLL_STATE_RESET	0U
+#define PM_PLL_STATE_LOCKED	1U
 
 /* Register offsets (in regard to PLL's base address of control registers) */
 #define PM_PLL_CTRL_OFFSET	0x0U
@@ -72,33 +59,17 @@
 #define PM_PLL_LOCK_TIMEOUT	0x10000U
 
 /* Power consumptions for PLLs defined by its states */
-#define DEFAULT_PLL_POWER_ON	100U
-#define DEFAULT_PLL_POWER_OFF	0U
+#define DEFAULT_PLL_POWER_LOCKED	100U
+#define DEFAULT_PLL_POWER_RESET		0U
 
-/* PLL states */
-static const u32 pmPllStates[PM_PLL_STATE_MAX] = {
-	[PM_PLL_STATE_UNUSED] = 0U,
-	[PM_PLL_STATE_USED] = PM_CAP_ACCESS | PM_CAP_POWER,
-};
-
-/* PLL transition table (from which to which state PLL can transit) */
-static const PmStateTran pmPllTransitions[] = {
-	{
-		.fromState = PM_PLL_STATE_USED,
-		.toState = PM_PLL_STATE_UNUSED,
-		.latency = PM_DEFAULT_LATENCY,
-	}, {
-		.fromState = PM_PLL_STATE_UNUSED,
-		.toState = PM_PLL_STATE_USED,
-		.latency = PM_DEFAULT_LATENCY,
-	},
-};
+/* Period of time needed to lock the PLL (to measure) */
+#define PM_PLL_LOCKING_TIME	1U
 
 /**
  * PmPllBypassAndReset() - Bypass and reset/power down a PLL
  * @pll Pointer to a Pll to be bypassed/reset
  */
-static void PmPllBypassAndReset(PmSlavePll* const pll)
+static void PmPllBypassAndReset(PmPll* const pll)
 {
 	/* Bypass PLL before putting it into the reset */
 	XPfw_RMW32(pll->addr + PM_PLL_CTRL_OFFSET, PM_PLL_CTRL_BYPASS_MASK,
@@ -110,26 +81,52 @@ static void PmPllBypassAndReset(PmSlavePll* const pll)
 }
 
 /**
- * PmPllSuspend() - Save context of PLL and power it down (reset)
- * @pll Pointer to a Pll to be suspended
+ * PmPllSaveContext() - Save the context of the PLL
+ * @pll		PLL whose context should be saved
  */
-static void PmPllSuspend(PmSlavePll* const pll)
+static void PmPllSaveContext(PmPll* const pll)
 {
-	u32 val;
-
-	PmDbg("%s\r\n", PmStrNode(pll->slv.node.nodeId));
-
 	/* Save register setting */
 	pll->context.ctrl = XPfw_Read32(pll->addr + PM_PLL_CTRL_OFFSET);
 	pll->context.cfg = XPfw_Read32(pll->addr + PM_PLL_CFG_OFFSET);
 	pll->context.frac = XPfw_Read32(pll->addr + PM_PLL_FRAC_OFFSET);
 	pll->context.toCtrl = XPfw_Read32(pll->toCtrlAddr);
 	pll->context.saved = true;
+}
 
-	val = XPfw_Read32(pll->addr + PM_PLL_CTRL_OFFSET);
+/**
+ * PmPllRestoreContext() - Restore the context of the PLL
+ * @pll		PLL whose context should be restored
+ */
+static void PmPllRestoreContext(PmPll* const pll)
+{
+	/* Restore register values with reset and bypass asserted */
+	XPfw_Write32(pll->addr + PM_PLL_CTRL_OFFSET, pll->context.ctrl |
+		     PM_PLL_CTRL_RESET_MASK | PM_PLL_CTRL_BYPASS_MASK);
+	XPfw_Write32(pll->addr + PM_PLL_CFG_OFFSET, pll->context.cfg);
+	XPfw_Write32(pll->addr + PM_PLL_FRAC_OFFSET, pll->context.frac);
+	XPfw_Write32(pll->toCtrlAddr, pll->context.toCtrl);
+	pll->context.saved = false;
+}
+
+/**
+ * PmPllSuspend() - Save context of PLL and power it down (reset)
+ * @pll Pointer to a Pll to be suspended
+ */
+static void PmPllSuspend(PmPll* const pll)
+{
+	PmDbg("%s\r\n", PmStrNode(pll->node.nodeId));
+
+	PmPllSaveContext(pll);
+
 	/* If PLL is not already in reset, bypass it and put in reset/pwrdn */
-	if (0U == (val & PM_PLL_CTRL_RESET_MASK)) {
+	if (0U == (pll->context.ctrl & PM_PLL_CTRL_RESET_MASK)) {
 		PmPllBypassAndReset(pll);
+	}
+
+	PmNodeUpdateCurrState(&pll->node, PM_PLL_STATE_RESET);
+	if (NULL != pll->node.parent) {
+		PmPowerReleaseParent(&pll->node);
 	}
 }
 
@@ -141,27 +138,27 @@ static void PmPllSuspend(PmSlavePll* const pll)
  *              - XST_SUCCESS if resumed correctly
  *              - XST_FAILURE if resume failed (if PLL failed to lock)
  */
-static int PmPllResume(PmSlavePll* const pll)
+static int PmPllResume(PmPll* const pll)
 {
+	u32 var = 0;
 	int status = XST_SUCCESS;
 
-	PmDbg("%s\r\n", PmStrNode(pll->slv.node.nodeId));
+	PmDbg("%s\r\n", PmStrNode(pll->node.nodeId));
 
 	if (true == pll->context.saved) {
-		/* Restore register values with reset and bypass asserted */
-		XPfw_Write32(pll->addr + PM_PLL_CTRL_OFFSET, pll->context.ctrl |
-			     PM_PLL_CTRL_RESET_MASK | PM_PLL_CTRL_BYPASS_MASK);
-		XPfw_Write32(pll->addr + PM_PLL_CFG_OFFSET, pll->context.cfg);
-		XPfw_Write32(pll->addr + PM_PLL_FRAC_OFFSET, pll->context.frac);
-		XPfw_Write32(pll->toCtrlAddr, pll->context.toCtrl);
-		pll->context.saved = false;
+		PmPllRestoreContext(pll);
 	}
 
 	if (0U != (PM_PLL_CTRL_RESET_MASK & pll->context.ctrl)) {
 		/* By saved/init configuration PLL is in reset, leave it as is */
 		goto done;
 	}
-
+	if (NULL != pll->node.parent) {
+		status = PmPowerRequestParent(&pll->node);
+		if (XST_SUCCESS != status) {
+			goto done;
+		}
+	}
 	/* Release reset */
 	XPfw_RMW32(pll->addr + PM_PLL_CTRL_OFFSET, PM_PLL_CTRL_RESET_MASK,
 		   ~PM_PLL_CTRL_RESET_MASK);
@@ -182,76 +179,154 @@ static int PmPllResume(PmSlavePll* const pll)
 			   PM_PLL_CTRL_BYPASS_MASK,
 			  ~PM_PLL_CTRL_BYPASS_MASK);
 	}
+	PmNodeUpdateCurrState(&pll->node, PM_PLL_STATE_LOCKED);
+
+	/* Force a delay by counting to timeout */
+	XPfw_UtilPollForMask((u32)&var, ~var, PM_PLL_LOCK_TIMEOUT);
 
 done:
 	return status;
 }
 
 /**
- * PmPllFsmHandler() - PLL FSM handler
- * @slave       Slave whose state should be changed
- * @nextState   State the slave should enter
- *
- * @return      Always XST_SUCCESS if FSM is implemented correctly
- *
- * Note: PLL FSM basically updates currState variable and restores PLL state
- * if needed. FSM transitions cannot fail.
+ * PmPllClearConfig() - Clear configuration of the PLL
+ * @node	PLL node
  */
-static int PmPllFsmHandler(PmSlave* const slave, const PmStateId nextState)
+static void PmPllClearConfig(PmNode* const node)
 {
-	int status;
-	PmSlavePll* pll = (PmSlavePll*)slave->node.derived;
+	PmPll* pll = (PmPll*)node->derived;
 
-	switch (nextState) {
-	case PM_PLL_STATE_USED:
-		/* Resume the PLL */
-		status = PmPllResume(pll);
-		break;
-	case PM_PLL_STATE_UNUSED:
-		/* Suspend the PLL (cannot fail) */
+	pll->useCount = 0U;
+}
+
+/**
+ * PmPllGetWakeUpLatency() - Get wake-up latency of a PLL
+ * @node	PLL node
+ * @lat		Pointer to the location where the latency value should be stored
+ *
+ * @return	XST_SUCCESS if latency value is stored in *lat, XST_NO_FEATURE
+ *		if the latency depends on power parent which has no method
+ *		(getWakeUpLatency) to provide latency information.
+ */
+static int PmPllGetWakeUpLatency(const PmNode* const node, u32* const lat)
+{
+	int status = XST_SUCCESS;
+	PmPll* pll = (PmPll*)node->derived;
+	PmNode* const powerNode = &node->parent->node;
+	u32 latency;
+
+	*lat = 0U;
+	if (PM_PLL_STATE_LOCKED == pll->node.currState) {
+		goto done;
+	}
+
+	*lat += PM_PLL_LOCKING_TIME;
+	if (NULL == powerNode->class->getWakeUpLatency) {
+		status = XST_NO_FEATURE;
+		goto done;
+	}
+
+	status = powerNode->class->getWakeUpLatency(powerNode, &latency);
+	if (XST_SUCCESS == status) {
+		*lat += latency;
+	}
+
+done:
+	return status;
+}
+
+/**
+ * PmPllForceDown() - Force down a PLL node
+ * @node	PLL node
+ *
+ * @return	XST_SUCCESS always (operation cannot fail)
+ */
+static int PmPllForceDown(PmNode* const node)
+{
+	PmPll* pll = (PmPll*)node->derived;
+
+	if (PM_PLL_STATE_LOCKED == node->currState) {
+		pll->useCount = 0U;
 		PmPllSuspend(pll);
-		status = XST_SUCCESS;
-		break;
-	default:
-		status = XST_PM_INTERNAL;
-		break;
+	}
+
+	return XST_SUCCESS;
+}
+
+/**
+ * PmPllInit() - Initialize the PLL
+ * @node	PLL node
+ *
+ * @note	This function does not affect the PLL configuration in hardware.
+ */
+static int PmPllInit(PmNode* const node)
+{
+	PmPll* pll = (PmPll*)node->derived;
+	u32 ctrl = XPfw_Read32(pll->addr + PM_PLL_CTRL_OFFSET);
+	int status = XST_SUCCESS;
+
+	if (0U == (ctrl & PM_PLL_CTRL_RESET_MASK)) {
+		node->currState = PM_PLL_STATE_LOCKED;
+		if (NULL != node->parent) {
+			status = PmPowerRequestParent(node);
+		}
+	} else {
+		node->currState = PM_PLL_STATE_RESET;
 	}
 
 	return status;
 }
 
-/* PLL FSM */
-static const PmSlaveFsm slavePllFsm = {
-	.states = pmPllStates,
-	.statesCnt = ARRAY_SIZE(pmPllStates),
-	.trans = pmPllTransitions,
-	.transCnt = ARRAY_SIZE(pmPllTransitions),
-	.enterState = PmPllFsmHandler,
+/**
+ * PmPllIsUsable() - Check if the PLL is used according to the set configuration
+ * @node	PLL node
+ *
+ * @return	True if PLL is used, false otherwise
+ */
+static bool PmPllIsUsable(PmNode* const node)
+{
+	PmPll* pll = (PmPll*)node->derived;
+
+	return 0U != pll->useCount;
+}
+
+/* Collection of PLL nodes */
+static PmNode* pmNodePllBucket[] = {
+	&pmApll_g.node,
+	&pmVpll_g.node,
+	&pmDpll_g.node,
+	&pmRpll_g.node,
+	&pmIOpll_g.node,
+};
+
+PmNodeClass pmNodeClassPll_g = {
+	DEFINE_NODE_BUCKET(pmNodePllBucket),
+	.id = NODE_CLASS_PLL,
+	.clearConfig = PmPllClearConfig,
+	.construct = NULL,
+	.getWakeUpLatency = PmPllGetWakeUpLatency,
+	.getPowerData = PmNodeGetPowerInfo,
+	.forceDown = PmPllForceDown,
+	.init = PmPllInit,
+	.isUsable = PmPllIsUsable,
 };
 
 static u32 PmStdPllPowers[] = {
-	DEFAULT_PLL_POWER_OFF,
-	DEFAULT_PLL_POWER_ON,
+	DEFAULT_PLL_POWER_RESET,
+	DEFAULT_PLL_POWER_LOCKED,
 };
 
-PmSlavePll pmSlaveApll_g = {
-	.slv = {
-		.node = {
-			.derived = &pmSlaveApll_g,
-			.nodeId = NODE_APLL,
-			.typeId = PM_TYPE_PLL,
-			.parent = &pmPowerDomainFpd_g,
-			.clocks = NULL,
-			.currState = PM_PLL_STATE_UNUSED,
-			.latencyMarg = MAX_LATENCY,
-			.ops = NULL,
-			.powerInfo = PmStdPllPowers,
-			.powerInfoCnt = ARRAY_SIZE(PmStdPllPowers),
-		},
-		.reqs = NULL,
-		.wake = NULL,
-		.slvFsm = &slavePllFsm,
-		.flags = PM_SLAVE_FLAG_IS_SHAREABLE,
+PmPll pmApll_g = {
+	.node = {
+		.derived = &pmApll_g,
+		.nodeId = NODE_APLL,
+		.class = &pmNodeClassPll_g,
+		.parent = &pmPowerDomainFpd_g.power,
+		.clocks = NULL,
+		.currState = PM_PLL_STATE_RESET,
+		.latencyMarg = MAX_LATENCY,
+		.flags = 0U,
+		DEFINE_PM_POWER_INFO(PmStdPllPowers),
 	},
 	.context = {
 		.saved = false,
@@ -263,24 +338,17 @@ PmSlavePll pmSlaveApll_g = {
 	.useCount = 0U,
 };
 
-PmSlavePll pmSlaveVpll_g = {
-	.slv = {
-		.node = {
-			.derived = &pmSlaveVpll_g,
-			.nodeId = NODE_VPLL,
-			.typeId = PM_TYPE_PLL,
-			.parent = &pmPowerDomainFpd_g,
-			.clocks = NULL,
-			.currState = PM_PLL_STATE_UNUSED,
-			.latencyMarg = MAX_LATENCY,
-			.ops = NULL,
-			.powerInfo = PmStdPllPowers,
-			.powerInfoCnt = ARRAY_SIZE(PmStdPllPowers),
-		},
-		.reqs = NULL,
-		.wake = NULL,
-		.slvFsm = &slavePllFsm,
-		.flags = PM_SLAVE_FLAG_IS_SHAREABLE,
+PmPll pmVpll_g = {
+	.node = {
+		.derived = &pmVpll_g,
+		.nodeId = NODE_VPLL,
+		.class = &pmNodeClassPll_g,
+		.parent = &pmPowerDomainFpd_g.power,
+		.clocks = NULL,
+		.currState = PM_PLL_STATE_RESET,
+		.latencyMarg = MAX_LATENCY,
+		.flags = 0U,
+		DEFINE_PM_POWER_INFO(PmStdPllPowers),
 	},
 	.context = {
 		.saved = false,
@@ -292,24 +360,17 @@ PmSlavePll pmSlaveVpll_g = {
 	.useCount = 0U,
 };
 
-PmSlavePll pmSlaveDpll_g = {
-	.slv = {
-		.node = {
-			.derived = &pmSlaveDpll_g,
-			.nodeId = NODE_DPLL,
-			.typeId = PM_TYPE_PLL,
-			.parent = &pmPowerDomainFpd_g,
-			.clocks = NULL,
-			.currState = PM_PLL_STATE_UNUSED,
-			.latencyMarg = MAX_LATENCY,
-			.ops = NULL,
-			.powerInfo = PmStdPllPowers,
-			.powerInfoCnt = ARRAY_SIZE(PmStdPllPowers),
-		},
-		.reqs = NULL,
-		.wake = NULL,
-		.slvFsm = &slavePllFsm,
-		.flags = PM_SLAVE_FLAG_IS_SHAREABLE,
+PmPll pmDpll_g = {
+	.node = {
+		.derived = &pmDpll_g,
+		.nodeId = NODE_DPLL,
+		.class = &pmNodeClassPll_g,
+		.parent = &pmPowerDomainFpd_g.power,
+		.clocks = NULL,
+		.currState = PM_PLL_STATE_RESET,
+		.latencyMarg = MAX_LATENCY,
+		.flags = 0U,
+		DEFINE_PM_POWER_INFO(PmStdPllPowers),
 	},
 	.context = {
 		.saved = false,
@@ -321,24 +382,17 @@ PmSlavePll pmSlaveDpll_g = {
 	.useCount = 0U,
 };
 
-PmSlavePll pmSlaveRpll_g = {
-	.slv = {
-		.node = {
-			.derived = &pmSlaveRpll_g,
-			.nodeId = NODE_RPLL,
-			.typeId = PM_TYPE_PLL,
-			.parent = &pmPowerDomainLpd_g,
-			.clocks = NULL,
-			.currState = PM_PLL_STATE_UNUSED,
-			.latencyMarg = MAX_LATENCY,
-			.ops = NULL,
-			.powerInfo = PmStdPllPowers,
-			.powerInfoCnt = ARRAY_SIZE(PmStdPllPowers),
-		},
-		.reqs = NULL,
-		.wake = NULL,
-		.slvFsm = &slavePllFsm,
-		.flags = PM_SLAVE_FLAG_IS_SHAREABLE,
+PmPll pmRpll_g = {
+	.node = {
+		.derived = &pmRpll_g,
+		.nodeId = NODE_RPLL,
+		.class = &pmNodeClassPll_g,
+		.parent = &pmPowerDomainLpd_g.power,
+		.clocks = NULL,
+		.currState = PM_PLL_STATE_RESET,
+		.latencyMarg = MAX_LATENCY,
+		.flags = 0U,
+		DEFINE_PM_POWER_INFO(PmStdPllPowers),
 	},
 	.context = {
 		.saved = false,
@@ -350,24 +404,17 @@ PmSlavePll pmSlaveRpll_g = {
 	.useCount = 0U,
 };
 
-PmSlavePll pmSlaveIOpll_g = {
-	.slv = {
-		.node = {
-			.derived = &pmSlaveIOpll_g,
-			.nodeId = NODE_IOPLL,
-			.typeId = PM_TYPE_PLL,
-			.parent = &pmPowerDomainLpd_g,
-			.clocks = NULL,
-			.currState = PM_PLL_STATE_UNUSED,
-			.latencyMarg = MAX_LATENCY,
-			.ops = NULL,
-			.powerInfo = PmStdPllPowers,
-			.powerInfoCnt = ARRAY_SIZE(PmStdPllPowers),
-		},
-		.reqs = NULL,
-		.wake = NULL,
-		.slvFsm = &slavePllFsm,
-		.flags = PM_SLAVE_FLAG_IS_SHAREABLE,
+PmPll pmIOpll_g = {
+	.node = {
+		.derived = &pmIOpll_g,
+		.nodeId = NODE_IOPLL,
+		.class = &pmNodeClassPll_g,
+		.parent = &pmPowerDomainLpd_g.power,
+		.clocks = NULL,
+		.currState = PM_PLL_STATE_RESET,
+		.latencyMarg = MAX_LATENCY,
+		.flags = 0U,
+		DEFINE_PM_POWER_INFO(PmStdPllPowers),
 	},
 	.context = {
 		.saved = false,
@@ -379,23 +426,6 @@ PmSlavePll pmSlaveIOpll_g = {
 	.useCount = 0U,
 };
 
-static PmSlavePll* const pmPlls[] = {
-	&pmSlaveApll_g,
-	&pmSlaveVpll_g,
-	&pmSlaveDpll_g,
-	&pmSlaveRpll_g,
-	&pmSlaveIOpll_g,
-};
-
-void PmPllClearUseCount(void)
-{
-	u32 i;
-
-	for (i = 0U; i < ARRAY_SIZE(pmPlls); i++) {
-		pmPlls[i]->useCount = 0U;
-	}
-}
-
 /**
  * PmPllRequest() - Request the PLL
  * @pll		The requested PLL
@@ -406,19 +436,16 @@ void PmPllClearUseCount(void)
  *		related aspects are not handled by the PM framework. The PM
  *		framework only saves/restores the context of PLLs.
  */
-int PmPllRequest(PmSlavePll* const pll)
+int PmPllRequest(PmPll* const pll)
 {
 	int status = XST_SUCCESS;
 
 #ifdef DEBUG_CLK
-	PmDbg("%s #%lu\r\n", PmStrNode(pll->slv.node.nodeId), 1 + pll->useCount);
+	PmDbg("%s #%lu\r\n", PmStrNode(pll->node.nodeId), 1 + pll->useCount);
 #endif
 	/* If the PLL is suspended it needs to be resumed first */
 	if (true == pll->context.saved) {
 		status = PmPllResume(pll);
-		if (XST_SUCCESS == status) {
-			PmNodeUpdateCurrState(&pll->slv.node, PM_PLL_STATE_USED);
-		}
 	}
 
 	pll->useCount++;
@@ -430,15 +457,16 @@ int PmPllRequest(PmSlavePll* const pll)
  * PmPllRequest() - Release the PLL (if PLL becomes unused, it will be reset)
  * @pll		The released PLL
  */
-void PmPllRelease(PmSlavePll* const pll)
+void PmPllRelease(PmPll* const pll)
 {
 	pll->useCount--;
 
 #ifdef DEBUG_CLK
-	PmDbg("%s #%lu\r\n", PmStrNode(pll->slv.node.nodeId), pll->useCount);
+	PmDbg("%s #%lu\r\n", PmStrNode(pll->node.nodeId), pll->useCount);
 #endif
 	if (0U == pll->useCount) {
 		PmPllSuspend(pll);
-		PmNodeUpdateCurrState(&pll->slv.node, PM_PLL_STATE_UNUSED);
 	}
 }
+
+#endif

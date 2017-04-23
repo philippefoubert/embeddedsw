@@ -1,13 +1,14 @@
 var xhwicap_8h =
 [
+    [ "PCAP_CR_OFFSET", "group__hwicap__v10__1.html#ga52f19423a8a68df00cec1517428d8cf7", null ],
     [ "XHwIcap_FifoRead", "group__hwicap__v10__1.html#gab24c5878ebb17d6bb12e6e6f00a70ccc", null ],
     [ "XHwIcap_FifoWrite", "group__hwicap__v10__1.html#ga578d555615b032cd9675c91f60dfb2bd", null ],
     [ "XHwIcap_GetControlReg", "group__hwicap__v10__1.html#gae175cdfd7a3fd2a9c0a68c1e4968572f", null ],
     [ "XHwIcap_GetRdFifoOccupancy", "group__hwicap__v10__1.html#gaa5372c712425f6f8c3cc116a79f29cf3", null ],
     [ "XHwIcap_GetStatusReg", "group__hwicap__v10__1.html#ga656dcfd3edf2dd7e5733af4db36bf69c", null ],
     [ "XHwIcap_GetWrFifoVacancy", "group__hwicap__v10__1.html#gada2fee3cdacf928be46488879f32bf8a", null ],
-    [ "XHwIcap_IntrClear", "group__hwicap__v10__1.html#gad1847ed859265c62358f863314cb582d", null ],
-    [ "XHwIcap_IntrDisable", "group__hwicap__v10__1.html#ga0303489c772460f9a188fab7339f5c63", null ],
+    [ "XHwIcap_IntrClear", "group__hwicap__v10__1.html#ga161e6cb1deac088c298c11c6400da295", null ],
+    [ "XHwIcap_IntrDisable", "group__hwicap__v10__1.html#gadd39ee74d909817a0ecd1d5145f36920", null ],
     [ "XHwIcap_IntrEnable", "group__hwicap__v10__1.html#gabf5d9b150a34fa3759415531b833f81a", null ],
     [ "XHwIcap_IntrGetEnabled", "group__hwicap__v10__1.html#ga50e8cae31685b6c7e2bb880fd1138209", null ],
     [ "XHwIcap_IntrGetStatus", "group__hwicap__v10__1.html#ga9ea29151eef34461b2a964bba048c22f", null ],

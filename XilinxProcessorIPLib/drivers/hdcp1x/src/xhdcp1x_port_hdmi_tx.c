@@ -187,18 +187,33 @@ static int XHdcp1x_PortHdmiTxInit(XHdcp1x *InstancePtr)
 ******************************************************************************/
 static int XHdcp1x_PortHdmiTxIsCapable(const XHdcp1x *InstancePtr)
 {
-	u8 Value = 0;
+	u8 Value[2] = {0, 0};
+	u16 Bstatus = 0;
 	int IsCapable = FALSE;
 
 	/* Verify arguments. */
 	Xil_AssertNonvoid(InstancePtr != NULL);
 
-	/* Check for hdcp capable */
-	if (XHdcp1x_PortHdmiTxRead(InstancePtr, XHDCP1X_PORT_OFFSET_BCAPS,
-			&Value, 1) > 0) {
-		if ((Value & XHDCP1X_PORT_BIT_BCAPS_HDMI) != 0) {
-			IsCapable = TRUE;
+	/* Check if connected device is DVI or HDMI capable in Bcaps.
+        If it is HDMI capable, check if HDMI_MODE in Bstatus is true. */
+	if (XHdcp1x_PortHdmiTxRead(InstancePtr,
+		XHDCP1X_PORT_OFFSET_BCAPS, Value, 1)) {
+		/* HDMI */
+		if ((Value[0] & XHDCP1X_PORT_BIT_BCAPS_HDMI)) {
+			if (XHdcp1x_PortHdmiTxRead(InstancePtr,
+				XHDCP1X_PORT_OFFSET_BSTATUS, Value, 2)) {
+			Bstatus = Value[0];
+			Bstatus |= Value[1] << 8;
+
+			if ((Bstatus & XHDCP1X_PORT_BIT_BSTATUS_HDMI_MODE)) {
+					IsCapable = TRUE;
+				}
+			}
 		}
+		/* DVI */
+		else {
+			IsCapable = TRUE;
+        }
 	}
 
 	return (IsCapable);
@@ -280,7 +295,8 @@ static int XHdcp1x_PortHdmiTxGetRepeaterInfo(const XHdcp1x *InstancePtr,
 			XHDCP1X_PORT_BUF_TO_UINT(U16Value, Buf, 16);
 
 			/* Update Info */
-			*Info = (U16Value & 0x0FFFu);
+			*Info = (U16Value & 0x1FFFu);
+
 		}
 		else {
 			Status = XST_DEVICE_BUSY;
@@ -310,7 +326,6 @@ static int XHdcp1x_PortHdmiTxGetRepeaterInfo(const XHdcp1x *InstancePtr,
 static int XHdcp1x_PortHdmiTxRead(const XHdcp1x *InstancePtr, u8 Offset,
 		void *Buf, u32 BufSize)
 {
-	XV_HdmiTx *HdmiTx = InstancePtr->Port.PhyIfPtr;
 	u8 Slave = 0x3Au;
 	int NumRead = 0;
 	u8 *ReadBuf = Buf;
@@ -361,11 +376,10 @@ static int XHdcp1x_PortHdmiTxRead(const XHdcp1x *InstancePtr, u8 Offset,
 static int XHdcp1x_PortHdmiTxWrite(XHdcp1x *InstancePtr, u8 Offset,
 		const void *Buf, u32 BufSize)
 {
-	XV_HdmiTx *HdmiTx = InstancePtr->Port.PhyIfPtr;
 	u8 Slave = 0x3Au;
 	u8 TxBuf[XHDCP1X_WRITE_CHUNK_SZ + 1];
 	int NumWritten = 0;
-	int ThisTime = 0;
+	u32 ThisTime = 0;
 	const u8 *WriteBuf = Buf;
 
 	/* Verify arguments. */

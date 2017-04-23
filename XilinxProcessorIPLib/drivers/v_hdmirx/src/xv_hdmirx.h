@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2016 Xilinx, Inc. All rights reserved.
+* Copyright (C) 2016 - 2017  Xilinx, Inc. All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -116,16 +116,21 @@
 *
 * Ver   Who    Date     Changes
 * ----- ------ -------- --------------------------------------------------
-* 1.0   gm, mg 10/07/15 Initial release.
-* 1.1   yh     14/01/16 Added Marco for AxisEnable PIO
-* 1.2   yh     15/01/16 Added 3D Video support
-* 1.3   MG     18/02/16 Added link error callback.
-* 1.4   MG     08/03/16 Added RefClk to structure XV_HdmiRx_Stream
-* 1.5   MG     13/05/16 Added XV_HdmiRx_DdcHdcp22Mode and XV_HdmiRx_DdcHdcp14Mode macros
-* 1.6   MG     27/05/16 Added VTD timebase macro
-* 1.7   YH     25/07/16 Used UINTPTR instead of u32 for BaseAddress
-*                       XV_HdmiRx_Config
-*                       XV_HdmiRx_CfgInitialize
+* 1.00  gm, mg 10/07/15 Initial release.
+* 1.01  yh     14/01/16 Added Marco for AxisEnable PIO
+* 1.02  yh     15/01/16 Added 3D Video support
+* 1.03  MG     18/02/16 Added link error callback.
+* 1.04  MG     08/03/16 Added RefClk to structure XV_HdmiRx_Stream
+* 1.05  MG     13/05/16 Added XV_HdmiRx_DdcHdcp22Mode and XV_HdmiRx_DdcHdcp14
+*                       Mode macros
+* 1.06  MG     27/05/16 Added VTD timebase macro
+* 1.07  YH     25/07/16 Used UINTPTR instead of u32 for BaseAddress
+*                          XV_HdmiRx_Config
+*                          XV_HdmiRx_CfgInitialize
+* 1.08  YH     14/11/16 Added XV_HdmiRx_Bridge_yuv420 & XV_HdmiRx_Bridge_pixel
+*                          mode macros
+* 1.09  MMO    02/03/17 Added Sync Loss and IsMode Handler for HDCP
+*                          compliance test.
 * </pre>
 *
 ******************************************************************************/
@@ -165,7 +170,9 @@ typedef enum {
 	XV_HDMIRX_HANDLER_STREAM_INIT,	/**< Interrupt type for stream init */
 	XV_HDMIRX_HANDLER_STREAM_UP,	/**< Interrupt type for stream up */
 	XV_HDMIRX_HANDLER_HDCP,			/**< Interrupt type for hdcp */
-	XV_HDMIRX_HANDLER_LINK_ERROR	/**< Interrupt type for link error */
+	XV_HDMIRX_HANDLER_LINK_ERROR,		/**< Interrupt type for link error */
+	XV_HDMIRX_HANDLER_SYNC_LOSS,       /**< Interrupt type for sync loss */
+	XV_HDMIRX_HANDLER_MODE             /**< Interrupt type for mode */
 } XV_HdmiRx_HandlerType;
 /*@}*/
 
@@ -226,6 +233,7 @@ typedef struct {
 	XV_HdmiRx_State	State;				/**< State */
 	u8 	IsConnected;					/**< Connected flag. This flag is set when
 										* the cable is connected */
+	u8 GetVideoPropertiesTries;			/** This value is used  in the GetVideoProperties API*/
 } XV_HdmiRx_Stream;
 
 
@@ -315,6 +323,14 @@ typedef struct {
 	XV_HdmiRx_Callback LinkErrorCallback;	/**< Callback for link error callback */
 	void *LinkErrorRef;						/**< To be passed to the link error callback */
 	u32 IsLinkErrorCallbackSet;				/**< Set flag. This flag is set to true when the callback has been registered */
+
+	XV_HdmiRx_Callback SyncLossCallback;		/**< Callback for sync loss callback */
+	void *SyncLossRef;						/**< To be passed to the link error callback */
+	u32 IsSyncLossCallbackSet;				/**< Set flag. This flag is set to true when the callback has been registered */
+
+	XV_HdmiRx_Callback ModeCallback;			/**< Callback for sync loss callback */
+	void *ModeRef;							/**< To be passed to the link error callback */
+	u32 IsModeCallbackSet;					/**< Set flag. This flag is set to true when the callback has been registered */
 
 	/* HDMI RX stream */
 	XV_HdmiRx_Stream Stream;				/**< HDMI RX stream information */
@@ -454,6 +470,55 @@ typedef struct {
 	} \
 }
 
+/*****************************************************************************/
+/**
+*
+* This macro controls the YUV420 mode for video bridge.
+*
+* @param	InstancePtr is a pointer to the XHdmi_Rx core instance.
+* @param	SetClr specifies TRUE/FALSE value to either enable or disable the
+*		YUV 420 Support.
+*
+* @return	None.
+*
+* @note		C-style signature:
+*		void XV_HdmiRx_Bridge_yuv420(XV_HdmiRx *InstancePtr, u8 SetClr)
+*
+******************************************************************************/
+#define XV_HdmiRx_Bridge_yuv420(InstancePtr, SetClr) \
+{ \
+	if (SetClr) { \
+		XV_HdmiRx_WriteReg((InstancePtr)->Config.BaseAddress, (XV_HDMIRX_PIO_OUT_SET_OFFSET), (XV_HDMIRX_PIO_OUT_BRIDGE_YUV420_MASK)); \
+	} \
+	else { \
+		XV_HdmiRx_WriteReg((InstancePtr)->Config.BaseAddress, (XV_HDMIRX_PIO_OUT_CLR_OFFSET), (XV_HDMIRX_PIO_OUT_BRIDGE_YUV420_MASK)); \
+	} \
+}
+
+/*****************************************************************************/
+/**
+*
+* This macro controls the Pixel Drop mode for video bridge.
+*
+* @param	InstancePtr is a pointer to the XHdmi_Rx core instance.
+* @param	SetClr specifies TRUE/FALSE value to either enable or disable the
+*		Pixel Repitition.
+*
+* @return	None.
+*
+* @note		C-style signature:
+*		void XV_HdmiRx_Bridge_pixel(XV_HdmiRx *InstancePtr, u8 SetClr)
+*
+******************************************************************************/
+#define XV_HdmiRx_Bridge_pixel(InstancePtr, SetClr) \
+{ \
+	if (SetClr) { \
+		XV_HdmiRx_WriteReg((InstancePtr)->Config.BaseAddress, (XV_HDMIRX_PIO_OUT_SET_OFFSET), (XV_HDMIRX_PIO_OUT_BRIDGE_PIXEL_MASK)); \
+	} \
+	else { \
+		XV_HdmiRx_WriteReg((InstancePtr)->Config.BaseAddress, (XV_HDMIRX_PIO_OUT_CLR_OFFSET), (XV_HDMIRX_PIO_OUT_BRIDGE_PIXEL_MASK)); \
+	} \
+}
 
 /*****************************************************************************/
 /**
@@ -1150,7 +1215,7 @@ int XV_HdmiRx_GetTmdsClockRatio(XV_HdmiRx *InstancePtr);
 u8 XV_HdmiRx_GetAviVic(XV_HdmiRx *InstancePtr);
 XVidC_ColorFormat XV_HdmiRx_GetAviColorSpace(XV_HdmiRx *InstancePtr);
 XVidC_ColorDepth XV_HdmiRx_GetGcpColorDepth(XV_HdmiRx *InstancePtr);
-void XV_HdmiRx_GetVideoProperties(XV_HdmiRx *InstancePtr);
+int XV_HdmiRx_GetVideoProperties(XV_HdmiRx *InstancePtr);
 int XV_HdmiRx_GetVideoTiming(XV_HdmiRx *InstancePtr);
 u32 XV_HdmiRx_Divide(u32 Dividend, u32 Divisor);
 

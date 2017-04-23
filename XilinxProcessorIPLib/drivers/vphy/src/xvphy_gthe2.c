@@ -47,13 +47,20 @@
  * ----- ---- -------- -----------------------------------------------
  * 1.0   als  10/19/15 Initial release.
  * 1.2   gm   08/26/16 Suppressed warning messages due to unused arguments
+ * 1.4   gm   29/11/16 Added preprocessor directives for sw footprint reduction
+ *                     Changed TX reconfig hook from TxPllRefClkDiv1Reconfig to
+ *                       TxChReconfig
+ *                     Corrected the default return value of DRP encoding
+ *                       APIs to prevent overwritting the reserved bits
  * </pre>
  *
 *******************************************************************************/
 
 /******************************* Include Files ********************************/
 
+#include "xparameters.h"
 #include "xvphy_gt.h"
+#if (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE2)
 #include "xstatus.h"
 
 /**************************** Function Prototypes *****************************/
@@ -133,7 +140,7 @@ const XVphy_GtConfig Gthe2Config = {
 	.ClkChReconfig = XVphy_Gthe2ClkChReconfig,
 	.ClkCmnReconfig = XVphy_Gthe2ClkCmnReconfig,
 	.RxChReconfig = XVphy_Gthe2RxChReconfig,
-	.TxPllRefClkDiv1Reconfig = NULL,
+	.TxChReconfig = NULL,
 
 	.CpllDivs = {
 		.M = Gthe2CpllDivsM,
@@ -266,16 +273,16 @@ u32 XVphy_Gthe2OutDivChReconfig(XVphy *InstancePtr, u8 QuadId,
 		/* Mask out RX_OUT_DIV. */
 		DrpVal &= ~0x07;
 		/* Set RX_OUT_DIV. */
-		WriteVal = XVphy_DToDrpEncoding(InstancePtr, QuadId, ChId,
-								XVPHY_DIR_RX);
+		WriteVal = (XVphy_DToDrpEncoding(InstancePtr, QuadId, ChId,
+								XVPHY_DIR_RX) & 0x7);
 		DrpVal |= WriteVal;
 	}
 	else {
 		/* Mask out TX_OUT_DIV. */
 		DrpVal &= ~0x70;
 		/* Set TX_OUT_DIV. */
-		WriteVal = XVphy_DToDrpEncoding(InstancePtr, QuadId, ChId,
-								XVPHY_DIR_TX);
+		WriteVal = (XVphy_DToDrpEncoding(InstancePtr, QuadId, ChId,
+								XVPHY_DIR_TX) & 0x7);
 		DrpVal |= (WriteVal << 4);
 	}
 	/* Write new DRP register value for TX/RX dividers. */
@@ -310,13 +317,13 @@ u32 XVphy_Gthe2ClkChReconfig(XVphy *InstancePtr, u8 QuadId,
 	/* Mask out clock divider bits. */
 	DrpVal &= ~(0x1FFF);
 	/* Set CPLL_FBDIV. */
-	WriteVal = XVphy_NToDrpEncoding(InstancePtr, QuadId, ChId, 2);
+	WriteVal = (XVphy_NToDrpEncoding(InstancePtr, QuadId, ChId, 2) & 0x7F);
 	DrpVal |= WriteVal;
 	/* Set CPLL_FBDIV_45. */
-	WriteVal = XVphy_NToDrpEncoding(InstancePtr, QuadId, ChId, 1);
+	WriteVal = (XVphy_NToDrpEncoding(InstancePtr, QuadId, ChId, 1) & 0x1);
 	DrpVal |= (WriteVal << 7);
 	/* Set CPLL_REFCLKDIV. */
-	WriteVal = XVphy_MToDrpEncoding(InstancePtr, QuadId, ChId);
+	WriteVal = (XVphy_MToDrpEncoding(InstancePtr, QuadId, ChId) & 0x1F);
 	DrpVal |= (WriteVal << 8);
 	/* Write new DRP register value for PLL dividers. */
 	XVphy_DrpWrite(InstancePtr, QuadId, ChId, 0x5E, DrpVal);
@@ -362,7 +369,7 @@ u32 XVphy_Gthe2ClkCmnReconfig(XVphy *InstancePtr, u8 QuadId,
 	/* Mask out QPLL_REFCLK_DIV. */
 	DrpVal &= ~(0xF800);
 	/* Set QPLL_REFCLK_DIV. */
-	WriteVal = XVphy_MToDrpEncoding(InstancePtr, QuadId, CmnId);
+	WriteVal = (XVphy_MToDrpEncoding(InstancePtr, QuadId, CmnId) & 0x1F);
 	DrpVal |= (WriteVal << 11);
 	/* Write new DRP register value for QPLL_REFCLK_DIV. */
 	XVphy_DrpWrite(InstancePtr, QuadId, CmnId, 0x33, DrpVal);
@@ -372,7 +379,7 @@ u32 XVphy_Gthe2ClkCmnReconfig(XVphy *InstancePtr, u8 QuadId,
 	/* Mask out QPLL_FBDIV. */
 	DrpVal &= ~(0x3FFF);
 	/* Set QPLL_FBDIV. */
-	WriteVal = XVphy_NToDrpEncoding(InstancePtr, QuadId, CmnId, 0);
+	WriteVal = (XVphy_NToDrpEncoding(InstancePtr, QuadId, CmnId, 0) & 0x3FF);
 	DrpVal |= WriteVal;
 	/* Write new DRP register value for QPLL_FBDIV. */
 	XVphy_DrpWrite(InstancePtr, QuadId, CmnId, 0x36, DrpVal);
@@ -575,7 +582,7 @@ static u8 XVphy_DrpEncodeQpllMCpllMN2(u8 AttrEncode)
 		DrpEncode = (AttrEncode - 2);
 		break;
 	default:
-		DrpEncode = 0xFF;
+		DrpEncode = 0xF;
 		break;
 	}
 
@@ -597,7 +604,7 @@ static u8 XVphy_DrpEncodeCpllN1(u8 AttrEncode)
 {
 	u8 DrpEncode;
 
-	DrpEncode = AttrEncode - 4;
+	DrpEncode = (AttrEncode - 4) & 0x1;
 
 	return DrpEncode;
 }
@@ -634,7 +641,7 @@ static u8 XVphy_DrpEncodeCpllTxRxD(u8 AttrEncode)
 		DrpEncode = 4;
 		break;
 	default:
-		DrpEncode = 0xFF;
+		DrpEncode = 0x4;
 		break;
 	}
 
@@ -682,9 +689,10 @@ static u16 XVphy_DrpEncodeQpllN(u8 AttrEncode)
 		DrpEncode = 0x170;
 		break;
 	default:
-		DrpEncode = 0xFF;
+		DrpEncode = 0x3FF;
 		break;
 	}
 
 	return DrpEncode;
 }
+#endif

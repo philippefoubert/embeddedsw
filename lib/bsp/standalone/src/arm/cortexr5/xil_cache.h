@@ -34,14 +34,21 @@
 *
 * @file xil_cache.h
 *
-* Contains required functions for the ARM cache functionality
+* @addtogroup r5_cache_apis Cortex R5 Processor Cache Functions
 *
+* Cache functions provide access to cache related operations such as flush
+*  and invalidate for instruction and data caches. It gives option to perform
+* the cache operations on a single cacheline, a range of memory and an entire
+* cache.
+*
+* @{
 * <pre>
 * MODIFICATION HISTORY:
 *
 * Ver   Who  Date     Changes
 * ----- ---- -------- -----------------------------------------------
 * 5.00 	pkp  02/20/14 First release
+* 6.2   mus  01/27/17 Updated to support IAR compiler
 * </pre>
 *
 ******************************************************************************/
@@ -54,6 +61,7 @@
 extern "C" {
 #endif
 
+#if defined (__GNUC__)
 #define asm_inval_dc_line_mva_poc(param) __asm__ __volatile__("mcr " \
 		XREG_CP15_INVAL_DC_LINE_MVA_POC :: "r" (param))
 
@@ -65,6 +73,19 @@ extern "C" {
 
 #define asm_inval_ic_line_mva_pou(param) __asm__ __volatile__("mcr " \
 		XREG_CP15_INVAL_IC_LINE_MVA_POU :: "r" (param))
+#elif defined (__ICCARM__)
+#define asm_inval_dc_line_mva_poc(param) __asm volatile("mcr " \
+		XREG_CP15_INVAL_DC_LINE_MVA_POC :: "r" (param))
+
+#define asm_clean_inval_dc_line_sw(param) __asm volatile("mcr " \
+		XREG_CP15_CLEAN_INVAL_DC_LINE_SW :: "r" (param))
+
+#define asm_clean_inval_dc_line_mva_poc(param) __asm volatile("mcr " \
+		XREG_CP15_CLEAN_INVAL_DC_LINE_MVA_POC :: "r" (param))
+
+#define asm_inval_ic_line_mva_pou(param) __asm volatile("mcr " \
+		XREG_CP15_INVAL_IC_LINE_MVA_POU :: "r" (param))
+#endif
 
 void Xil_DCacheEnable(void);
 void Xil_DCacheDisable(void);
@@ -87,3 +108,6 @@ void Xil_ICacheInvalidateLine(INTPTR adr);
 #endif
 
 #endif
+/**
+* @} End of "addtogroup r5_cache_apis".
+*/

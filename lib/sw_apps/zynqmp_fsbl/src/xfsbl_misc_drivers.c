@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +44,10 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00  kc   10/21/13 Initial release
+* 2.0   bv   12/02/16 Made compliance to MISRAC 2012 guidelines
+*       jr   01/24/17 Updated XFsbl_PmInit function, to process only
+*                     SYSCFG is enabled and sending PM_SET_CONFIGURATION API
+*                     to the PMU
 *
 * </pre>
 *
@@ -69,6 +73,12 @@
 #ifdef XPAR_XIPIPSU_0_DEVICE_ID
 #include "xipipsu.h"
 #endif
+
+#ifdef XPAR_XILPM_ENABLED
+#include "pm_defs.h"
+#include "pm_cfg_obj.h"
+#endif
+
 /************************** Constant Definitions *****************************/
 
 /**************************** Type Definitions *******************************/
@@ -82,10 +92,10 @@
 #endif
 #define PM_INIT_COMPLETED_KEY		0x5A5A5A5AU
 /************************** Function Prototypes ******************************/
-
+static u32 XFsbl_ConvertTime_WdtCounter(u32 seconds);
 /************************** Variable Definitions *****************************/
 #ifdef XFSBL_WDT_PRESENT
-static XWdtPs Watchdog;		/* Instance of WatchDog Timer	*/
+static XWdtPs Watchdog={0};		/* Instance of WatchDog Timer	*/
 #endif
 /*****************************************************************************/
 
@@ -107,11 +117,12 @@ static XWdtPs Watchdog;		/* Instance of WatchDog Timer	*/
  * @return	None
  *
  *****************************************************************************/
-u32 XFsbl_InitWdt()
+u32 XFsbl_InitWdt(void)
 {
-	u32 Status = XFSBL_SUCCESS;
+	s32 Status;
+	u32 UStatus;
 	XWdtPs_Config *ConfigPtr; 	/* Config structure of the WatchDog Timer */
-	u32 CounterValue = 1;
+	u32 CounterValue;
 	u32 RegValue;
 
 
@@ -119,12 +130,18 @@ u32 XFsbl_InitWdt()
 	 * Initialize the WDT timer
 	 */
 	ConfigPtr = XWdtPs_LookupConfig(XFSBL_WDT_DEVICE_ID);
+
+	if(ConfigPtr==NULL) {
+		UStatus = XFSBL_WDT_INIT_FAILED;
+		goto END;
+	}
+
 	Status = XWdtPs_CfgInitialize(&Watchdog,
 			ConfigPtr,
 			ConfigPtr->BaseAddress);
-	if (Status != XST_SUCCESS) {
+	if (Status != XFSBL_SUCCESS) {
 		XFsbl_Printf(DEBUG_INFO, "XFSBL_WDT_INIT_FAILED\n\r");
-		Status = XFSBL_WDT_INIT_FAILED;
+		UStatus = XFSBL_WDT_INIT_FAILED;
 		goto END;
 	}
 
@@ -167,8 +184,9 @@ u32 XFsbl_InitWdt()
 
 	XWdtPs_RestartWdt(&Watchdog);
 
+	UStatus = XFSBL_SUCCESS;
 END:
-	return Status;
+	return UStatus;
 }
 
 
@@ -184,24 +202,27 @@ END:
 * @note		None
 *
 *******************************************************************************/
-u32 XFsbl_ConvertTime_WdtCounter(u32 seconds)
+static u32 XFsbl_ConvertTime_WdtCounter(u32 seconds)
 {
-	double time = 0.0;
+	double time;
 	double CounterValue;
-	u32 Crv = 0;
-	u32 Prescaler=0;
-	u32 PrescalerValue=0;
+	u32 Crv;
+	u32 Prescaler;
+	u32 PrescalerValue;
 
 	Prescaler = XWdtPs_GetControlValue(&Watchdog, XWDTPS_CLK_PRESCALE);
 
 	if (Prescaler == XWDTPS_CCR_PSCALE_0008) {
 		PrescalerValue = 8;
-	} if (Prescaler == XWDTPS_CCR_PSCALE_0064) {
+	} else if (Prescaler == XWDTPS_CCR_PSCALE_0064) {
 		PrescalerValue = 64;
-	} if (Prescaler == XWDTPS_CCR_PSCALE_4096) {
+	} else if (Prescaler == XWDTPS_CCR_PSCALE_4096) {
 		PrescalerValue = 4096;
 	}
-
+	else
+	{
+		PrescalerValue = 0U;
+	}
 	time = (double)(PrescalerValue) / (double)XPAR_XWDTPS_0_WDT_CLK_FREQ_HZ;
 
 	CounterValue = seconds / time;
@@ -223,7 +244,7 @@ u32 XFsbl_ConvertTime_WdtCounter(u32 seconds)
 * @note		None
 *
 *******************************************************************************/
-void XFsbl_RestartWdt()
+void XFsbl_RestartWdt(void)
 {
 	XWdtPs_RestartWdt(&Watchdog);
 }
@@ -239,7 +260,7 @@ void XFsbl_RestartWdt()
 * @note		None
 *
 *******************************************************************************/
-void XFsbl_StopWdt()
+void XFsbl_StopWdt(void)
 {
 	u32 RegValue;
 
@@ -272,11 +293,20 @@ void XFsbl_StopWdt()
 *******************************************************************************/
 u32 XFsbl_PmInit(void)
 {
-	u32 Status = XFSBL_SUCCESS;
+	u32 UStatus;
+/* Proceed only if SYSCFG is enabled */
+#ifdef XPAR_XILPM_ENABLED
 #ifdef XPAR_XIPIPSU_0_DEVICE_ID
+	s32 Status ;
 	XIpiPsu IpiInstance;
 	XIpiPsu_Config *Config;
-	u32 Response, Buffer = PM_INIT;
+	u32 Response = 0U;
+
+	#ifdef __aarch64__
+	u32 CfgCmd[2U] = {PM_SET_CONFIGURATION, (u32)((u64)&XPm_ConfigObject[0])};
+	#else
+	u32 CfgCmd[2U] = {PM_SET_CONFIGURATION, (u32)&XPm_ConfigObject[0]};
+	#endif
 #endif
 
 	/**
@@ -293,11 +323,12 @@ u32 XFsbl_PmInit(void)
 	if ((XFsbl_In32(PMU_GLOBAL_GLOBAL_CNTRL) &
 			PMU_GLOBAL_GLOBAL_CNTRL_FW_IS_PRESENT_MASK) !=
 				PMU_GLOBAL_GLOBAL_CNTRL_FW_IS_PRESENT_MASK) {
+		UStatus = XFSBL_SUCCESS;
 		goto END;
 	}
 #ifndef XPAR_XIPIPSU_0_DEVICE_ID
 	else {
-		Status = XFSBL_ERROR_PM_INIT;
+		UStatus = XFSBL_ERROR_PM_INIT;
 		XFsbl_Printf(DEBUG_GENERAL,
 			"PMU firmware is present, but IPI is disabled\r\n");
 		goto END;
@@ -308,28 +339,27 @@ u32 XFsbl_PmInit(void)
 	/* Initialize IPI peripheral */
 	Config = XIpiPsu_LookupConfig(IPI_DEVICE_ID);
 	if (Config == NULL) {
-		Status = XFSBL_ERROR_PM_INIT;
+		UStatus = XFSBL_ERROR_PM_INIT;
 		goto END;
 	}
 
-	Status = (u32)XIpiPsu_CfgInitialize(&IpiInstance, Config,
+	Status = XIpiPsu_CfgInitialize(&IpiInstance, Config,
 			Config->BaseAddress);
-	if (XST_SUCCESS != Status) {
-		Status = XFSBL_ERROR_PM_INIT;
+	if (XFSBL_SUCCESS != Status) {
+		UStatus = XFSBL_ERROR_PM_INIT;
 		goto END;
 	}
-
-	/* Send PM_INIT API to the PMU */
+	/* Send PM_SET_CONFIGURATION API to the PMU */
 	Status = XIpiPsu_WriteMessage(&IpiInstance, IPI_PMU_PM_INT_MASK,
-					&Buffer, 1, XIPIPSU_BUF_TYPE_MSG);
-	if (XST_SUCCESS != Status) {
-		Status = XFSBL_ERROR_PM_INIT;
+					&CfgCmd[0], 2U, XIPIPSU_BUF_TYPE_MSG);
+	if (XFSBL_SUCCESS != Status) {
+		UStatus = XFSBL_ERROR_PM_INIT;
 		goto END;
 	}
 
 	Status = XIpiPsu_TriggerIpi(&IpiInstance, IPI_PMU_PM_INT_MASK);
-	if (XST_SUCCESS != Status) {
-		Status = XFSBL_ERROR_PM_INIT;
+	if (XFSBL_SUCCESS != Status) {
+		UStatus = XFSBL_ERROR_PM_INIT;
 		goto END;
 	}
 
@@ -337,20 +367,21 @@ u32 XFsbl_PmInit(void)
 	/* This is a blocking call, wait until IPI is handled by the PMU */
 	Status = XIpiPsu_PollForAck(&IpiInstance, IPI_PMU_PM_INT_MASK,
 				  PM_IPI_TIMEOUT);
-	if (XST_SUCCESS != Status) {
-		Status = XFSBL_ERROR_PM_INIT;
+	if (XFSBL_SUCCESS != Status) {
+		UStatus = XFSBL_ERROR_PM_INIT;
 		goto END;
 	}
 
 	Status = XIpiPsu_ReadMessage(&IpiInstance, IPI_PMU_PM_INT_MASK,
 					&Response, 1, XIPIPSU_BUF_TYPE_RESP);
-	if ((Status != XST_SUCCESS) || (Response != XST_SUCCESS)) {
-		Status = XFSBL_ERROR_PM_INIT;
+	if ((Status != XFSBL_SUCCESS) || (Response != XFSBL_SUCCESS)) {
+		UStatus = XFSBL_ERROR_PM_INIT;
 		goto END;
 	}
 #endif /** end of IPI related code */
-
+#endif /* End of XPAR_XILPM_ENABLED */
 	XFsbl_Printf(DEBUG_DETAILED,"PM Init Success\r\n");
+	UStatus = XFSBL_SUCCESS;
 END:
-	return Status;
+	return UStatus;
 }

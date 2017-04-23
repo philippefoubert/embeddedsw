@@ -14,7 +14,13 @@ var NAVTREE =
       [ "Typedefs", "globals_type.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
-    [ "File List", "files.html", "files" ]
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xtrafgen_interrupt_example.c", "example.html#ex1", null ],
+      [ "xtrafgen_master_streaming_example.c", "example.html#ex2", null ],
+      [ "xtrafgen_polling_example.c", "example.html#ex3", null ],
+      [ "xtrafgen_static_mode_example.c", "example.html#ex4", null ]
+    ] ]
   ] ]
 ];
 

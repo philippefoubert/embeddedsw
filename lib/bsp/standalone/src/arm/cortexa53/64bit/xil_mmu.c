@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2014 - 2015 Xilinx, Inc. All rights reserved.
+* Copyright (C) 2014 - 2017 Xilinx, Inc. All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +44,7 @@
 * Ver   Who  Date     Changes
 * ----- ---- -------- ---------------------------------------------------
 * 5.00 	pkp  05/29/14 First release
+* 6.02  pkp	 01/22/17 Added support for EL1 non-secure
 * </pre>
 *
 * @note
@@ -75,12 +76,18 @@ extern INTPTR MMUTableL1;
 extern INTPTR MMUTableL2;
 
 /************************** Function Prototypes ******************************/
-/*****************************************************************************
+/*****************************************************************************/
+/**
+* brief		It sets the memory attributes for a section, in the translation
+* 			table. If the address (defined by Addr) is less than 4GB, the
+*			memory attribute(attrib) is set for a section of 2MB memory. If the
+*			address (defined by Addr) is greater than 4GB, the memory attribute
+*			(attrib) is set for a section of 1GB memory.
 *
-* Set the memory attributes for a section, in the translation table.
-*
-* @param	addr is the address for which attributes are to be set.
-* @param	attrib specifies the attributes for that memory region.
+* @param	Addr: 64-bit address for which attributes are to be set.
+* @param	attrib: Attribute for the specified memory region. xil_mmu.h
+*			contains commonly used memory attributes definitions which can be
+*			utilized for this function.
 *
 * @return	None.
 *
@@ -88,8 +95,7 @@ extern INTPTR MMUTableL2;
 *			translation table attribute.
 *
 ******************************************************************************/
-
-void Xil_SetTlbAttributes(INTPTR Addr, u64 attrib)
+void Xil_SetTlbAttributes(UINTPTR Addr, u64 attrib)
 {
 	INTPTR *ptr;
 	INTPTR section;
@@ -112,7 +118,10 @@ void Xil_SetTlbAttributes(INTPTR Addr, u64 attrib)
 
 	Xil_DCacheFlush();
 
-	mtcptlbi(ALLE3);
+	if (EL3 == 1)
+		mtcptlbi(ALLE3);
+	else if (EL1_NONSECURE == 1)
+		mtcptlbi(VMALLE1);
 
 	dsb(); /* ensure completion of the BP and TLB invalidation */
     isb(); /* synchronize context on this processor */

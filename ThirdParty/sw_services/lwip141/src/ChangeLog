@@ -1,5 +1,20 @@
 Change Log for lwip
 =================================
+2017-03-07
+	* SW workaround for unstable link with TI DP83867 PHY
+	  when RX CTRL is not strapped to MODE 3 or 4.
+2017-02-13
+	* Correct TI PHYCR register initialization
+2017-02-03
+	* Add jumbo frame support for ZynqMP ethernet
+2016-12-19
+	* Export options for user to change NO_SYS_NO_TIMERS and
+	  LWIP_TCP_KEEP_ALIVE.
+2016-12-07
+	* Add Support for TI PHY DP83867 SGMII Mode configuration.
+2016-11-22
+	* Add support in xemaps_physpeed.c for newer version of Xilinx
+	  PCS PMA core with phy address scanning.
 2016-11-09
 	* Fix compilation errors for microblaze based designs CR#963580
 	* dsb() is not availble for Microblaze added checks for the same

@@ -63,7 +63,7 @@ var xaxidma__hw_8h =
     [ "XAXIDMA_IRQ_ERROR_MASK", "group__axidma__v9__0.html#ga6ceb68e74761910e4253795a9b4992cf", null ],
     [ "XAXIDMA_IRQ_IOC_MASK", "group__axidma__v9__0.html#gae420f2ad87e1e00456a6ee3a80d2480d", null ],
     [ "XAXIDMA_MICROMODE_MIN_BUF_ALIGN", "group__axidma__v9__0.html#gaf0f7e862f42d26800868816eea2a949b", null ],
-    [ "XAxiDma_ReadReg", "group__axidma__v9__0.html#ga99f615c527035db697545614fff86bf2", null ],
+    [ "XAxiDma_ReadReg", "group__axidma__v9__0.html#gadea426ef26fc5473a78723cd2b92aba5", null ],
     [ "XAXIDMA_RX_CDESC0_MSB_OFFSET", "group__axidma__v9__0.html#gad80414a88feceb1da4b9f77096d1d590", null ],
     [ "XAXIDMA_RX_CDESC0_OFFSET", "group__axidma__v9__0.html#ga79d2eca90f2554b8c893b2f9a70c795c", null ],
     [ "XAXIDMA_RX_NDESC_OFFSET", "group__axidma__v9__0.html#ga6fc559cbc93b62195de6ecaf25492467", null ],
@@ -77,5 +77,5 @@ var xaxidma__hw_8h =
     [ "XAXIDMA_TDESC_MSB_OFFSET", "group__axidma__v9__0.html#ga6063ffb7cb46cdca589e6f31069f7758", null ],
     [ "XAXIDMA_TDESC_OFFSET", "group__axidma__v9__0.html#gac8626fb2bed7230a2c82a7e1db0ddd35", null ],
     [ "XAXIDMA_TX_OFFSET", "group__axidma__v9__0.html#ga88232281611059fd669f0339888cd44e", null ],
-    [ "XAxiDma_WriteReg", "group__axidma__v9__0.html#ga96d7b2834ae100f53627ca961393e9a2", null ]
+    [ "XAxiDma_WriteReg", "group__axidma__v9__0.html#ga73dabf09bac8a209e0cc367f6ccdf44b", null ]
 ];

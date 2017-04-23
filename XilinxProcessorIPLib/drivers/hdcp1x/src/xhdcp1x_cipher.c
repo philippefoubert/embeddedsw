@@ -59,7 +59,7 @@
 #include "xhdcp1x_cipher.h"
 #include "xil_assert.h"
 #include "xil_types.h"
-#include "xhdcp1x_platform.h"
+#include "xhdcp1x_debug.h"
 
 /************************** Constant Definitions *****************************/
 
@@ -171,7 +171,6 @@ int XHdcp1x_CipherIsLinkUp(const XHdcp1x *InstancePtr)
 int XHdcp1x_CipherEnable(XHdcp1x *InstancePtr)
 {
 	u32 Value = 0;
-	int Status = XST_SUCCESS;
 
 	/* Verify arguments. */
 	Xil_AssertNonvoid(InstancePtr != NULL);
@@ -550,7 +549,6 @@ u64 XHdcp1x_CipherGetEncryption(const XHdcp1x *InstancePtr)
 int XHdcp1x_CipherEnableEncryption(XHdcp1x *InstancePtr, u64 StreamMap)
 {
 	u32 Value = 0;
-	u32 Tries = 0;
 
 	/* Verify arguments. */
 	Xil_AssertNonvoid(InstancePtr != NULL);
@@ -605,19 +603,14 @@ int XHdcp1x_CipherEnableEncryption(XHdcp1x *InstancePtr, u64 StreamMap)
 	XHdcp1x_WriteReg(InstancePtr->Config.BaseAddress,
 		XHDCP1X_CIPHER_REG_CONTROL, Value);
 
-	/* Wait until the XOR has actually started */
-	while (1) {
-		if (!XHdcp1x_CipherXorInProgress(InstancePtr)) {
-			return (XST_SUCCESS);
-		} else {
-			if (Tries < 10000) {
-				Tries++;
-				XHdcp1x_PlatformTimerBusy(InstancePtr, 1);
-			} else {
-				return (XST_FAILURE);
-			}
-		}
+	/* Check if XORInProgress bit is set in the status register*/
+	if (!XHdcp1x_CipherXorInProgress(InstancePtr)) {
+		/* Do nothing for now. We can depend on the Cipher
+		 * to set the XorInProgress in status register when
+		 * we receive protected content. */
 	}
+
+	return (XST_SUCCESS);
 }
 
 /*****************************************************************************/

@@ -126,6 +126,8 @@ var xsysmonpsu_8h =
     [ "XSysMonPsu_RawToVoltage", "xsysmonpsu_8h.html#af6667f0fcc65dda4a7af897b2924143c", null ],
     [ "XSysMonPsu_TemperatureToRaw_ExternalRef", "xsysmonpsu_8h.html#a50b32ba6617a306fd1f12c7d34151722", null ],
     [ "XSysMonPsu_TemperatureToRaw_OnChip", "xsysmonpsu_8h.html#a977b419288fae23364d46bc87d6976ce", null ],
+    [ "XSysMonPsu_VccopsioRawToVoltage", "xsysmonpsu_8h.html#ad74fd43c8a038933bc2580837b95cee4", null ],
+    [ "XSysMonPsu_VccopsioVoltageToRaw", "xsysmonpsu_8h.html#a05b960d7be1902cbefc489cc0ae4ec95", null ],
     [ "XSysMonPsu_VoltageToRaw", "xsysmonpsu_8h.html#a986f164c3c1f811ea27713adf9dace4c", null ],
     [ "XSysMonPsu_Handler", "xsysmonpsu_8h.html#aa228a3186422ffdc47f63d2e6b0f654e", null ],
     [ "XSysMonPsu_CfgInitialize", "xsysmonpsu_8h.html#a8cd0584410c0931f931aa4da1e3e151b", null ],

@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +44,8 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00  ba   11/17/14 Initial release
+* 2.0   bv   12/05/16 Made compliance to MISRAC 2012 guidelines
+*                     Modified bitstream chunk size to 56KB
 *
 * </pre>
 *
@@ -66,11 +68,24 @@ extern "C" {
 #include "xcsudma.h"
 /************************** Constant Definitions *****************************/
 
-#define PL_DONE_POLL_COUNT  10000U
+#define PL_DONE_POLL_COUNT  (u32)(10000U)
 #define PL_RESET_PERIOD_IN_US  1U
 
 /* Dummy address to indicate that destination is PCAP */
 #define XFSBL_DESTINATION_PCAP_ADDR    (0XFFFFFFFFU)
+
+/*
+ * Buffer sizes required for bitstream
+ * if block size is 8MB and taking chunk size as 56KB(READ_BUFFER_SIZE)
+ * we may require a buffer to store hashs of the chunks is:
+ * HASH_BUFFER_SIZE = (8MB/56KB)* (Sha3/2 hash length)
+ */
+#define READ_BUFFER_SIZE			(56*1024)
+					/**< Buffer Size to store chunk
+					of data */
+#define HASH_BUFFER_SIZE			(7*1024)
+					 /**< Buffer to store chunk's
+						hashs of each block. */
 
 /**************************** Type Definitions *******************************/
 

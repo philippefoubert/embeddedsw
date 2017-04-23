@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2014 - 2016 Xilinx, Inc. All rights reserved.
+* Copyright (C) 2014 - 2017 Xilinx, Inc. All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -33,14 +33,40 @@
 /**
 * @file boot.S
 *
-* This file contains the initial startup code for the Cortex A53 processor
-* It checks the current exception level and if it matches with selected
-* exception level, then only it initializes the required system registers and
-* executes the code further, otherwise it will loop busy loop around error.
-* If the selected exception level is EL3, execution of the processor has to
-* be in EL3. If the selected exception level is EL1 non-secure, execution of
-* the processor can be EL2 or EL1.
+* @addtogroup a53_64_boot_code Cortex A53 64bit Processor Boot Code
+* @{
+* <h2> boot.S </h2>
 *
+* The boot code performs minimum configuration which is required for an
+* application. Cortex-A53 starts by checking current exception level. If the
+* current exception level is EL3 and BSP is built for EL3, it will do
+* initialization required for application execution at EL3. Below is a
+* sequence illustrating what all configuration is performed before control
+* reaches to main function for EL3 execution.
+*
+* 1. Program vector table base for exception handling
+* 2. Set reset vector table base address
+* 3. Program stack pointer for EL3
+* 4. Routing of interrupts to EL3
+* 5. Enable ECC protection
+* 6. Program generic counter frequency
+* 7. Invalidate instruction cache, data cache and TLBs
+* 8. Configure MMU registers and program base address of translation table
+* 9. Transfer control to _start which clears BSS sections and runs global
+*    constructor before jumping to main application
+*
+* If the current exception level is EL1 and BSP is also built for EL1_NONSECURE
+* it will perform initialization required for application execution at EL1
+* non-secure. For all other combination, the execution will go into infinite
+* loop. Below is a sequence illustrating what all configuration is performed
+* before control reaches to main function for EL1 execution.
+*
+* 1. Program vector table base for exception handling
+* 2. Program stack pointer for EL1
+* 3. Invalidate instruction cache, data cache and TLBs
+* 4. Configure MMU registers and program base address of translation table
+* 5. Transfer control to _start which clears BSS sections and runs global
+*    constructor before jumping to main application
 *
 * <pre>
 * MODIFICATION HISTORY:
@@ -49,10 +75,10 @@
 * ----- ------- -------- ---------------------------------------------------
 * 5.00  pkp	05/21/14 Initial version
 * 6.00	pkp     07/25/16 Program the counter frequency
+* 6.02  pkp	01/22/17 Added support for EL1 non-secure
+* 6.02	pkp	01/24/17 Clearing status of FPUStatus variable to ensure it
+*			 holds correct value.
 *
-* @note
-*
-* None.
 *
 ******************************************************************************/
 
@@ -139,6 +165,16 @@ EndlessLoop0:
 #endif
 OKToRun:
 
+	mrs	x0, currentEL
+	cmp	x0, #0xC
+	beq	InitEL3
+
+	cmp	x0, #0x4
+	beq	InitEL1
+
+	b 	error			// go to error if current exception level is neither EL3 nor EL1
+InitEL3:
+.if (EL3 == 1)
 	/*Set vector table base address*/
 	ldr	x1, =vector_base
 	msr	VBAR_EL3,x1
@@ -160,10 +196,23 @@ OKToRun:
 	ldr	 x2,=EL3_stack
 	mov	 sp,x2
 
-	/* Disable trapping of CPTR_EL3 accesses or use of Adv.SIMD/FPU*/
-	mov      x0, #0                 // Clear all trap bits
+	/* Enable Trapping of SIMD/FPU register for standalone BSP */
+	mov      x0, #0
+#ifndef FREERTOS_BSP
+	orr      x0, x0, #(0x1 << 10)
+#endif
 	msr      CPTR_EL3, x0
 
+	/*
+	 * Clear FPUStatus variable to make sure that it contains current
+	 * status of FPU i.e. disabled. In case of a warm restart execution
+	 * when bss sections are not cleared, it may contain previously updated
+	 * value which does not hold true now.
+	 */
+#ifndef FREERTOS_BSP
+	 ldr x0,=FPUStatus
+	 str xzr, [x0]
+#endif
 	/* Configure SCR_EL3 */
 	mov      w1, #0              	//; Initial value of register is unknown
 	orr      w1, w1, #(1 << 11)  	//; Set ST bit (Secure EL1 can access CNTPS_TVAL_EL1, CNTPS_CTL_EL1 & CNTPS_CVAL_EL1)
@@ -238,8 +287,93 @@ OKToRun:
 	isb
 
 	b 	 _startup		//jump to start
+.else
+	b 	error			// present exception level and selected exception level mismatch
+.endif
 
-loop:	b	loop
+InitEL1:
+.if (EL1_NONSECURE == 1)
+	/*Set vector table base address*/
+	ldr	x1, =vector_base
+	msr	VBAR_EL1,x1
+
+	mrs	x0, CPACR_EL1
+	bic	x0, x0, #(0x3 << 0x20)
+	msr	CPACR_EL1, x0
+
+	/*
+	 * Clear FPUStatus variable to make sure that it contains current
+	 * status of FPU i.e. disabled. In case of a warm restart execution
+	 * when bss sections are not cleared, it may contain previously updated
+	 * value which does not hold true now.
+	 */
+#ifndef FREERTOS_BSP
+	 ldr x0,=FPUStatus
+	 str xzr, [x0]
+#endif
+	/*Define stack pointer for current exception level*/
+	ldr	 x2,=EL1_stack
+	mov	 sp,x2
+
+	/* Disable MMU first */
+	mov	x1,#0x0
+	msr     SCTLR_EL1, x1
+	isb
+
+	TLBI    VMALLE1
+
+	ic      IALLU                  	//; Invalidate I cache to PoU
+	bl 	invalidate_dcaches
+	dsb	 sy
+	isb
+
+	ldr      x1, =L0Table 		//; Get address of level 0 for TTBR0_EL1
+	msr      TTBR0_EL1, x1		//; Set TTBR0_EL1
+
+	/**********************************************
+	* Set up memory attributes
+	* This equates to:
+	* 0 = b01000100 = Normal, Inner/Outer Non-Cacheable
+	* 1 = b11111111 = Normal, Inner/Outer WB/WA/RA
+	* 2 = b00000000 = Device-nGnRnE
+	* 3 = b00000100 = Device-nGnRE
+	* 4 = b10111011 = Normal, Inner/Outer WT/WA/RA
+	**********************************************/
+	ldr      x1, =0x000000BB0400FF44
+	msr      MAIR_EL1, x1
+
+        /**********************************************
+        * Set up TCR_EL1
+	* Physical Address Size PS =  010 -> 40bits 1TB
+	* Granual Size TG0 = 00 -> 4KB
+        * size offset of the memory region T0SZ = 24 -> (region size 2^(64-24) = 2^40)
+        ***************************************************/
+        ldr     x1,=0x285800518
+        msr     TCR_EL1, x1
+        isb
+	/* Enable SError Exception for asynchronous abort */
+	mrs 	x1,DAIF
+        bic	x1,x1,#(0x1<<8)
+        msr	DAIF,x1
+
+	//; Enable MMU
+	mov	x1,#0x0
+	orr     x1, x1, #(1 << 18)    // ; Set WFE non trapping
+	orr     x1, x1, #(1 << 17)    // ; Set WFI non trapping
+	orr     x1, x1, #(1 << 5)    // ; Set CP15 barrier enabled
+	orr     x1, x1, #(1 << 12)    // ; Set I bit
+	orr     x1, x1, #(1 << 2)    // ; Set C bit
+	orr     x1, x1, #(1 << 0)    // ; Set M bit
+	msr     SCTLR_EL1, x1
+	isb
+
+	bl 	 _startup		//jump to start
+.else
+	b 	error			// present exception level and selected exception level mismatch
+.endif
+
+error: 	b	error
+
 
 invalidate_dcaches:
 
@@ -291,3 +425,6 @@ invalidateCaches_end:
 	ret
 
 .end
+/**
+* @} End of "addtogroup a53_64_boot_code".
+*/

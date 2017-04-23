@@ -16,7 +16,16 @@ var NAVTREE =
       [ "Enumerator", "globals_eval.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
-    [ "File List", "files.html", "files" ]
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xdprxss_selftest_example.c", "example.html#ex1", null ],
+      [ "xdprxss_mst_example.c", "example.html#ex2", null ],
+      [ "xdprxss_intr_example.c", "example.html#ex3", null ],
+      [ "xdprxss_debug_example.c", "example.html#ex4", null ],
+      [ "xdprxss_hdcp_example.c", "example.html#ex5", [
+        [ "NOTES", "example.html#IMPORTANT", null ]
+      ] ]
+    ] ]
   ] ]
 ];
 

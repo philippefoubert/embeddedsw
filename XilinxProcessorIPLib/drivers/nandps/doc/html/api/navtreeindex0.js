@@ -1,6 +1,10 @@
 var NAVTREEINDEX0 =
 {
 "annotated.html":[0,0],
+"example.html":[3],
+"example.html#ex1":[3,0],
+"example.html#ex2":[3,1],
+"example.html#ex3":[3,2],
 "files.html":[2],
 "functions.html":[0,1,0],
 "functions_vars.html":[0,1,1],
@@ -245,9 +249,5 @@ var NAVTREEINDEX0 =
 "group__nandps__v2__2.html#gac547ca7c91b79d5437cf58f29c0fda1e":[2,3,19],
 "group__nandps__v2__2.html#gac6131810c9cd8eab374f752b8865ba62":[2,5,161],
 "group__nandps__v2__2.html#gac770d392ac287ea3385cd79aeb6f976e":[2,5,137],
-"group__nandps__v2__2.html#gac7b61519733a4be05a029c4767dcf624":[2,5,26],
-"group__nandps__v2__2.html#gac876c6eb0d6c95869f0a68dccd44b975":[2,7,42],
-"group__nandps__v2__2.html#gac99a2d1110d9fb8c528f7256fbe2c804":[2,1,24],
-"group__nandps__v2__2.html#gacafee1faf2214361e9a96833f1078060":[2,5,164],
-"group__nandps__v2__2.html#gacb0ea4d313e8298a55444b93f6ed32e2":[2,5,122]
+"group__nandps__v2__2.html#gac7b61519733a4be05a029c4767dcf624":[2,5,26]
 };

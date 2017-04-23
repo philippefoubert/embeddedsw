@@ -27,6 +27,8 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 #include "pm_master.h"
 #include "pm_mmio_access.h"
@@ -88,7 +90,34 @@ static const PmAccessRegion pmAccessTable[] = {
 	/* Module clock controller low power domain (CRL_APB) */
 	{
 		.startAddr = CRL_APB_BASEADDR + 0x20,
-		.endAddr = CRL_APB_BASEADDR + 0x8c,
+		.endAddr = CRL_APB_BASEADDR + 0x73,
+		.access = MMIO_ACCESS_RW(IPI_PMU_0_IER_APU_MASK |
+					 IPI_PMU_0_IER_RPU_0_MASK |
+					 IPI_PMU_0_IER_RPU_1_MASK),
+	},
+
+#if !((STDOUT_BASEADDRESS == XPAR_PSU_UART_0_BASEADDR) && defined(DEBUG_MODE))
+	{
+		.startAddr = CRL_APB_BASEADDR + 0x74,
+		.endAddr = CRL_APB_BASEADDR + 0x77,
+		.access = MMIO_ACCESS_RW(IPI_PMU_0_IER_APU_MASK |
+					 IPI_PMU_0_IER_RPU_0_MASK |
+					 IPI_PMU_0_IER_RPU_1_MASK),
+	},
+#endif
+
+#if !((STDOUT_BASEADDRESS == XPAR_PSU_UART_1_BASEADDR) && defined(DEBUG_MODE))
+	{
+		.startAddr = CRL_APB_BASEADDR + 0x78,
+		.endAddr = CRL_APB_BASEADDR + 0x7B,
+		.access = MMIO_ACCESS_RW(IPI_PMU_0_IER_APU_MASK |
+					 IPI_PMU_0_IER_RPU_0_MASK |
+					 IPI_PMU_0_IER_RPU_1_MASK),
+	},
+#endif
+	{
+		.startAddr = CRL_APB_BASEADDR + 0x7C,
+		.endAddr = CRL_APB_BASEADDR + 0x8C,
 		.access = MMIO_ACCESS_RW(IPI_PMU_0_IER_APU_MASK |
 					 IPI_PMU_0_IER_RPU_0_MASK |
 					 IPI_PMU_0_IER_RPU_1_MASK),
@@ -137,6 +166,24 @@ static const PmAccessRegion pmAccessTable[] = {
 	{
 		.startAddr = PM_MMIO_CSU_BASE + 0x40,
 		.endAddr = PM_MMIO_CSU_BASE + 0x44,
+		.access = MMIO_ACCESS_RO(IPI_PMU_0_IER_APU_MASK |
+					 IPI_PMU_0_IER_RPU_0_MASK |
+					 IPI_PMU_0_IER_RPU_1_MASK),
+	},
+
+	/* RO access to CRL_APB required for Linux CCF */
+	{
+		.startAddr = CRL_APB_BASEADDR,
+		.endAddr = CRL_APB_BASEADDR + 0x288,
+		.access = MMIO_ACCESS_RO(IPI_PMU_0_IER_APU_MASK |
+					 IPI_PMU_0_IER_RPU_0_MASK |
+					 IPI_PMU_0_IER_RPU_1_MASK),
+	},
+
+	/* RO access to CRF_APB required for Linux CCF */
+	{
+		.startAddr = CRF_APB_BASEADDR,
+		.endAddr = CRF_APB_BASEADDR + 0x108,
 		.access = MMIO_ACCESS_RO(IPI_PMU_0_IER_APU_MASK |
 					 IPI_PMU_0_IER_RPU_0_MASK |
 					 IPI_PMU_0_IER_RPU_1_MASK),
@@ -190,3 +237,5 @@ bool PmGetMmioAccessWrite(const PmMaster *const master, const u32 address)
 {
 	return PmGetMmioAccess(master, address, MMIO_ACCESS_TYPE_WRITE);
 }
+
+#endif

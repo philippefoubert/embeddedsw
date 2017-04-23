@@ -1,5 +1,6 @@
 var files =
 [
+    [ "vpss_example.tcl", "vpss__example_8tcl.html", "vpss__example_8tcl" ],
     [ "xvprocss.c", "xvprocss_8c.html", "xvprocss_8c" ],
     [ "xvprocss.h", "xvprocss_8h.html", "xvprocss_8h" ],
     [ "xvprocss_coreinit.c", "xvprocss__coreinit_8c.html", "xvprocss__coreinit_8c" ],

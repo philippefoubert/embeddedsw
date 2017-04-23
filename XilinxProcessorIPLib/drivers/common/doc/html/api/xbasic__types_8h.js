@@ -1,9 +1,9 @@
 var xbasic__types_8h =
 [
-    [ "XASSERT_NONVOID", "group__common__v1__00__a.html#gacb16a9ce84634175b8be6eb6320e5d40", null ],
-    [ "XASSERT_NONVOID_ALWAYS", "group__common__v1__00__a.html#gafc46bd7c308a9f91dbea4b65802bebae", null ],
-    [ "XASSERT_VOID", "group__common__v1__00__a.html#ga1c87fc9274e19272996a00cfc7444693", null ],
-    [ "XASSERT_VOID_ALWAYS", "group__common__v1__00__a.html#gaf6e6133cad2f067f155510cb4323b04b", null ],
+    [ "XASSERT_NONVOID", "group__common__v1__00__a.html#ga237c4df94339dabd56c08bfa8ef55cff", null ],
+    [ "XASSERT_NONVOID_ALWAYS", "group__common__v1__00__a.html#gabeb9e456a42a06ee1b516bd939dd3750", null ],
+    [ "XASSERT_VOID", "group__common__v1__00__a.html#gab1a59ff109b7b674b214f40e07361215", null ],
+    [ "XASSERT_VOID_ALWAYS", "group__common__v1__00__a.html#ga4f21b82ff570989a66c1addca6fe862a", null ],
     [ "XCOMPONENT_IS_READY", "group__common__v1__00__a.html#gaf1e439aeef84a0f2e1f0ad0937d3ccba", null ],
     [ "XCOMPONENT_IS_STARTED", "group__common__v1__00__a.html#ga8146fba914623632ff0d9edc2acc6a01", null ],
     [ "XNULL", "group__common__v1__00__a.html#ga7ba08d136437c7da95f6825b2e976632", null ],

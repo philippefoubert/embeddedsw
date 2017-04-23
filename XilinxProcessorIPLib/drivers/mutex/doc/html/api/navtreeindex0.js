@@ -1,6 +1,8 @@
 var NAVTREEINDEX0 =
 {
 "annotated.html":[0,0],
+"example.html":[3],
+"example.html#ex1":[3,0],
 "files.html":[2],
 "functions.html":[0,1,0],
 "functions_vars.html":[0,1,1],
@@ -39,5 +41,9 @@ var NAVTREEINDEX0 =
 "xmutex__g_8c.html":[2,2],
 "xmutex__hw_8h.html":[2,3],
 "xmutex__selftest_8c.html":[2,4],
-"xmutex__sinit_8c.html":[2,5]
+"xmutex__sinit_8c.html":[2,5],
+"xmutex__tapp__example_8c.html":[2,6],
+"xmutex__tapp__example_8c.html#a38d80185764e6fa61854824523d74f14":[2,6,0],
+"xmutex__tapp__example_8c.html#a840291bc02cba5474a4cb46a9b9566fe":[2,6,1],
+"xmutex__tapp__example_8c.html#aa4d12e3d41820399786bffe09465a544":[2,6,2]
 };
