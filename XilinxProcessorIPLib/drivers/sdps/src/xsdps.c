@@ -78,6 +78,18 @@
 *       sk     02/01/17 Added HSD and DDR mode support for eMMC.
 *       vns    02/09/17 Added ARMA53_32 support for ZynqMP CR#968397
 *       sk     03/20/17 Add support for EL1 non-secure mode.
+* -     pf     04/24/17 Fix misprints:
+*                        * XSdPs_CmdTransfer:
+*                           - Status instead of StatusReg
+*                           - XSDPS_PSR_INHIBIT_DAT_MASK instead of
+*                             XSDPS_PSR_INHIBIT_CMD_MASK
+*                        * XSdPs_CfgInitialize: comments
+*                        * XSdPs_Select_Card:   comments
+* -     pf     04/24/17 Add a missing break in XSdPs_FrameCmd (case CMD23, ACMD23,
+*                       CMD24, CMD25) (Note: it was not resulting in a bug since
+*                       RESP_R3 is included in RESP_R1).
+* -     pf     04/24/17 Bug correction in and XSdPs_ReadPolledXSdPs_WritePolled
+*                       when HCS is not supported.
 * </pre>
 *
 ******************************************************************************/
@@ -156,7 +168,7 @@ static s32 XSdPs_Switch_Voltage(XSdPs *InstancePtr);
 *		Voltage of 3.3V is selected as that is supported by host.
 *		Interrupts status is enabled and signal disabled by default.
 *		Default data direction is card to host and
-*		32 bit ADMA2 is selected. Defualt Block size is 512 bytes.
+*		32 bit ADMA2 is selected. Default Block size is 512 bytes.
 *
 ******************************************************************************/
 s32 XSdPs_CfgInitialize(XSdPs *InstancePtr, XSdPs_Config *ConfigPtr,
@@ -257,7 +269,7 @@ s32 XSdPs_CfgInitialize(XSdPs *InstancePtr, XSdPs_Config *ConfigPtr,
 	XSdPs_WriteReg8(InstancePtr->Config.BaseAddress,
 			XSDPS_POWER_CTRL_OFFSET,
 			PowerLevel | XSDPS_PC_BUS_PWR_MASK);
-	/* Enable ADMA2 in 64bit mode. */
+	/* Enable ADMA2 in 32bit mode. */
 	XSdPs_WriteReg8(InstancePtr->Config.BaseAddress,
 			XSDPS_HOST_CTRL1_OFFSET,
 			XSDPS_HC_DMA_ADMA2_32_MASK);
@@ -1058,7 +1070,7 @@ s32 XSdPs_CmdTransfer(XSdPs *InstancePtr, u32 Cmd, u32 Arg, u32 BlkCnt)
 	if ((Cmd != CMD21) && (Cmd != CMD19)) {
 		PresentStateReg = XSdPs_ReadReg(InstancePtr->Config.BaseAddress,
 				XSDPS_PRES_STATE_OFFSET);
-		if (((PresentStateReg & (XSDPS_PSR_INHIBIT_DAT_MASK |
+		if (((PresentStateReg & (XSDPS_PSR_INHIBIT_CMD_MASK |
 									XSDPS_PSR_INHIBIT_DAT_MASK)) != 0U) &&
 				((CommandReg & XSDPS_DAT_PRESENT_SEL_MASK) != 0U)) {
 			Status = XST_FAILURE;
@@ -1083,10 +1095,12 @@ s32 XSdPs_CmdTransfer(XSdPs *InstancePtr, u32 Cmd, u32 Arg, u32 BlkCnt)
 		}
 
 		if ((StatusReg & XSDPS_INTR_ERR_MASK) != 0U) {
-			Status = XSdPs_ReadReg16(InstancePtr->Config.BaseAddress,
+			StatusReg = XSdPs_ReadReg16(InstancePtr->Config.BaseAddress,
 									XSDPS_ERR_INTR_STS_OFFSET);
-			if ((Status & ~XSDPS_INTR_ERR_CT_MASK) == 0) {
+			if ((StatusReg & ~XSDPS_INTR_ERR_CT_MASK) == 0) {
 				Status = XSDPS_CT_ERROR;
+			} else {
+				Status = XST_FAILURE;
 			}
 			 /* Write to clear error bits */
 			XSdPs_WriteReg16(InstancePtr->Config.BaseAddress,
@@ -1187,6 +1201,7 @@ u32 XSdPs_FrameCmd(XSdPs *InstancePtr, u32 Cmd)
 		case CMD24:
 		case CMD25:
 			RetVal |= RESP_R1 | (u32)XSDPS_DAT_PRESENT_SEL_MASK;
+			break;
 		case ACMD41:
 			RetVal |= RESP_R3;
 		break;
@@ -1268,6 +1283,10 @@ s32 XSdPs_ReadPolled(XSdPs *InstancePtr, u32 Arg, u32 BlkCnt, u8 *Buff)
 	Xil_DCacheInvalidateRange((INTPTR)Buff, BlkCnt * XSDPS_BLK_SIZE_512_MASK);
 
 	/* Send block read command */
+	if (0 == InstancePtr->HCS)
+	{
+		Arg = Arg << 9;
+	}
 	Status = XSdPs_CmdTransfer(InstancePtr, CMD18, Arg, BlkCnt);
 	if (Status != XST_SUCCESS) {
 		Status = XST_FAILURE;
@@ -1358,6 +1377,10 @@ s32 XSdPs_WritePolled(XSdPs *InstancePtr, u32 Arg, u32 BlkCnt, const u8 *Buff)
 			XSDPS_TM_MUL_SIN_BLK_SEL_MASK | XSDPS_TM_DMA_EN_MASK);
 
 	/* Send block write command */
+	if (0 == InstancePtr->HCS)
+	{
+		Arg = Arg << 9;
+	}
 	Status = XSdPs_CmdTransfer(InstancePtr, CMD25, Arg, BlkCnt);
 	if (Status != XST_SUCCESS) {
 		Status = XST_FAILURE;
@@ -1394,7 +1417,7 @@ s32 XSdPs_WritePolled(XSdPs *InstancePtr, u32 Arg, u32 BlkCnt, const u8 *Buff)
 /*****************************************************************************/
 /**
 *
-* Selects card and sets default block size
+* Selects card
 *
 *
 * @param	InstancePtr is a pointer to the XSdPs instance.
