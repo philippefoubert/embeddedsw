@@ -27,13 +27,15 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*************************************************************************
  * PM slave structures definitions and code for handling states of slaves.
  ************************************************************************/
 
 #include "pm_slave.h"
-#include "pm_master.h"
+#include "pm_requirement.h"
 #include "pm_defs.h"
 #include "pm_common.h"
 #include "pm_node.h"
@@ -45,7 +47,12 @@
 #include "lpd_slcr.h"
 #include "pm_ddr.h"
 #include "pm_clock.h"
+#include <unistd.h>
+#include "pm_gpp.h"
+#include "pm_extern.h"
+#include "pm_system.h"
 
+<<<<<<< HEAD
 /* All slaves array */
 static PmSlave* const pmSlaves[] = {
 	&pmSlaveL2_g.slv,
@@ -136,6 +143,10 @@ bool PmSlaveRequiresPower(const PmSlave* const slave)
 
 	return requiresPower;
 }
+=======
+#define HAS_CAPABILITIES(slavePtr, state, caps)	\
+	((caps) == ((caps) & (slavePtr)->slvFsm->states[state]))
+>>>>>>> upstream/master
 
 /**
  * PmGetMaxCapabilities()- Get maximum of all requested capabilities of slave
@@ -149,9 +160,13 @@ static u32 PmGetMaxCapabilities(const PmSlave* const slave)
 	u32 maxCaps = 0U;
 
 	while (NULL != req) {
+<<<<<<< HEAD
 		if (0U != (PM_MASTER_USING_SLAVE_MASK & req->info)) {
 			maxCaps |= req->currReq;
 		}
+=======
+		maxCaps |= req->currReq;
+>>>>>>> upstream/master
 		req = req->nextMaster;
 	}
 
@@ -216,7 +231,7 @@ done:
  * @return	Status fo preparing for the transition (XST_SUCCESS or an error
  *		code)
  */
-static int PmSlavePrepareState(const PmSlave* const slv, const PmStateId next)
+static int PmSlavePrepareState(PmSlave* const slv, const PmStateId next)
 {
 	int status = XST_SUCCESS;
 	const PmStateId curr = slv->node.currState;
@@ -226,13 +241,9 @@ static int PmSlavePrepareState(const PmSlave* const slv, const PmStateId next)
 
 		if ((0U == (slv->slvFsm->states[curr] & PM_CAP_POWER)) &&
 		    (0U != (slv->slvFsm->states[next] & PM_CAP_POWER))) {
-
-			/* Slave will need power parent to be on */
-			if (true == NODE_IS_OFF(&slv->node.parent->node)) {
-				status = PmTriggerPowerUp(slv->node.parent);
-				if (XST_SUCCESS != status) {
-					goto done;
-				}
+			status = PmPowerRequestParent(&slv->node);
+			if (XST_SUCCESS != status) {
+				goto done;
 			}
 		}
 	}
@@ -254,7 +265,7 @@ done:
  * @slv		Slave that exited the prev state
  * @prev	Previous state the slave was in
  */
-static void PmSlaveClearAfterState(const PmSlave* const slv, const PmStateId prev)
+static void PmSlaveClearAfterState(PmSlave* const slv, const PmStateId prev)
 {
 	const PmStateId curr = slv->node.currState;
 
@@ -265,6 +276,15 @@ static void PmSlaveClearAfterState(const PmSlave* const slv, const PmStateId pre
 			PmClockRelease(&slv->node);
 		}
 	}
+
+	/* Check if slave doesn't need power in the new state */
+	if (NULL != slv->node.parent) {
+		if ((0U != (slv->slvFsm->states[prev] & PM_CAP_POWER)) &&
+		    (0U == (slv->slvFsm->states[curr] & PM_CAP_POWER))) {
+			PmPowerReleaseParent(&slv->node);
+		}
+	}
+
 }
 
 /**
@@ -382,7 +402,11 @@ static u32 PmGetMinRequestedLatency(const PmSlave* const slave)
 	u32 minLatency = MAX_LATENCY;
 
 	while (NULL != req) {
+<<<<<<< HEAD
 		if (0U != (PM_MASTER_USING_SLAVE_MASK & req->info)) {
+=======
+		if (0U != (PM_MASTER_SET_LATENCY_REQ & req->info)) {
+>>>>>>> upstream/master
 			if (minLatency > req->latencyReq) {
 				minLatency = req->latencyReq;
 			}
@@ -400,7 +424,7 @@ static u32 PmGetMinRequestedLatency(const PmSlave* const slave)
  *
  * @return      Return value for the found latency
  */
-u32 PmGetLatencyFromState(const PmSlave* const slave,
+static u32 PmGetLatencyFromState(const PmSlave* const slave,
 			  const PmStateId state)
 {
 	u32 i, latency = 0U;
@@ -464,85 +488,55 @@ static int PmConstrainStateByLatency(const PmSlave* const slave,
  * @slave       Slave whose state is about to be updated
  *
  * @return      Status of operation of updating slave's state.
+ *
+ * @note	A slave may not have state with zero capabilities. If that is
+ * the case and no capabilities are requested, it is put in lowest power state
+ * (state ID 0).
+ * When non-zero capabilities are requested and a selected state which has the
+ * requested capabilities doesn't satisfy the wake-up latency requirements, the
+ * first higher power state which satisfies latency requirement and has the
+ * requested capabilities is configured (in the worst case it's the highest
+ * power state).
  */
 int PmUpdateSlave(PmSlave* const slave)
 {
 	PmStateId state = 0U;
 	int status = XST_SUCCESS;
-	u32 wkupLat, minLat, latencyMargin;
-	u32 capsToSet = PmGetMaxCapabilities(slave);
-	PmPower* parent;
+	u32 wkupLat, minLat;
+	u32 caps = PmGetMaxCapabilities(slave);
 
-	if (0U != capsToSet) {
-		/*
-		 * This check has to exist because some slaves have no state
-		 * with 0 capabilities. Therefore, they are always placed in
-		 * first, lowest power state when their caps are not required.
-		 */
-
-		/* Get state that has all required capabilities */
-		status = PmGetStateWithCaps(slave, capsToSet, &state);
-	}
-
-	if (XST_SUCCESS != status) {
-		goto done;
-	}
-
-	minLat = PmGetMinRequestedLatency(slave);
-	wkupLat = PmGetLatencyFromState(slave, state);
-	if (wkupLat > minLat) {
-		/*
-		 * State does not satisfy wake-up latency requirements. Find the
-		 * first higher power state which does (in the worst case the
-		 * highest power state may be chosen)
-		 */
-		status = PmConstrainStateByLatency(slave, &state, capsToSet,
-						   minLat);
-
+	if (0U != caps) {
+		/* Find which state has the requested capabilities */
+		status = PmGetStateWithCaps(slave, caps, &state);
 		if (XST_SUCCESS != status) {
 			goto done;
 		}
 	}
 
-	if (state != slave->node.currState) {
-		/*
-		 * Change state of a slave if state with required capabilities
-		 * exists and slave is not already in that state.
-		 */
-		status = PmSlaveChangeState(slave, state);
-	} else {
-		/* Ensure that parents meet latency requirement as well */
-		parent = slave->node.parent;
-		latencyMargin = minLat;
+	minLat = PmGetMinRequestedLatency(slave);
+	wkupLat = PmGetLatencyFromState(slave, state);
+	if (wkupLat > minLat) {
+		/* State does not satisfy latency requirement, find another */
+		status = PmConstrainStateByLatency(slave, &state, caps, minLat);
+		if (XST_SUCCESS != status) {
+			goto done;
+		}
+		wkupLat = PmGetLatencyFromState(slave, state);
+	}
 
-		while ((NULL != parent) && (true == NODE_IS_OFF(&parent->node))) {
-			/* Calculate remaining latency budget */
-			latencyMargin -= wkupLat;
-			wkupLat = parent->pwrUpLatency;
-			if (latencyMargin < wkupLat) {
-				/* Power up parents from this level up */
-				status = PmTriggerPowerUp(parent);
-				if (XST_SUCCESS != status) {
-					goto done;
-				}
-				break;
-			}
-			parent = parent->node.parent;
+	slave->node.latencyMarg = minLat - wkupLat;
+	if (state != slave->node.currState) {
+		status = PmSlaveChangeState(slave, state);
+		if (XST_SUCCESS != status) {
+			goto done;
+		}
+	} else {
+		if (!HAS_CAPABILITIES(slave, state, PM_CAP_POWER) &&
+		    (NULL != slave->node.parent)) {
+			/* Notify power parent (changed latency requirement) */
+			status = PmPowerUpdateLatencyReq(&slave->node);
 		}
 	}
-
-	/* determine the new latency margin for the parent nodes */
-	latencyMargin = slave->node.latencyMarg;
-	/* remember the remaining latency margin for upper levels to use */
-	slave->node.latencyMarg = minLat - PmGetLatencyFromState(slave, state);
-
-	if ((0U == (slave->slvFsm->states[state] & PM_CAP_POWER)) &&
-	    (NULL != slave->node.parent)) {
-		PmOpportunisticSuspend(slave->node.parent);
-	}
-
-	/* remember the remaining latency margin for upper levels to use */
-	slave->node.latencyMarg = minLat - PmGetLatencyFromState(slave, state);
 
 done:
 	return status;
@@ -562,7 +556,11 @@ u32 PmSlaveGetUsersMask(const PmSlave* const slave)
 	u32 usage = 0U;
 
 	while (NULL != req) {
+<<<<<<< HEAD
 		if (0U != (PM_MASTER_USING_SLAVE_MASK & req->info)) {
+=======
+		if (MASTER_REQUESTED_SLAVE(req)) {
+>>>>>>> upstream/master
 			/* Found master which is using slave */
 			usage |= req->master->ipiMask;
 		}
@@ -574,7 +572,7 @@ u32 PmSlaveGetUsersMask(const PmSlave* const slave)
 
 /**
  * PmSlaveGetUsageStatus() - get current usage status for a slave node
- * @slavenode  Slave node for which the usage status is requested
+ * @slave      Slave node for which the usage status is requested
  * @master     Master that's requesting the current usage status
  *
  * @return  Usage status:
@@ -584,56 +582,47 @@ u32 PmSlaveGetUsersMask(const PmSlave* const slave)
  *	    - 3: Both the current and at least one other master is currently
  *               using the node
  */
-u32 PmSlaveGetUsageStatus(const u32 slavenode, const PmMaster *const master)
+u32 PmSlaveGetUsageStatus(const PmSlave* const slave,
+			  const PmMaster* const master)
 {
-	u32 i;
 	u32 usageStatus = 0;
-	PmMaster* currMaster;
-	PmRequirement* masterReq;
+	const PmRequirement* req = slave->reqs;
 
-	for (i = 0U; i < PM_MASTER_MAX; i++) {
-		currMaster = pmAllMasters[i];
+	while (NULL != req) {
 
-		masterReq = PmGetRequirementForSlave(currMaster, slavenode);
-
-		if (NULL == masterReq) {
-			/* This master has no access to this slave */
-			continue;
+		if (MASTER_REQUESTED_SLAVE(req)) {
+			/* This master is currently using this slave */
+			if (master == req->master) {
+				usageStatus |= PM_USAGE_CURRENT_MASTER;
+			} else {
+				usageStatus |= PM_USAGE_OTHER_MASTER;
+			}
 		}
-
-		if (0U == (masterReq->info & PM_MASTER_USING_SLAVE_MASK)) {
-			/* This master is currently not using this slave */
-			continue;
-		}
-
-		/* This master is currently using this slave */
-		if (currMaster == master) {
-			usageStatus |= PM_USAGE_CURRENT_MASTER;
-		} else {
-			usageStatus |= PM_USAGE_OTHER_MASTER;
-		}
+		req = req->nextMaster;
 	}
+
 	return usageStatus;
 }
 
 /**
  * PmSlaveGetRequirements() - get current requirements for a slave node
- * @slavenode  Slave node for which the current requirements are requested
+ * @slave      Slave node for which the current requirements are requested
  * @master     Master that's making the request
  *
  * @return  Current requirements of the requesting master on the node
  */
-u32 PmSlaveGetRequirements(const u32 slavenode, const PmMaster *const master)
+u32 PmSlaveGetRequirements(const PmSlave* const slave,
+			   const PmMaster* const master)
 {
 	u32 currReq = 0;
-	PmRequirement* masterReq = PmGetRequirementForSlave(master, slavenode);
+	PmRequirement* masterReq = PmRequirementGet(master, slave);
 
 	if (NULL == masterReq) {
 		/* This master has no access to this slave */
 		goto done;
 	}
 
-	if (0U == (masterReq->info & PM_MASTER_USING_SLAVE_MASK)) {
+	if (!MASTER_REQUESTED_SLAVE(masterReq)) {
 		/* This master is currently not using this slave */
 		goto done;
 	}
@@ -676,3 +665,244 @@ int PmSlaveVerifyRequest(const PmSlave* const slave)
 done:
 	return status;
 }
+
+/**
+ * PmSlaveSetConfig() - Set the configuration for the slave
+ * @slave       Slave to configure
+ * @policy      Usage policy for the slave to configure
+ * @perms       Permissions to use the slave (ORed IPI masks of permissible
+ *              masters)
+ * @return      XST_SUCCESS if configuration is set, XST_FAILURE otherwise
+ *
+ * @note        For each master whose IPI is encoded in the 'perms', the
+ *              requirements structure is automatically allocated and added in
+ *              master's/slave's lists of requirements.
+ */
+int PmSlaveSetConfig(PmSlave* const slave, const u32 policy, const u32 perms)
+{
+	int status = XST_SUCCESS;
+	u32 masterIpiMasks = perms;
+	u32 caps = slave->slvFsm->states[slave->slvFsm->statesCnt - 1U];
+
+	if (0U != (policy & PM_SLAVE_FLAG_IS_SHAREABLE)) {
+		slave->flags |= PM_SLAVE_FLAG_IS_SHAREABLE;
+	}
+
+	/* Extract and process one by one master from the encoded perms */
+	while (0U != masterIpiMasks) {
+		PmMaster* master = PmMasterGetNextFromIpiMask(&masterIpiMasks);
+		PmRequirement* req;
+
+		if (NULL == master) {
+			status = XST_FAILURE;
+			goto done;
+		}
+
+		req = PmRequirementAdd(master, slave);
+		if (NULL == req) {
+			status = XST_FAILURE;
+			goto done;
+		}
+		req->currReq = caps;
+	}
+
+done:
+	return status;
+}
+
+/**
+ * PmSlaveClearConfig() - Clear configuration of the slave node
+ * @slaveNode	Slave node to clear
+ */
+static void PmSlaveClearConfig(PmNode* const slaveNode)
+{
+	PmSlave* const slave = (PmSlave*)slaveNode->derived;
+
+	slave->reqs = NULL;
+	slave->flags = 0U;
+}
+
+/**
+ * PmSlaveGetWakeUpLatency() - Get wake-up latency of the slave node
+ * @node	Slave node
+ * @lat		Pointer to the location where the latency value should be stored
+ *
+ * @return	XST_SUCCESS if latency value is stored in *lat, XST_NO_FEATURE
+ *		if the latency depends on power parent which has no method
+ *		(getWakeUpLatency) to provide latency information
+ */
+static int PmSlaveGetWakeUpLatency(const PmNode* const node, u32* const lat)
+{
+	PmSlave* const slave = (PmSlave*)node->derived;
+	PmNode* const powerNode = &node->parent->node;
+	int status = XST_SUCCESS;
+	u32 latency;
+
+	*lat = PmGetLatencyFromState(slave, slave->node.currState);
+
+
+	if (NULL == powerNode->class->getWakeUpLatency) {
+		status = XST_NO_FEATURE;
+		goto done;
+	}
+
+	status = powerNode->class->getWakeUpLatency(powerNode, &latency);
+	if (XST_SUCCESS == status) {
+		*lat += latency;
+	}
+
+done:
+	return status;
+
+}
+
+ /**
+ * PmSlaveForceDown() - Force down the slave node
+ * @node	Slave node to force down
+ *
+ * @return	Status of performing force down operation
+ */
+static int PmSlaveForceDown(PmNode* const node)
+{
+	int status = XST_SUCCESS;
+	PmSlave* const slave = (PmSlave*)node->derived;
+	PmRequirement* req = slave->reqs;
+
+	while (NULL != req) {
+		if (MASTER_REQUESTED_SLAVE(req)) {
+			PmRequirementClear(req);
+		}
+		req = req->nextMaster;
+	}
+	status = PmUpdateSlave(slave);
+
+	if ((NULL != slave->class) && (NULL != slave->class->forceDown)) {
+		slave->class->forceDown(slave);
+	}
+
+	return status;
+}
+
+/**
+ * PmSlaveInit() - Initialize the slave node
+ * @node	Node to initialize
+ *
+ * @return	Status of initializing the node
+ */
+static int PmSlaveInit(PmNode* const node)
+{
+	PmSlave* const slave = (PmSlave*)node->derived;
+	int status = XST_SUCCESS;
+
+	if (NULL != node->parent) {
+		if (HAS_CAPABILITIES(slave, node->currState, PM_CAP_POWER)) {
+			status = PmPowerRequestParent(node);
+			if (XST_SUCCESS != status) {
+				goto done;
+			}
+		}
+	}
+
+	if (NULL != node->clocks) {
+		if (HAS_CAPABILITIES(slave, node->currState, PM_CAP_CLOCK)) {
+			status = PmClockRequest(node);
+		}
+	}
+
+	if ((NULL != slave->class) && (NULL != slave->class->init)) {
+		slave->class->init(slave);
+	}
+
+done:
+	return status;
+}
+
+/**
+ * PmSlaveIsUsable() - Check if slave is usable according to the configuration
+ * @node	Slave node to check
+ *
+ * @return	True if slave can be used, false otherwise
+ */
+static bool PmSlaveIsUsable(PmNode* const node)
+{
+	bool usable = true;
+	PmSlave* const slave = (PmSlave*)node->derived;
+
+	/* Slave is not usable if it has no allocated requirements */
+	if (NULL == slave->reqs) {
+		usable = false;
+	}
+
+	return usable;
+}
+
+/* Collection of slave nodes */
+static PmNode* pmNodeSlaveBucket[] = {
+	&pmSlaveL2_g.slv.node,
+	&pmSlaveOcm0_g.slv.node,
+	&pmSlaveOcm1_g.slv.node,
+	&pmSlaveOcm2_g.slv.node,
+	&pmSlaveOcm3_g.slv.node,
+	&pmSlaveTcm0A_g.sram.slv.node,
+	&pmSlaveTcm0B_g.sram.slv.node,
+	&pmSlaveTcm1A_g.sram.slv.node,
+	&pmSlaveTcm1B_g.sram.slv.node,
+	&pmSlaveUsb0_g.slv.node,
+	&pmSlaveUsb1_g.slv.node,
+	&pmSlaveTtc0_g.node,
+	&pmSlaveTtc1_g.node,
+	&pmSlaveTtc2_g.node,
+	&pmSlaveTtc3_g.node,
+	&pmSlaveSata_g.node,
+	&pmSlaveGpuPP0_g.slv.node,
+	&pmSlaveGpuPP1_g.slv.node,
+	&pmSlaveUart0_g.node,
+	&pmSlaveUart1_g.node,
+	&pmSlaveSpi0_g.node,
+	&pmSlaveSpi1_g.node,
+	&pmSlaveI2C0_g.node,
+	&pmSlaveI2C1_g.node,
+	&pmSlaveSD0_g.node,
+	&pmSlaveSD1_g.node,
+	&pmSlaveCan0_g.node,
+	&pmSlaveCan1_g.node,
+	&pmSlaveEth0_g.node,
+	&pmSlaveEth1_g.node,
+	&pmSlaveEth2_g.node,
+	&pmSlaveEth3_g.node,
+	&pmSlaveAdma_g.node,
+	&pmSlaveGdma_g.node,
+	&pmSlaveDP_g.node,
+	&pmSlaveNand_g.node,
+	&pmSlaveQSpi_g.node,
+	&pmSlaveGpio_g.node,
+	&pmSlaveDdr_g.node,
+	&pmSlaveIpiApu_g.node,
+	&pmSlaveIpiRpu0_g.node,
+	&pmSlaveIpiRpu1_g.node,
+	&pmSlaveIpiPl0_g.node,
+	&pmSlaveIpiPl1_g.node,
+	&pmSlaveIpiPl2_g.node,
+	&pmSlaveIpiPl3_g.node,
+	&pmSlaveGpu_g.node,
+	&pmSlavePcie_g.node,
+	&pmSlavePcap_g.node,
+	&pmSlaveRtc_g.node,
+	&pmSlaveVcu_g.slv.node,
+	&pmSlaveExternDevice_g.node,
+	&pmSlavePl_g.node,
+};
+
+PmNodeClass pmNodeClassSlave_g = {
+	DEFINE_NODE_BUCKET(pmNodeSlaveBucket),
+	.id = NODE_CLASS_SLAVE,
+	.clearConfig = PmSlaveClearConfig,
+	.construct = NULL,
+	.getWakeUpLatency = PmSlaveGetWakeUpLatency,
+	.getPowerData = PmNodeGetPowerInfo,
+	.forceDown = PmSlaveForceDown,
+	.init = PmSlaveInit,
+	.isUsable = PmSlaveIsUsable,
+};
+
+#endif

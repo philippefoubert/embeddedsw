@@ -36,6 +36,10 @@ BEGIN driver sdps
   OPTION supported_peripherals = (ps7_sdio psu_sd);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 3.2;
+>>>>>>> upstream/master
   OPTION NAME = sdps;
 
 END driver

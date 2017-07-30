@@ -37,12 +37,20 @@
 
 #include "xil_types.h"
 #include "pm_master.h"
+#include "pm_slave.h"
 
 /*********************************************************************
  * Function declarations
  ********************************************************************/
+<<<<<<< HEAD
 void PmSystemProcessShutdown(const PmMaster *master, u32 type, u32 subtype)
 	__attribute__((noreturn));
 bool PmSystemRequestNotAllowed(const PmMaster* const master);
+=======
+int PmSystemRequirementAdd(void);
+
+void PmSystemPrepareForRestart(const PmMaster* const master);
+void PmSystemRestartDone(const PmMaster* const master);
+>>>>>>> upstream/master
 
 #endif

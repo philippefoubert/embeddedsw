@@ -43,7 +43,11 @@ _UNDEF_STACK_SIZE = DEFINED(_UNDEF_STACK_SIZE) ? _UNDEF_STACK_SIZE : 1024;
 
 MEMORY
 {
+<<<<<<< HEAD
    psu_ddr_S_AXI_BASEADDR : ORIGIN = 0x3ED00000, LENGTH = 0x00040000
+=======
+   psu_ddr_S_AXI_BASEADDR : ORIGIN = 0x3ED00000, LENGTH = 0x00020000
+>>>>>>> upstream/master
    psu_ocm_ram_1_S_AXI_BASEADDR : ORIGIN = 0xFFFF0000, LENGTH = 0x00010000
    psu_r5_tcm_ram_0_S_AXI_BASEADDR : ORIGIN = 0x00000000, LENGTH = 0x00010000
    psu_r5_tcm_ram_1_S_AXI_BASEADDR : ORIGIN = 0x00020000, LENGTH = 0x00010000
@@ -134,7 +138,11 @@ SECTIONS
    *(.got)
    *(.got.plt)
    __data_end = .;
+<<<<<<< HEAD
 } > psu_ddr_S_AXI_BASEADDR
+=======
+} > psu_r5_tcm_ram_0_S_AXI_BASEADDR
+>>>>>>> upstream/master
 
 .data1 : {
    __data1_start = .;

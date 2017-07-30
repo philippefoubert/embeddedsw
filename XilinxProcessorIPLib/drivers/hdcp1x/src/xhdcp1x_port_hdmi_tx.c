@@ -187,19 +187,61 @@ static int XHdcp1x_PortHdmiTxInit(XHdcp1x *InstancePtr)
 ******************************************************************************/
 static int XHdcp1x_PortHdmiTxIsCapable(const XHdcp1x *InstancePtr)
 {
-	u8 Value = 0;
+	u8 Value[2] = {0, 0};
+	u16 Bstatus = 0;
 	int IsCapable = FALSE;
 
 	/* Verify arguments. */
 	Xil_AssertNonvoid(InstancePtr != NULL);
 
-	/* Check for hdcp capable */
-	if (XHdcp1x_PortHdmiTxRead(InstancePtr, XHDCP1X_PORT_OFFSET_BCAPS,
-			&Value, 1) > 0) {
-		if ((Value & XHDCP1X_PORT_BIT_BCAPS_HDMI) != 0) {
+	/* Check if the transmitter device is HDMI or DVI. */
+	if(InstancePtr->Tx.TxIsHdmi == TRUE) {
+
+		/* If an HDCP 1.x register is successfully read, then the
+	        downstream device is ready to authenticate. */
+		if (XHdcp1x_PortHdmiTxRead(InstancePtr,
+			XHDCP1X_PORT_OFFSET_BCAPS, Value, 1)) {
+
+			/* Check if connected device is DVI or HDMI
+			 * capable in Bcaps. */
+			if (Value[0] & 0x80) {
+
+				if (XHdcp1x_PortHdmiTxRead(InstancePtr,
+				     XHDCP1X_PORT_OFFSET_BSTATUS, Value, 2)) {
+					/* If it is HDMI capable, check if
+					 * HDMI_MODE in BStatus is true. */
+					Bstatus = Value[0];
+					Bstatus |= Value[1] << 8;
+
+					/* Downstream receiver has
+					 * transitioned to HDMI mode and is
+					 * ready to authenticate. */
+					if (Bstatus & 0x1000) {
+						IsCapable = TRUE;
+					}
+					/* If the downstream receiver has
+					 * not yet set the HDMI_MODE in
+					 * BStatus it isn't ready yet. */
+				}
+			}
+			/* The downstream device is DVI, but the transmitter is
+			 * configured in HDMI mode. This is an error. In this
+			 * case we keep the IsCapable value set to FALSE. */
+			else {
+				IsCapable = FALSE;
+			}
+		}
+	}
+	/* DVI */
+	else if (InstancePtr->Tx.TxIsHdmi == FALSE) {
+		/* If an HDCP 1.x register is successfully read, then the
+	        downstream device is ready to authenticate. */
+		if (XHdcp1x_PortHdmiTxRead(InstancePtr,
+			XHDCP1X_PORT_OFFSET_BCAPS, Value, 1)) {
 			IsCapable = TRUE;
 		}
 	}
+
 
 	return (IsCapable);
 }
@@ -280,7 +322,8 @@ static int XHdcp1x_PortHdmiTxGetRepeaterInfo(const XHdcp1x *InstancePtr,
 			XHDCP1X_PORT_BUF_TO_UINT(U16Value, Buf, 16);
 
 			/* Update Info */
-			*Info = (U16Value & 0x0FFFu);
+			*Info = (U16Value & 0x1FFFu);
+
 		}
 		else {
 			Status = XST_DEVICE_BUSY;
@@ -310,7 +353,6 @@ static int XHdcp1x_PortHdmiTxGetRepeaterInfo(const XHdcp1x *InstancePtr,
 static int XHdcp1x_PortHdmiTxRead(const XHdcp1x *InstancePtr, u8 Offset,
 		void *Buf, u32 BufSize)
 {
-	XV_HdmiTx *HdmiTx = InstancePtr->Port.PhyIfPtr;
 	u8 Slave = 0x3Au;
 	int NumRead = 0;
 	u8 *ReadBuf = Buf;
@@ -361,11 +403,10 @@ static int XHdcp1x_PortHdmiTxRead(const XHdcp1x *InstancePtr, u8 Offset,
 static int XHdcp1x_PortHdmiTxWrite(XHdcp1x *InstancePtr, u8 Offset,
 		const void *Buf, u32 BufSize)
 {
-	XV_HdmiTx *HdmiTx = InstancePtr->Port.PhyIfPtr;
 	u8 Slave = 0x3Au;
 	u8 TxBuf[XHDCP1X_WRITE_CHUNK_SZ + 1];
 	int NumWritten = 0;
-	int ThisTime = 0;
+	u32 ThisTime = 0;
 	const u8 *WriteBuf = Buf;
 
 	/* Verify arguments. */

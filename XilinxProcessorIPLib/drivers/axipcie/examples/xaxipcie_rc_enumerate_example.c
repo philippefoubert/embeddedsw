@@ -68,6 +68,12 @@
 * 2.02a nm   08/19/12 Removed the calls to XAxiPcie_GetLocalBusBar2PcieBar
 *		      and XAxiPcie_SetLocalBusBar2PcieBar as they are not
 *		      needed for enumeration
+* 3.1   ms   01/23/17 Added xil_printf statement in main function to
+*                     ensure that "Successfully ran" and "Failed" strings
+*                     are available in all examples. This is a fix for
+*                     CR-965028.
+*       ms   04/05/17 Added tabspace for return statements in functions
+*                     for proper documentation while generating doxygen.
 *
 *</pre>
 *****************************************************************************/
@@ -77,6 +83,7 @@
 #include "xparameters.h"	/* Defines for XPAR constants */
 #include "xaxipcie.h"		/* XAxiPcie level 1 interface */
 #include "stdio.h"
+#include "xil_printf.h"
 
 /************************** Constant Definitions ****************************/
 
@@ -151,7 +158,8 @@ XAxiPcie AxiPcieInstance;
 *
 * @param 	None
 *
-* @return 	- XST_SUCCESS if successful
+* @return
+*		- XST_SUCCESS if successful
 *		- XST_FAILURE if unsuccessful.
 *
 * @note 	None.
@@ -166,12 +174,14 @@ int main(void)
 	Status = PcieInitRootComplex(&AxiPcieInstance, AXIPCIE_DEVICE_ID);
 
 	if (Status != XST_SUCCESS) {
+		xil_printf("Axipcie rc enumerate Example Failed\r\n");
 		return XST_FAILURE;
 	}
 
 	/* Scan PCIe Fabric */
 	PCIeEnumerateFabric(&AxiPcieInstance);
 
+	xil_printf("Successfully ran Axipcie rc enumerate Example\r\n");
 	return XST_SUCCESS;
 }
 
@@ -183,7 +193,8 @@ int main(void)
 *		structure represents a root complex IP.
 * @param 	DeviceId is AXI PCIe IP unique ID
 *
-* @return	- XST_SUCCESS if successful.
+* @return
+*		- XST_SUCCESS if successful.
 *		- XST_FAILURE if unsuccessful.
 *
 * @note 	None.

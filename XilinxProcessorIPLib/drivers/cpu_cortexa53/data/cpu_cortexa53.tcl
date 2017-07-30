@@ -35,6 +35,7 @@
 # Ver   Who  Date     Changes
 # ----- ---- -------- -----------------------------------------------
 # 1.0	pkp  07/21/14 Initial common::version
+# 1.3   mus  02/20/17 Updated tcl to guard xparameters.h by protection macros
 #
 ##############################################################################
 #uses "xillib.tcl"
@@ -62,6 +63,18 @@ proc xdefine_cortexa53_params {drvhandle} {
 	common::set_property -name {EXTRA_COMPILER_FLAGS} -value $new_flags -objects [hsi::get_sw_processor]
 
     }
+
+    #Append LTO flag in EXTRA_COMPILER_FLAGS for zynqmp_fsbl_bsp
+    set is_zynqmp_fsbl_bsp [common::get_property CONFIG.ZYNQMP_FSBL_BSP [hsi::get_os]]
+    if {$is_zynqmp_fsbl_bsp == true} {
+		set extra_flags [common::get_property CONFIG.extra_compiler_flags [hsi::get_sw_processor]]
+		#Append LTO flag in EXTRA_COMPILER_FLAGS if not exist previoulsy.
+		if {[string first "-flto" $extra_flags] == -1 } {
+			append extra_flags " -Os -flto -ffat-lto-objects"
+			common::set_property -name {EXTRA_COMPILER_FLAGS} -value $extra_flags -objects [hsi::get_sw_processor]
+		}
+    }
+
     set archiver [common::get_property CONFIG.archiver $procdrv]
     if {[string first "iarchive" $archiver] < 0 } {
     } else {
@@ -79,6 +92,9 @@ proc xdefine_cortexa53_params {drvhandle} {
     set lprocs [lsort $lprocs]
 
     set config_inc [::hsi::utils::open_include_file "xparameters.h"]
+    puts $config_inc "#ifndef XPARAMETERS_H   /* prevent circular inclusions */"
+    puts $config_inc "#define XPARAMETERS_H   /* by using protection macros */"
+    puts $config_inc ""
     puts $config_inc "/* Definition for CPU ID */"
 
     foreach periph $periphs {
@@ -159,4 +175,16 @@ proc xdefine_addr_params_for_ext_intf {drvhandle file_name} {
       }
 
     close $file_handle
+}
+
+proc post_generate_final {drv_handle} {
+
+	set type [get_property CLASS $drv_handle]
+	if {[string equal $type "driver"]} {
+	   return
+	}
+
+	set file_handle [::hsi::utils::open_include_file "xparameters.h"]
+	puts $file_handle "#endif  /* end of protection macro */"
+	close $file_handle
 }

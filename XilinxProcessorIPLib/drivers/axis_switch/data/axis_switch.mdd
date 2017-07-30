@@ -35,5 +35,9 @@ BEGIN driver axis_switch
     OPTION supported_peripherals = (axis_switch);
     OPTION driver_state = ACTIVE;
     OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+    OPTION VERSION = 1.2;
+>>>>>>> upstream/master
     OPTION NAME = axis_switch;
 END driver

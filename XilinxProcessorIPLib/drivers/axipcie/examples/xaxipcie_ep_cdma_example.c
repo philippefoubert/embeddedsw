@@ -69,6 +69,12 @@
 * 1.00a rkv  03/07/11 Initial version based on PLB PCIE example
 * 2.00a nm   10/19/11 Renamed function call XAxiPcie_GetRequestId to
 *		      XAxiPcie_GetRequesterId
+* 3.1   ms   01/23/17 Added xil_printf statement in main function to
+*                     ensure that "Successfully ran" and "Failed" strings
+*                     are available in all examples. This is a fix for
+*                     CR-965028.
+*       ms   04/05/17 Added tabspace for return statements in functions
+*                     for proper documentation while generating doxygen.
 *</pre>
 *****************************************************************************/
 
@@ -78,6 +84,7 @@
 #include "xaxipcie.h"		/* XAxiPcie interface */
 #include "xaxicdma.h"		/* AXICDMA interface */
 #include "stdio.h"
+#include "xil_printf.h"
 
 /************************** Constant Definitions ****************************/
 
@@ -142,7 +149,8 @@ XAxiCdma CdmaInstance;
 *
 * @param	None
 *
-* @return 	- XST_SUCCESS if successful
+* @return
+*		- XST_SUCCESS if successful
 *		- XST_FAILURE if unsuccessful
 *
 * @note		None.
@@ -164,9 +172,11 @@ int main(void)
 	/* Use AXICDMA to transfer data to/from end point. */
 	Status = DmaDataTransfer(AXIDMA_DEVICE_ID);
 	if (Status != XST_SUCCESS) {
+		xil_printf("Axipcie ep cdma Example Failed\r\n");
 		return (XST_FAILURE);
 	}
 
+	xil_printf("Successfully ran Axipcie ep cdma Example\r\n");
 	return(0);
 }
 
@@ -178,7 +188,8 @@ int main(void)
 *		structure represents an end point IP.
 * @param	DeviceId is PCIe IP unique ID
 *
-* @return	- XST_SUCCESS if successful
+* @return
+*		- XST_SUCCESS if successful
 *		- XST_FAILURE if unsuccessful
 *
 * @note		None.
@@ -312,7 +323,8 @@ int PCIeEndPointInitialize(XAxiPcie *XlnxEndPointPtr, u16 DeviceId)
 *
 * @param	DeviceId is device ID of the XAxiCdma Device.
 *
-* @return	- XST_SUCCESS if successful
+* @return
+*		- XST_SUCCESS if successful
 *		- XST_FAILURE.if unsuccessful.
 *
 * @note		If the hardware system is not built correctly, this function

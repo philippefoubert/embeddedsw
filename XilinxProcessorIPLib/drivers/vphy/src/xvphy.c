@@ -60,6 +60,12 @@
  *                     Used usleep API instead of MB_Sleep API
  *                     Fixed Null pointer dereference in XVphy_IBufDsEnable
  *                     Suppressed warning messages due to unused arguments
+<<<<<<< HEAD
+=======
+ * 1.4   gm   29/11/16 Moved internally used APIs to xvphy_i.c/h
+ *                     Added preprocessor directives for sw footprint reduction
+ *                     Fixed c++ compiler warnings
+>>>>>>> upstream/master
  * </pre>
  *
 *******************************************************************************/
@@ -69,24 +75,16 @@
 #include <string.h>
 #include "xstatus.h"
 #include "xvphy.h"
+#include "xvphy_i.h"
 #include "xvphy_hdmi.h"
 #include "sleep.h"
 #include "xvphy_gt.h"
 
 /**************************** Function Prototypes *****************************/
-
-extern void XVphy_Ch2Ids(XVphy *InstancePtr, XVphy_ChannelId ChId,
-		u8 *Id0, u8 *Id1);
-static void XVphy_SelQuad(XVphy *InstancePtr, u8 QuadId);
 static u32 XVphy_MmcmWriteParameters(XVphy *InstancePtr, u8 QuadId,
-		XVphy_DirectionType Dir);
-static inline XVphy_SysClkDataSelType Pll2SysClkData(XVphy_PllType PllSelect);
-static inline XVphy_SysClkOutSelType Pll2SysClkOut(XVphy_PllType PllSelect);
+							XVphy_DirectionType Dir);
 static u32 XVphy_DrpAccess(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 		XVphy_DirectionType Dir, u16 Addr, u16 *Val);
-static u32 XVphy_PllCalculator(XVphy *InstancePtr, u8 QuadId,
-		XVphy_ChannelId ChId, XVphy_DirectionType Dir,
-		u32 PllClkInFreqHz);
 
 /**************************** Function Definitions ****************************/
 
@@ -124,30 +122,26 @@ void XVphy_CfgInitialize(XVphy *InstancePtr, XVphy_Config *ConfigPtr,
 	InstancePtr->Config = *ConfigPtr;
 	InstancePtr->Config.BaseAddr = EffectiveAddr;
 
-	if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTXE2) {
-		InstancePtr->GtAdaptor = &Gtxe2Config;
-	}
-	else if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTHE2) {
-		InstancePtr->GtAdaptor = &Gthe2Config;
-	}
-	else if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTPE2) {
-		InstancePtr->GtAdaptor = &Gtpe2Config;
-	}
-	else if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTHE3) {
-		InstancePtr->GtAdaptor = &Gthe3Config;
-	}
-	else {
-		InstancePtr->GtAdaptor = &Gthe4Config;
-	}
+#if (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTXE2)
+	InstancePtr->GtAdaptor = &Gtxe2Config;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE2)
+	InstancePtr->GtAdaptor = &Gthe2Config;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTPE2)
+	InstancePtr->GtAdaptor = &Gtpe2Config;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE3)
+	InstancePtr->GtAdaptor = &Gthe3Config;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE4)
+	InstancePtr->GtAdaptor = &Gthe4Config;
+#endif
 
 	const XVphy_SysClkDataSelType SysClkCfg[7][2] = {
-		{0, XVPHY_SYSCLKSELDATA_TYPE_CPLL_OUTCLK},
-		{1, XVPHY_SYSCLKSELDATA_TYPE_QPLL0_OUTCLK},
-		{2, XVPHY_SYSCLKSELDATA_TYPE_QPLL1_OUTCLK},
-		{3, XVPHY_SYSCLKSELDATA_TYPE_QPLL_OUTCLK},
-		{4, XVPHY_SYSCLKSELDATA_TYPE_PLL0_OUTCLK},
-		{5, XVPHY_SYSCLKSELDATA_TYPE_PLL1_OUTCLK},
-		{6, XVPHY_SYSCLKSELDATA_TYPE_QPLL0_OUTCLK},
+		{(XVphy_SysClkDataSelType)0, XVPHY_SYSCLKSELDATA_TYPE_CPLL_OUTCLK},
+		{(XVphy_SysClkDataSelType)1, XVPHY_SYSCLKSELDATA_TYPE_QPLL0_OUTCLK},
+		{(XVphy_SysClkDataSelType)2, XVPHY_SYSCLKSELDATA_TYPE_QPLL1_OUTCLK},
+		{(XVphy_SysClkDataSelType)3, XVPHY_SYSCLKSELDATA_TYPE_QPLL_OUTCLK},
+		{(XVphy_SysClkDataSelType)4, XVPHY_SYSCLKSELDATA_TYPE_PLL0_OUTCLK},
+		{(XVphy_SysClkDataSelType)5, XVPHY_SYSCLKSELDATA_TYPE_PLL1_OUTCLK},
+		{(XVphy_SysClkDataSelType)6, XVPHY_SYSCLKSELDATA_TYPE_QPLL0_OUTCLK},
 	};
 	for (Sel = 0; Sel < 7; Sel++) {
 		if (InstancePtr->Config.TxSysPllClkSel == SysClkCfg[Sel][0]) {
@@ -158,20 +152,29 @@ void XVphy_CfgInitialize(XVphy *InstancePtr, XVphy_Config *ConfigPtr,
 		}
 	}
 
-	InstancePtr->Config.TxRefClkSel += XVPHY_PLL_REFCLKSEL_TYPE_GTREFCLK0;
-	InstancePtr->Config.RxRefClkSel += XVPHY_PLL_REFCLKSEL_TYPE_GTREFCLK0;
-	InstancePtr->Config.DruRefClkSel += XVPHY_PLL_REFCLKSEL_TYPE_GTREFCLK0;
+	InstancePtr->Config.TxRefClkSel = (XVphy_PllRefClkSelType)
+			(InstancePtr->Config.TxRefClkSel +
+					XVPHY_PLL_REFCLKSEL_TYPE_GTREFCLK0);
+	InstancePtr->Config.RxRefClkSel = (XVphy_PllRefClkSelType)
+			(InstancePtr->Config.RxRefClkSel +
+					XVPHY_PLL_REFCLKSEL_TYPE_GTREFCLK0);
+	InstancePtr->Config.DruRefClkSel = (XVphy_PllRefClkSelType)
+			(InstancePtr->Config.DruRefClkSel +
+					XVPHY_PLL_REFCLKSEL_TYPE_GTREFCLK0);
 
 	/* Correct RefClkSel offsets for GTPE2 EAST and WEST RefClks */
 	if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTPE2) {
 		if (InstancePtr->Config.TxRefClkSel > 6) {
-			InstancePtr->Config.TxRefClkSel -= 4;
+			InstancePtr->Config.TxRefClkSel = (XVphy_PllRefClkSelType)
+					(InstancePtr->Config.TxRefClkSel - 4);
 		}
 		if (InstancePtr->Config.RxRefClkSel > 6) {
-			InstancePtr->Config.RxRefClkSel -= 4;
+			InstancePtr->Config.RxRefClkSel = (XVphy_PllRefClkSelType)
+					(InstancePtr->Config.RxRefClkSel - 4);
 		}
 		if (InstancePtr->Config.DruRefClkSel > 6) {
-			InstancePtr->Config.DruRefClkSel -= 4;
+			InstancePtr->Config.DruRefClkSel = (XVphy_PllRefClkSelType)
+					(InstancePtr->Config.DruRefClkSel - 4);
 		}
 	}
 
@@ -209,8 +212,11 @@ u32 XVphy_PllInitialize(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 {
 	/* Suppress Warning Messages */
 	ChId = ChId;
+<<<<<<< HEAD
 
 	XVphy_SelQuad(InstancePtr, QuadId);
+=======
+>>>>>>> upstream/master
 
 	/* Set configuration in software. */
 	if (InstancePtr->Config.XcvrType != XVPHY_GT_TYPE_GTPE2) {
@@ -309,6 +315,7 @@ void XVphy_WaitUs(XVphy *InstancePtr, u32 MicroSeconds)
 	}
 }
 
+#if defined (XPAR_XDP_0_DEVICE_ID)
 /*****************************************************************************/
 /**
 * This function will initialize the clocking for a given channel.
@@ -349,6 +356,7 @@ u32 XVphy_ClkInitialize(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 
 	return Status;
 }
+#endif
 
 /*****************************************************************************/
 /**
@@ -368,6 +376,7 @@ u32 XVphy_GetVersion(XVphy *InstancePtr)
 
 /*****************************************************************************/
 /**
+<<<<<<< HEAD
 * This function will enable or disable the LPM logic in the Video PHY core.
 *
 * @param	InstancePtr is a pointer to the XVphy core instance.
@@ -558,6 +567,8 @@ u32 XVphy_WriteCfgRefClkSelReg(XVphy *InstancePtr, u8 QuadId)
 
 /*****************************************************************************/
 /**
+=======
+>>>>>>> upstream/master
 * Configure the channel's line rate. This is a software only configuration and
 * this value is used in the PLL calculator.
 *
@@ -589,6 +600,7 @@ u32 XVphy_CfgLineRate(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 	return XST_SUCCESS;
 }
 
+#if defined (XPAR_XDP_0_DEVICE_ID)
 /*****************************************************************************/
 /**
 * Configure the quad's reference clock frequency. This is a software only
@@ -618,93 +630,7 @@ u32 XVphy_CfgQuadRefClkFreq(XVphy *InstancePtr, u8 QuadId,
 
 	return XST_SUCCESS;
 }
-
-/*****************************************************************************/
-/**
-* Configure the PLL reference clock selection for the specified channel(s).
-* This is applied to both direction to the software configuration only.
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	QuadId is the GT quad ID to operate on.
-* @param	ChId is the channel ID to operate on.
-* @param	SysClkDataSel is the reference clock selection to configure.
-*
-* @return	None.
-*
-* @note		None.
-*
-******************************************************************************/
-void XVphy_CfgPllRefClkSel(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
-		XVphy_PllRefClkSelType RefClkSel)
-{
-	u8 Id, Id0, Id1;
-
-	XVphy_Ch2Ids(InstancePtr, ChId, &Id0, &Id1);
-	for (Id = Id0; Id <= Id1; Id++) {
-		InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].PllRefClkSel =
-					RefClkSel;
-	}
-}
-
-/*****************************************************************************/
-/**
-* Configure the SYSCLKDATA reference clock selection for the direction. Same
-* configuration applies to all channels in the quad. This is applied to the
-* software configuration only.
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	QuadId is the GT quad ID to operate on.
-* @param	Dir is an indicator for TX or RX.
-* @param	SysClkDataSel is the reference clock selection to configure.
-*
-* @return	None.
-*
-* @note		None.
-*
-******************************************************************************/
-void XVphy_CfgSysClkDataSel(XVphy *InstancePtr, u8 QuadId,
-		XVphy_DirectionType Dir, XVphy_SysClkDataSelType SysClkDataSel)
-{
-	XVphy_Channel *ChPtr;
-	u8 Id, Id0, Id1;
-
-	XVphy_Ch2Ids(InstancePtr, XVPHY_CHANNEL_ID_CHA, &Id0, &Id1);
-	/* Select in software - same for all channels. */
-	for (Id = Id0; Id <= Id1; Id++) {
-		ChPtr = &InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)];
-		ChPtr->DataRefClkSel[Dir] = SysClkDataSel;
-	}
-}
-
-/*****************************************************************************/
-/**
-* Configure the SYSCLKOUT reference clock selection for the direction. Same
-* configuration applies to all channels in the quad. This is applied to the
-* software configuration only.
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	QuadId is the GT quad ID to operate on.
-* @param	Dir is an indicator for TX or RX.
-* @param	SysClkOutSel is the reference clock selection to configure.
-*
-* @return	None.
-*
-* @note		None.
-*
-******************************************************************************/
-void XVphy_CfgSysClkOutSel(XVphy *InstancePtr, u8 QuadId,
-		XVphy_DirectionType Dir, XVphy_SysClkOutSelType SysClkOutSel)
-{
-	XVphy_Channel *ChPtr;
-	u8 Id, Id0, Id1;
-
-	XVphy_Ch2Ids(InstancePtr, XVPHY_CHANNEL_ID_CHA, &Id0, &Id1);
-	/* Select in software - same for all channels. */
-	for (Id = Id0; Id <= Id1; Id++) {
-		ChPtr = &InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)];
-		ChPtr->OutRefClkSel[Dir] = SysClkOutSel;
-	}
-}
+#endif
 
 /*****************************************************************************/
 /**
@@ -773,21 +699,20 @@ XVphy_PllType XVphy_GetPllType(XVphy *InstancePtr, u8 QuadId,
 
 /*****************************************************************************/
 /**
-* Obtain the reconfiguration channel ID for given PLL type
+* This function will return the line rate in Hz for a given channel / quad.
 *
 * @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	QuadId is the GT quad ID to operate on.
-* @param	Dir is an indicator for TX or RX.
-* @param	PllType is the PLL type being used by the channel.
+* @param	QuadId is the GT quad ID to check.
+* @param	ChId is the channel ID for which to retrieve the line rate.
 *
-* @return	The Channel ID to be used for reconfiguration
+* @return	The line rate in Hz.
 *
 * @note		None.
 *
 ******************************************************************************/
-XVphy_ChannelId XVphy_GetRcfgChId(XVphy *InstancePtr, u8 QuadId,
-		XVphy_DirectionType Dir, XVphy_PllType PllType)
+u64 XVphy_GetLineRateHz(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId)
 {
+<<<<<<< HEAD
 	XVphy_ChannelId ChId;
 
 	/* Suppress Warning Messages */
@@ -812,89 +737,148 @@ XVphy_ChannelId XVphy_GetRcfgChId(XVphy *InstancePtr, u8 QuadId,
 	}
 
 	return ChId;
+=======
+	Xil_AssertNonvoid(InstancePtr != NULL);
+	Xil_AssertNonvoid((XVPHY_CHANNEL_ID_CH1 <= ChId) &&
+			(ChId <= XVPHY_CHANNEL_ID_CMN1));
+
+	return InstancePtr->Quads[QuadId].Plls[ChId -
+		XVPHY_CHANNEL_ID_CH1].LineRateHz;
+>>>>>>> upstream/master
 }
 
+#if defined (XPAR_XDP_0_DEVICE_ID)
 /*****************************************************************************/
 /**
-* Obtain the current reference clock frequency for the quad based on the
-* reference clock type.
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	QuadId is the GT quad ID to operate on.
-* @param	RefClkType is the type to obtain the clock selection for.
-*
-* @return	The current reference clock frequency for the quad for the
-*		specified type selection.
-*
-* @note		None.
-*
-******************************************************************************/
-u32 XVphy_GetQuadRefClkFreq(XVphy *InstancePtr, u8 QuadId,
-		XVphy_PllRefClkSelType RefClkType)
-{
-	u32 FreqHz;
-
-	u8 RefClkIndex = RefClkType - XVPHY_PLL_REFCLKSEL_TYPE_GTREFCLK0;
-
-	FreqHz = (RefClkType > XVPHY_PLL_REFCLKSEL_TYPE_GTGREFCLK) ? 0 :
-		InstancePtr->Quads[QuadId].RefClkHz[RefClkIndex];
-
-	return FreqHz;
-}
-
-/*****************************************************************************/
-/**
-* Obtain the current PLL reference clock selection.
+* This function will wait for a PMA reset done on the specified channel(s) or
+* time out.
 *
 * @param	InstancePtr is a pointer to the XVphy core instance.
 * @param	QuadId is the GT quad ID to operate on.
 * @param	ChId is the channel ID which to operate on.
+* @param	Dir is an indicator for TX or RX.
 *
-* @return	The current PLL reference clock selection.
+* @return
+*		- XST_SUCCESS if the PMA reset has finalized.
+*		- XST_FAILURE otherwise; waiting for the reset done timed out.
 *
 * @note		None.
 *
 ******************************************************************************/
-XVphy_PllRefClkSelType XVphy_GetPllRefClkSel(XVphy *InstancePtr, u8 QuadId,
-		XVphy_ChannelId ChId)
+u32 XVphy_WaitForPmaResetDone(XVphy *InstancePtr, u8 QuadId,
+		XVphy_ChannelId ChId, XVphy_DirectionType Dir)
 {
-	u32 Sel;
 	u32 RegVal;
+	u32 MaskVal;
+	u32 RegOffset;
+	u8 Retry = 0;
 
 	/* Suppress Warning Messages */
 	QuadId = QuadId;
+
+	if (Dir == XVPHY_DIR_TX) {
+		RegOffset = XVPHY_TX_INIT_STATUS_REG;
+	}
+	else {
+		RegOffset = XVPHY_RX_INIT_STATUS_REG;
+	}
+	if (ChId == XVPHY_CHANNEL_ID_CHA) {
+		MaskVal = XVPHY_TXRX_INIT_STATUS_PMARESETDONE_ALL_MASK;
+	}
+	else {
+		MaskVal = XVPHY_TXRX_INIT_STATUS_PMARESETDONE_MASK(ChId);
+	}
+	do {
+		RegVal = XVphy_ReadReg(InstancePtr->Config.BaseAddr, RegOffset);
+		if (!(RegVal & MaskVal)){
+			XVphy_WaitUs(InstancePtr, 1000);
+			Retry++;
+		}
+	} while ((!(RegVal & MaskVal)) && (Retry < 15));
+
+	if (Retry == 15){
+		return XST_FAILURE;
+	}
+	else {
+		return XST_SUCCESS;
+	}
+}
+
+/*****************************************************************************/
+/**
+* This function will wait for a reset done on the specified channel(s) or time
+* out.
+*
+* @param	InstancePtr is a pointer to the XVphy core instance.
+* @param	QuadId is the GT quad ID to operate on.
+* @param	ChId is the channel ID which to operate on.
+* @param	Dir is an indicator for TX or RX.
+*
+* @return
+*		- XST_SUCCESS if the reset has finalized.
+*		- XST_FAILURE otherwise; waiting for the reset done timed out.
+*
+* @note		None.
+*
+******************************************************************************/
+u32 XVphy_WaitForResetDone(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
+		XVphy_DirectionType Dir)
+{
+	u32 RegVal;
+	u32 MaskVal;
+	u32 RegOffset;
+	u8 Retry = 0;
+
+	/* Suppress Warning Messages */
+	QuadId = QuadId;
+<<<<<<< HEAD
 
 	Xil_AssertNonvoid((XVPHY_CHANNEL_ID_CH1 <= ChId) &&
 			(ChId <= XVPHY_CHANNEL_ID_CMN1));
 
 	RegVal = XVphy_ReadReg(InstancePtr->Config.BaseAddr,
 							XVPHY_REF_CLK_SEL_REG);
+=======
+>>>>>>> upstream/master
 
-	/* Synchronize software configuration to hardware. */
-	if (ChId == XVPHY_CHANNEL_ID_CMN0) {
-		Sel = RegVal & XVPHY_REF_CLK_SEL_QPLL0_MASK;
-	}
-	else if (ChId == XVPHY_CHANNEL_ID_CMN1) {
-		Sel = RegVal & XVPHY_REF_CLK_SEL_QPLL1_MASK;
-		Sel >>= XVPHY_REF_CLK_SEL_QPLL1_SHIFT;
+	if (Dir == XVPHY_DIR_TX) {
+		RegOffset = XVPHY_TX_INIT_STATUS_REG;
 	}
 	else {
-		Sel = RegVal & XVPHY_REF_CLK_SEL_CPLL_MASK;
-		Sel >>= XVPHY_REF_CLK_SEL_CPLL_SHIFT;
+		RegOffset = XVPHY_RX_INIT_STATUS_REG;
 	}
+	if (ChId == XVPHY_CHANNEL_ID_CHA) {
+		MaskVal = XVPHY_TXRX_INIT_STATUS_RESETDONE_ALL_MASK;
+	}
+	else {
+		MaskVal = XVPHY_TXRX_INIT_STATUS_RESETDONE_MASK(ChId);
+	}
+	do {
+		RegVal = XVphy_ReadReg(InstancePtr->Config.BaseAddr, RegOffset);
+		if (!(RegVal & MaskVal)){
+			XVphy_WaitUs(InstancePtr, 1000);
+			Retry++;
+		}
+	} while ((!(RegVal & MaskVal)) && (Retry < 15));
 
-	return Sel;
+	if (Retry == 15){
+		return XST_FAILURE;
+	}
+	else {
+		return XST_SUCCESS;
+	}
 }
 
 /*****************************************************************************/
 /**
-* Obtain the current [RT]XSYSCLKSEL[0] configuration.
+* This function will wait for a PLL lock on the specified channel(s) or time
+* out.
 *
 * @param	InstancePtr is a pointer to the XVphy core instance.
 * @param	QuadId is the GT quad ID to operate on.
-* @param	Dir is an indicator for TX or RX.
 * @param	ChId is the channel ID which to operate on.
 *
+<<<<<<< HEAD
 * @return	The current [RT]XSYSCLKSEL[0] selection.
 *
 * @note		None.
@@ -1120,6 +1104,8 @@ u32 XVphy_WaitForResetDone(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 * @param	QuadId is the GT quad ID to operate on.
 * @param	ChId is the channel ID which to operate on.
 *
+=======
+>>>>>>> upstream/master
 * @return
 *		- XST_SUCCESS if the PLL(s) have locked.
 *		- XST_FAILURE otherwise; waiting for the lock timed out.
@@ -1140,6 +1126,7 @@ u32 XVphy_WaitForPllLock(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId)
 
 	return Status;
 }
+<<<<<<< HEAD
 
 /*****************************************************************************/
 /**
@@ -1205,6 +1192,9 @@ u32 XVphy_IsPllLocked(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId)
 
 	return XST_FAILURE;
 }
+=======
+#endif
+>>>>>>> upstream/master
 
 /*****************************************************************************/
 /**
@@ -1316,24 +1306,28 @@ u32 XVphy_ResetGtTxRx(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 
 /*****************************************************************************/
 /**
-* This function will reset and enable the Video PHY's user core logic.
+* This function will initiate a write DRP transaction. It is a wrapper around
+* XVphy_DrpAccess.
 *
 * @param	InstancePtr is a pointer to the XVphy core instance.
 * @param	QuadId is the GT quad ID to operate on.
-* @param	ChId is the channel ID which to operate on.
-* @param	Dir is an indicator for TX or RX.
-* @param	Hold is an indicator whether to "hold" the reset if set to 1.
-*		If set to 0: reset, then enable.
+* @param	ChId is the channel ID on which to direct the DRP access.
+* @param	Dir is an indicator for write (TX) or read (RX).
+* @param	Addr is the DRP address to issue the DRP access to.
+* @param	Val is the value to write to the DRP address.
 *
 * @return
-*		- XST_SUCCESS.
+*		- XST_SUCCESS if the DRP access was successful.
+*		- XST_FAILURE otherwise, if the busy bit did not go low, or if
+*		  the ready bit did not go high.
 *
 * @note		None.
 *
 ******************************************************************************/
-u32 XVphy_GtUserRdyEnable(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
-		XVphy_DirectionType Dir, u8 Hold)
+u32 XVphy_DrpWrite(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
+		u16 Addr, u16 Val)
 {
+<<<<<<< HEAD
 	u32 RegVal;
 	u32 MaskVal;
 	u32 RegOffset;
@@ -1453,6 +1447,8 @@ u32 XVphy_ResetGt(XVphy *InstancePtr, u8 QuadId, XVphy_DirectionType Dir)
 u32 XVphy_DrpWrite(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 		u16 Addr, u16 Val)
 {
+=======
+>>>>>>> upstream/master
 	return XVphy_DrpAccess(InstancePtr, QuadId, ChId,
 			XVPHY_DIR_TX, /* Write. */
 			Addr, &Val);
@@ -1491,50 +1487,6 @@ u16 XVphy_DrpRead(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId, u16 Addr)
 
 /*****************************************************************************/
 /**
-* This function will reset the mixed-mode clock manager (MMCM) core.
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	QuadId is the GT quad ID to operate on.
-* @param	Dir is an indicator for TX or RX.
-* @param	Hold is an indicator whether to "hold" the reset if set to 1.
-*		If set to 0: reset, then enable.
-*
-* @return
-*		- XST_SUCCESS.
-*
-* @note		None.
-*
-******************************************************************************/
-void XVphy_MmcmReset(XVphy *InstancePtr, u8 QuadId, XVphy_DirectionType Dir,
-		u8 Hold)
-{
-	u32 RegOffsetCtrl;
-	u32 RegVal;
-
-	XVphy_SelQuad(InstancePtr, QuadId);
-
-	if (Dir == XVPHY_DIR_TX) {
-		RegOffsetCtrl = XVPHY_MMCM_TXUSRCLK_CTRL_REG;
-	}
-	else {
-		RegOffsetCtrl = XVPHY_MMCM_RXUSRCLK_CTRL_REG;
-	}
-
-	/* Assert reset. */
-	RegVal = XVphy_ReadReg(InstancePtr->Config.BaseAddr, RegOffsetCtrl);
-	RegVal |= XVPHY_MMCM_USRCLK_CTRL_RST_MASK;
-	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffsetCtrl, RegVal);
-
-	if (!Hold) {
-		/* De-assert reset. */
-		RegVal &= ~XVPHY_MMCM_USRCLK_CTRL_RST_MASK;
-		XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffsetCtrl,
-									RegVal);
-	}
-}
-
-/*****************************************************************************/
-/**
 * This function will power down the mixed-mode clock manager (MMCM) core.
 *
 * @param	InstancePtr is a pointer to the XVphy core instance.
@@ -1555,7 +1507,8 @@ void XVphy_MmcmPowerDown(XVphy *InstancePtr, u8 QuadId, XVphy_DirectionType Dir,
 	u32 RegOffsetCtrl;
 	u32 RegVal;
 
-	XVphy_SelQuad(InstancePtr, QuadId);
+	/* Suppress Warning Messages */
+	QuadId = QuadId;
 
 	if (Dir == XVPHY_DIR_TX) {
 		RegOffsetCtrl = XVPHY_MMCM_TXUSRCLK_CTRL_REG;
@@ -1592,16 +1545,9 @@ void XVphy_MmcmPowerDown(XVphy *InstancePtr, u8 QuadId, XVphy_DirectionType Dir,
 ******************************************************************************/
 void XVphy_MmcmStart(XVphy *InstancePtr, u8 QuadId, XVphy_DirectionType Dir)
 {
+#if defined (XPAR_XDP_0_DEVICE_ID)
 	u32 Status;
 	u8 Retry;
-
-	if ((Dir == XVPHY_DIR_TX &&
-			InstancePtr->Config.TxProtocol == XVPHY_PROTOCOL_HDMI) ||
-		(Dir == XVPHY_DIR_RX &&
-			InstancePtr->Config.RxProtocol == XVPHY_PROTOCOL_HDMI)) {
-		XVphy_HdmiMmcmStart(InstancePtr, QuadId, Dir);
-		return;
-	}
 
 	/* Enable MMCM. */
 	XVphy_MmcmPowerDown(InstancePtr, QuadId, Dir, FALSE);
@@ -1625,134 +1571,19 @@ void XVphy_MmcmStart(XVphy *InstancePtr, u8 QuadId, XVphy_DirectionType Dir)
 
 	/* Toggle MMCM reset. */
 	XVphy_MmcmReset(InstancePtr, QuadId, Dir, FALSE);
+#else
+	/* Toggle MMCM reset. */
+	XVphy_MmcmReset(InstancePtr, QuadId, Dir, FALSE);
+
+	/* Configure MMCM. */
+	XVphy_MmcmWriteParameters(InstancePtr, QuadId, Dir);
+
+	/* Unmask the MMCM Lock */
+	XVphy_MmcmLockedMaskEnable(InstancePtr, 0, Dir, FALSE);
+#endif
 
 	XVphy_LogWrite(InstancePtr, (Dir == XVPHY_DIR_TX) ?
 		XVPHY_LOG_EVT_TXPLL_RECONFIG : XVPHY_LOG_EVT_RXPLL_RECONFIG, 1);
-}
-
-/*****************************************************************************/
-/**
-* This function will reset the mixed-mode clock manager (MMCM) core.
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	QuadId is the GT quad ID to operate on.
-* @param	Dir is an indicator for TX or RX.
-* @param	Enable is an indicator whether to "Enable" the locked mask
-*		if set to 1. If set to 0: reset, then disable.
-*
-* @return	None.
-*
-* @note		None.
-*
-******************************************************************************/
-void XVphy_MmcmLockedMaskEnable(XVphy *InstancePtr, u8 QuadId,
-		XVphy_DirectionType Dir, u8 Enable)
-{
-	u32 RegOffsetCtrl;
-	u32 RegVal;
-
-	XVphy_SelQuad(InstancePtr, QuadId);
-
-	if (Dir == XVPHY_DIR_TX) {
-		RegOffsetCtrl = XVPHY_MMCM_TXUSRCLK_CTRL_REG;
-	}
-	else {
-		RegOffsetCtrl = XVPHY_MMCM_RXUSRCLK_CTRL_REG;
-	}
-
-	/* Assert reset. */
-	RegVal = XVphy_ReadReg(InstancePtr->Config.BaseAddr, RegOffsetCtrl);
-	RegVal |= XVPHY_MMCM_USRCLK_CTRL_LOCKED_MASK_MASK;
-	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffsetCtrl, RegVal);
-
-	if (!Enable) {
-		/* De-assert reset. */
-		RegVal &= ~XVPHY_MMCM_USRCLK_CTRL_LOCKED_MASK_MASK;
-		XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffsetCtrl,
-									RegVal);
-	}
-}
-
-/*****************************************************************************/
-/**
-* This function resets the BUFG_GT peripheral.
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	Dir is an indicator for TX or RX
-* @param	Reset specifies TRUE/FALSE value to either assert or deassert
-*		reset on the BUFG_GT, respectively.
-*
-* @return	None.
-*
-******************************************************************************/
-void XVphy_BufgGtReset(XVphy *InstancePtr, XVphy_DirectionType Dir, u8 Reset)
-{
-	u32 RegVal;
-	u32 RegOffset;
-
-	if (Dir == XVPHY_DIR_TX) {
-		RegOffset = XVPHY_BUFGGT_TXUSRCLK_REG;
-	}
-	else {
-		RegOffset = XVPHY_BUFGGT_RXUSRCLK_REG;
-	}
-
-	/* Read BUFG_GT register. */
-	RegVal = XVphy_ReadReg(InstancePtr->Config.BaseAddr, RegOffset);
-
-	/* Write new value to BUFG_GT register. */
-	if (Reset) {
-		RegVal |= XVPHY_BUFGGT_XXUSRCLK_CLR_MASK;
-	}
-	else {
-		RegVal &= ~XVPHY_BUFGGT_XXUSRCLK_CLR_MASK;
-	}
-	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffset, RegVal);
-}
-
-/*****************************************************************************/
-/**
-* This function obtains the divider value of the BUFG_GT peripheral.
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	Dir is an indicator for TX or RX
-* @param	Div 3-bit divider value
-*
-* @return	None.
-*
-******************************************************************************/
-void XVphy_SetBufgGtDiv(XVphy *InstancePtr, XVphy_DirectionType Dir, u8 Div)
-{
-	u32 RegVal;
-	u32 RegOffset;
-	u8 Divider = Div;
-
-	if (Divider == 0) {
-		Divider = 1;
-	}
-	else {
-		Divider = Divider - 1;
-	}
-
-
-	if (Dir == XVPHY_DIR_TX) {
-		RegOffset = XVPHY_BUFGGT_TXUSRCLK_REG;
-	}
-	else {
-		RegOffset = XVPHY_BUFGGT_RXUSRCLK_REG;
-	}
-
-	/* Read BUFG_GT register. */
-	RegVal = XVphy_ReadReg(InstancePtr->Config.BaseAddr, RegOffset);
-	RegVal &= ~XVPHY_BUFGGT_XXUSRCLK_DIV_MASK;
-
-	/* Shift divider value to correct position. */
-	Divider <<= XVPHY_BUFGGT_XXUSRCLK_DIV_SHIFT;
-	Divider &= XVPHY_BUFGGT_XXUSRCLK_DIV_MASK;
-	RegVal |= Divider;
-
-	/* Write new value to BUFG_GT ctrl register. */
-	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffset, RegVal);
 }
 
 /*****************************************************************************/
@@ -1841,6 +1672,7 @@ void XVphy_Clkout1OBufTdsEnable(XVphy *InstancePtr, XVphy_DirectionType Dir,
 
 	if (Dir == XVPHY_DIR_TX) {
 		RegOffset = XVPHY_MISC_TXUSRCLK_REG;
+<<<<<<< HEAD
 	}
 	else {
 		RegOffset = XVPHY_MISC_RXUSRCLK_REG;
@@ -2130,170 +1962,158 @@ u32 XVphy_DirReconfig(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 	if ((InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTHE2) &&
 			(Dir == XVPHY_DIR_TX)) {
 		return XST_SUCCESS;
+=======
+>>>>>>> upstream/master
+	}
+	else {
+		RegOffset = XVPHY_MISC_RXUSRCLK_REG;
 	}
 
-    if ((InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTPE2) &&
-		((InstancePtr->Config.TxProtocol == XVPHY_PROTOCOL_DP) ||
-		 (InstancePtr->Config.RxProtocol == XVPHY_PROTOCOL_DP))) {
-               ChId = XVPHY_CHANNEL_ID_CHA;
-    }
+	/* Read XXUSRCLK MISC register. */
+	RegVal = XVphy_ReadReg(InstancePtr->Config.BaseAddr, RegOffset);
 
-	XVphy_Ch2Ids(InstancePtr, ChId, &Id0, &Id1);
-	for (Id = Id0; Id <= Id1; Id++) {
-		if (Dir == XVPHY_DIR_TX) {
-			Status = XVphy_TxPllRefClkDiv1Reconfig(InstancePtr,
-					QuadId, Id);
-		}
-		else {
-			Status = XVphy_RxChReconfig(InstancePtr, QuadId, Id);
-		}
-		if (Status != XST_SUCCESS) {
-			break;
-		}
+	/* Write new value to XXUSRCLK MISC register. */
+	if (Enable) {
+		RegVal |= XVPHY_MISC_XXUSRCLK_CKOUT1_OEN_MASK;
+	}
+	else {
+		RegVal &= ~XVPHY_MISC_XXUSRCLK_CKOUT1_OEN_MASK;
+	}
+	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffset, RegVal);
+}
+
+#if defined (XPAR_XDP_0_DEVICE_ID)
+/*****************************************************************************/
+/**
+* This function resets the BUFG_GT peripheral.
+*
+* @param	InstancePtr is a pointer to the XVphy core instance.
+* @param	Dir is an indicator for TX or RX
+* @param	Reset specifies TRUE/FALSE value to either assert or deassert
+*		reset on the BUFG_GT, respectively.
+*
+* @return	None.
+*
+******************************************************************************/
+void XVphy_BufgGtReset(XVphy *InstancePtr, XVphy_DirectionType Dir, u8 Reset)
+{
+	u32 RegVal;
+	u32 RegOffset;
+
+	if (Dir == XVPHY_DIR_TX) {
+		RegOffset = XVPHY_BUFGGT_TXUSRCLK_REG;
+	}
+	else {
+		RegOffset = XVPHY_BUFGGT_RXUSRCLK_REG;
 	}
 
-	XVphy_LogWrite(InstancePtr, (Dir == XVPHY_DIR_TX) ?
-		XVPHY_LOG_EVT_GT_TX_RECONFIG : XVPHY_LOG_EVT_GT_RX_RECONFIG, 1);
+	/* Read BUFG_GT register. */
+	RegVal = XVphy_ReadReg(InstancePtr->Config.BaseAddr, RegOffset);
 
-	return Status;
+	/* Write new value to BUFG_GT register. */
+	if (Reset) {
+		RegVal |= XVPHY_BUFGGT_XXUSRCLK_CLR_MASK;
+	}
+	else {
+		RegVal &= ~XVPHY_BUFGGT_XXUSRCLK_CLR_MASK;
+	}
+	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffset, RegVal);
 }
 
 /*****************************************************************************/
 /**
-* This function will set the current clocking settings for each channel to
-* hardware based on the configuration stored in the driver's instance.
+* This function will set 8b10b encoding for the specified GT PLL.
 *
 * @param	InstancePtr is a pointer to the XVphy core instance.
 * @param	QuadId is the GT quad ID to operate on.
-* @param	ChId is the channel ID for which to write the settings for.
+* @param	ChId is the channel ID to operate on.
+* @param	Dir is an indicator for TX or RX.
+* @param	Enable is an indicator to enable/disable 8b10b encoding.
 *
 * @return
-*		- XST_SUCCESS if the configuration was successful.
-*		- XST_FAILURE otherwise.
+*		- XST_SUCCESS.
 *
 * @note		None.
 *
 ******************************************************************************/
-u32 XVphy_ClkReconfig(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId)
+void XVphy_Set8b10b(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
+		XVphy_DirectionType Dir, u8 Enable)
 {
-	u32 Status;
-	u8 Id;
-	u8 Id0;
-	u8 Id1;
+	u32 RegOffset;
+	u32 MaskVal;
+	u32 RegVal;
 
-	XVphy_Ch2Ids(InstancePtr, ChId, &Id0, &Id1);
-	for (Id = Id0; Id <= Id1; Id++) {
-		if (XVPHY_ISCH(Id)) {
-			Status = XVphy_ClkChReconfig(InstancePtr, QuadId, Id);
-		}
-		else if (XVPHY_ISCMN(ChId)) {
-			Status = XVphy_ClkCmnReconfig(InstancePtr, QuadId, Id);
-		}
-		if (Status != XST_SUCCESS) {
-			return Status;
-		}
-	}
+	/* Suppress Warning Messages */
+	QuadId = QuadId;
 
-	if (XVPHY_ISCH(Id)) {
-		XVphy_LogWrite(InstancePtr, XVPHY_LOG_EVT_CPLL_RECONFIG, 1);
-	}
-	else if (XVPHY_ISCMN(ChId) &&
-			(InstancePtr->Config.XcvrType != XVPHY_GT_TYPE_GTPE2)) {
-		XVphy_LogWrite(InstancePtr, XVPHY_LOG_EVT_QPLL_RECONFIG, 1);
-	}
-	else if (XVPHY_ISCMN(ChId)) { /* GTPE2. */
-		XVphy_LogWrite(InstancePtr, (ChId == XVPHY_CHANNEL_ID_CMN0) ?
-			XVPHY_LOG_EVT_PLL0_RECONFIG :
-			XVPHY_LOG_EVT_PLL1_RECONFIG, 1);
-	}
-
-	return Status;
-}
-
-/*****************************************************************************/
-/**
-* This function will set the channel IDs to correspond with the supplied
-* channel ID based on the protocol. HDMI uses 3 channels; DP uses 4. This ID
-* translation is done to allow other functions to operate iteratively over
-* multiple channels.
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	ChId is the channel ID used to determine the indices.
-* @param	Id0 is a pointer to the start channel ID to set.
-* @param	Id1 is a pointer to the end channel ID to set.
-*
-* @return	None.
-*
-* @note		The contents of Id0 and Id1 will be set according to ChId.
-*
-******************************************************************************/
-void XVphy_Ch2Ids(XVphy *InstancePtr, XVphy_ChannelId ChId,
-		u8 *Id0, u8 *Id1)
-{
-	u8 Channels = 4;
-
-	if (ChId == XVPHY_CHANNEL_ID_CHA) {
-		*Id0 = XVPHY_CHANNEL_ID_CH1;
-		if ((InstancePtr->Config.TxProtocol == XVPHY_PROTOCOL_HDMI) ||
-			(InstancePtr->Config.RxProtocol == XVPHY_PROTOCOL_HDMI)) {
-			*Id1 = XVPHY_CHANNEL_ID_CH3;
+	if (Dir == XVPHY_DIR_TX) {
+		RegOffset = XVPHY_TX_CONTROL_REG;
+		if (ChId == XVPHY_CHANNEL_ID_CHA) {
+			MaskVal = XVPHY_TX_CONTROL_TX8B10BEN_ALL_MASK;
 		}
 		else {
-			Channels = ((InstancePtr->Config.TxChannels >=
-							InstancePtr->Config.RxChannels) ?
-									InstancePtr->Config.TxChannels :
-									InstancePtr->Config.RxChannels);
-
-			if (Channels == 1) {
-				*Id1 = XVPHY_CHANNEL_ID_CH1;
-			}
-			else if (Channels == 2) {
-				*Id1 = XVPHY_CHANNEL_ID_CH2;
-			}
-			else if (Channels == 3) {
-				*Id1 = XVPHY_CHANNEL_ID_CH3;
-			}
-			else {
-				*Id1 = XVPHY_CHANNEL_ID_CH4;
-			}
-		}
-	}
-	else if (ChId == XVPHY_CHANNEL_ID_CMNA) {
-		*Id0 = XVPHY_CHANNEL_ID_CMN0;
-		if ((InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTHE3) ||
-		    (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTHE4)) {
-			*Id1 = XVPHY_CHANNEL_ID_CMN1;
-		}
-		else {
-			*Id1 = XVPHY_CHANNEL_ID_CMN0;
+			MaskVal = XVPHY_TX_CONTROL_TX8B10BEN_MASK(ChId);
 		}
 	}
 	else {
-		*Id0 = *Id1 = ChId;
+		RegOffset = XVPHY_RX_CONTROL_REG;
+		if (ChId == XVPHY_CHANNEL_ID_CHA) {
+			MaskVal = XVPHY_RX_CONTROL_RX8B10BEN_ALL_MASK;
+		}
+		else {
+			MaskVal = XVPHY_RX_CONTROL_RX8B10BEN_MASK(ChId);
+		}
 	}
+
+	RegVal = XVphy_ReadReg(InstancePtr->Config.BaseAddr, RegOffset);
+	if (Enable) {
+		RegVal |= MaskVal;
+	}
+	else {
+		RegVal &= ~MaskVal;
+	}
+	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffset, RegVal);
 }
+#endif
 
 /*****************************************************************************/
 /**
-* This function will set the Video PHY IP to operate on the specified GT quad.
-* All Video PHY future accesses will operate on the specified quad until this
-* a different quad is set.
+* This function returns true when the RX and TX are bonded and are running
+* from the same (RX) reference clock.
 *
 * @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	QuadId is the GT quad ID to operate on.
 *
-* @return	None.
+* @return	TRUE if the RX and TX are using the same PLL, FALSE otherwise.
 *
 * @note		None.
 *
 ******************************************************************************/
-static void XVphy_SelQuad(XVphy *InstancePtr, u8 QuadId)
+u32 XVphy_IsBonded(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId)
 {
-	u32 RegVal;
+	XVphy_SysClkDataSelType RxSysClkDataSel;
+	XVphy_SysClkOutSelType RxSysClkOutSel;
+	XVphy_SysClkDataSelType TxSysClkDataSel;
+	XVphy_SysClkOutSelType TxSysClkOutSel;
 
-	RegVal = (QuadId << XVPHY_BANK_SELECT_RX_SHIFT) | QuadId;
-	XVphy_WriteReg(InstancePtr->Config.BaseAddr, XVPHY_BANK_SELECT_REG,
-									RegVal);
+	if (ChId == XVPHY_CHANNEL_ID_CHA) {
+		ChId = XVPHY_CHANNEL_ID_CH1;
+	}
+
+	RxSysClkDataSel = XVphy_GetSysClkDataSel(InstancePtr, QuadId,
+							XVPHY_DIR_RX, ChId);
+	RxSysClkOutSel = XVphy_GetSysClkOutSel(InstancePtr, QuadId,
+							XVPHY_DIR_RX, ChId);
+	TxSysClkDataSel = XVphy_GetSysClkDataSel(InstancePtr, QuadId,
+							XVPHY_DIR_TX, ChId);
+	TxSysClkOutSel = XVphy_GetSysClkOutSel(InstancePtr, QuadId,
+							XVPHY_DIR_TX, ChId);
+
+	if ((RxSysClkDataSel == TxSysClkDataSel) &&
+					(RxSysClkOutSel == TxSysClkOutSel)) {
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 /*****************************************************************************/
@@ -2320,9 +2140,9 @@ static u32 XVphy_MmcmWriteParameters(XVphy *InstancePtr, u8 QuadId,
 	u32 RegOffsetClk;
 	u32 RegVal;
 	XVphy_Mmcm *MmcmParams;
+#if defined (XPAR_XDP_0_DEVICE_ID)
 	u8 Retry;
-
-	XVphy_SelQuad(InstancePtr, QuadId);
+#endif
 
 	if (Dir == XVPHY_DIR_TX) {
 		RegOffsetCtrl = XVPHY_MMCM_TXUSRCLK_CTRL_REG;
@@ -2372,6 +2192,7 @@ static u32 XVphy_MmcmWriteParameters(XVphy *InstancePtr, u8 QuadId,
 	RegVal |= XVPHY_MMCM_USRCLK_CTRL_CFG_NEW_MASK;
 	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffsetCtrl, RegVal);
 
+#if defined (XPAR_XDP_0_DEVICE_ID)
 	/* Wait until the MMCM indicates configuration has succeeded. */
 	Retry = 0;
 	do {
@@ -2383,60 +2204,9 @@ static u32 XVphy_MmcmWriteParameters(XVphy *InstancePtr, u8 QuadId,
 		}
 		Retry++;
 	} while (!(RegVal & XVPHY_MMCM_USRCLK_CTRL_CFG_SUCCESS_MASK));
+#endif
 
 	return XST_SUCCESS;
-}
-
-/*****************************************************************************/
-/**
-* This function will translate from XVphy_PllType to XVphy_SysClkDataSelType.
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-*
-* @return	The reference clock type based on the PLL selection.
-*
-* @note		None.
-*
-******************************************************************************/
-static inline XVphy_SysClkDataSelType Pll2SysClkData(XVphy_PllType PllSelect)
-{
-	return	(PllSelect == XVPHY_PLL_TYPE_CPLL) ?
-			XVPHY_SYSCLKSELDATA_TYPE_CPLL_OUTCLK :
-		(PllSelect == XVPHY_PLL_TYPE_QPLL) ?
-			XVPHY_SYSCLKSELDATA_TYPE_QPLL_OUTCLK :
-		(PllSelect == XVPHY_PLL_TYPE_QPLL0) ?
-			XVPHY_SYSCLKSELDATA_TYPE_QPLL0_OUTCLK :
-		(PllSelect == XVPHY_PLL_TYPE_QPLL1) ?
-			XVPHY_SYSCLKSELDATA_TYPE_QPLL1_OUTCLK :
-		(PllSelect == XVPHY_PLL_TYPE_PLL0) ?
-			XVPHY_SYSCLKSELDATA_TYPE_PLL0_OUTCLK :
-		XVPHY_SYSCLKSELDATA_TYPE_PLL1_OUTCLK;
-}
-
-/*****************************************************************************/
-/**
-* This function will translate from XVphy_PllType to XVphy_SysClkOutSelType.
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-*
-* @return	The reference clock type based on the PLL selection.
-*
-* @note		None.
-*
-******************************************************************************/
-static inline XVphy_SysClkOutSelType Pll2SysClkOut(XVphy_PllType PllSelect)
-{
-	return	(PllSelect == XVPHY_PLL_TYPE_CPLL) ?
-			XVPHY_SYSCLKSELOUT_TYPE_CPLL_REFCLK :
-		(PllSelect == XVPHY_PLL_TYPE_QPLL) ?
-			XVPHY_SYSCLKSELOUT_TYPE_QPLL_REFCLK :
-		(PllSelect == XVPHY_PLL_TYPE_QPLL0) ?
-			XVPHY_SYSCLKSELOUT_TYPE_QPLL0_REFCLK :
-		(PllSelect == XVPHY_PLL_TYPE_QPLL1) ?
-			XVPHY_SYSCLKSELOUT_TYPE_QPLL1_REFCLK :
-		(PllSelect == XVPHY_PLL_TYPE_PLL0) ?
-			XVPHY_SYSCLKSELOUT_TYPE_PLL0_REFCLK :
-		XVPHY_SYSCLKSELOUT_TYPE_PLL1_REFCLK;
 }
 
 /*****************************************************************************/
@@ -2469,7 +2239,8 @@ static u32 XVphy_DrpAccess(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 	u32 RegVal;
 	u8 Retry;
 
-	XVphy_SelQuad(InstancePtr, QuadId);
+	/* Suppress Warning Messages */
+	QuadId = QuadId;
 
 	/* Determine which DRP registers to use based on channel. */
 	if (XVPHY_ISCMN(ChId)) {
@@ -2532,6 +2303,7 @@ static u32 XVphy_DrpAccess(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 	return XST_SUCCESS;
 }
 
+<<<<<<< HEAD
 /*****************************************************************************/
 /**
 * This function will try to find the necessary PLL divisor values to produce
@@ -2731,3 +2503,5 @@ u64 XVphy_GetPllVcoFreqHz(XVphy *InstancePtr, u8 QuadId,
 
 	return PllxVcoRateHz;
 }
+=======
+>>>>>>> upstream/master

@@ -52,8 +52,12 @@
 * Please see xgpiops.h file for description of the pin numbering.
 *
 * @note		This example assumes that there is a Uart device in the HW
-*		design. This example is to provide support only for zcu102 on
-*		ZynqMp Platform and only for zc702 on Zynq Platform.
+* design. This example is to provide support only for zcu102 on
+* ZynqMp Platform and only for zc702 on Zynq Platform.
+* For ZynqMP Platform, Input pin is 22(sw19 on zcu102 board) and Output Pin is
+* 23(DS50 on zcu102 board).
+* For Zynq Platform, Input Pins are 12(sw14 on zc702 board), 14(sw13 on
+* zc702 board) and Output Pin is 10(DS23 on zc702 board).
 *
 * <pre>
 * MODIFICATION HISTORY:
@@ -64,7 +68,8 @@
 * 1.01a sv   04/15/12 Removed the calling of some unnecessary APIs.
 *		      Updated the examples for a ZC702 board .
 *		      Updated the example to use only pin APIs.
-*
+* 3.3   ms   04/17/17 Added notes about input and output pin description
+*                     for zcu102 and zc702 boards.
 * </pre>
 *
 *****************************************************************************/
@@ -124,7 +129,8 @@ XGpioPs Gpio;	/* The driver instance for GPIO Device. */
 *
 * @param	None
 *
-* @return	- XST_SUCCESS if the example has completed successfully.
+* @return
+*		- XST_SUCCESS if the example has completed successfully.
 *		- XST_FAILURE if the example has failed.
 *
 * @note		None
@@ -158,7 +164,8 @@ int main(void)
 * @param	DataRead is the pointer where the data read from GPIO Input is
 *		returned.
 *
-* @return	- XST_SUCCESS if the example has completed successfully.
+* @return
+*		- XST_SUCCESS if the example has completed successfully.
 *		- XST_FAILURE if the example has failed.
 *
 * @note		This function will not return if the test is running.

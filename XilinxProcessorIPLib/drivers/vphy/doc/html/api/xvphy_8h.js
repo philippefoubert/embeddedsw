@@ -11,6 +11,17 @@ var xvphy_8h =
     [ "XVphy_IntrHandler", "xvphy_8h.html#a21fe7ac2940a12aa24d265c30d02b1aa", null ],
     [ "XVphy_TimerHandler", "xvphy_8h.html#a2aa9ce957914fce939a5a3aca20b7e86", null ],
     [ "XVphy_ChannelId", "xvphy_8h.html#a535e4dd9425d8b7818e02930ce9e2b8e", null ],
+<<<<<<< HEAD
+=======
+    [ "XVphy_ErrIrqType", "xvphy_8h.html#a63f8585e9f30f40cf292b200922ea058", [
+      [ "XVPHY_ERRIRQ_QPLL_CFG", "xvphy_8h.html#a63f8585e9f30f40cf292b200922ea058aa01a02e850d1b1e51028ef569e235485", null ],
+      [ "XVPHY_ERRIRQ_CPLL_CFG", "xvphy_8h.html#a63f8585e9f30f40cf292b200922ea058a2d80d5bb73875fb8007aace91cd86f14", null ],
+      [ "XVPHY_ERRIRQ_NO_DRU", "xvphy_8h.html#a63f8585e9f30f40cf292b200922ea058a14e79315e1b59761e51203c0ff991d1c", null ],
+      [ "XVPHY_ERRIRQ_VD_NOT_SPRTD", "xvphy_8h.html#a63f8585e9f30f40cf292b200922ea058a61748cdc5f3f01ee0e4edbea387e18f0", null ],
+      [ "XVPHY_ERRIRQ_MMCM_CFG", "xvphy_8h.html#a63f8585e9f30f40cf292b200922ea058a4a56203354fb9c00109d66bf56467a09", null ],
+      [ "XVPHY_ERRIRQ_PLL_LAYOUT", "xvphy_8h.html#a63f8585e9f30f40cf292b200922ea058afffcca0f834e94154c8606ac1f3d62ae", null ]
+    ] ],
+>>>>>>> upstream/master
     [ "XVphy_GtState", "xvphy_8h.html#a11be9fb60860466de1747a062ac1a919", [
       [ "XVPHY_GT_STATE_IDLE", "xvphy_8h.html#a11be9fb60860466de1747a062ac1a919a8af6950c69438f65bef20ec1ec395c5d", null ],
       [ "XVPHY_GT_STATE_LOCK", "xvphy_8h.html#a11be9fb60860466de1747a062ac1a919abd3df6a0b11e0c4dd9250f995cf528d2", null ],
@@ -60,6 +71,10 @@ var xvphy_8h =
       [ "XVPHY_LOG_EVT_VID_TX_RST", "xvphy_8h.html#a850b903da34740657782f29d2f142862a0dbd82fde8ad7b4a702af465767dfd85", null ],
       [ "XVPHY_LOG_EVT_VID_RX_RST", "xvphy_8h.html#a850b903da34740657782f29d2f142862a786c25e8dc1c0f36bd6d2c242f306691", null ],
       [ "XVPHY_LOG_EVT_TX_ALIGN", "xvphy_8h.html#a850b903da34740657782f29d2f142862a21a930543611410db05e0f831c77e762", null ],
+<<<<<<< HEAD
+=======
+      [ "XVPHY_LOG_EVT_TX_ALIGN_TMOUT", "xvphy_8h.html#a850b903da34740657782f29d2f142862a305b618171b512efe17f9ae0006eef7a", null ],
+>>>>>>> upstream/master
       [ "XVPHY_LOG_EVT_TX_TMR", "xvphy_8h.html#a850b903da34740657782f29d2f142862aeb3c3b3bf2de063bb0162202c8e8cf6b", null ],
       [ "XVPHY_LOG_EVT_RX_TMR", "xvphy_8h.html#a850b903da34740657782f29d2f142862ae0779929475e9bb2dfbcfd5c53ea66cc", null ],
       [ "XVPHY_LOG_EVT_GT_RECONFIG", "xvphy_8h.html#a850b903da34740657782f29d2f142862a831f281a8a83b29f3968f5147ba32b9b", null ],
@@ -84,6 +99,10 @@ var xvphy_8h =
       [ "XVPHY_LOG_EVT_GT_QPLL_CFG_ERR", "xvphy_8h.html#a850b903da34740657782f29d2f142862af3b29c66f638794cdec285bf32a342dd", null ],
       [ "XVPHY_LOG_EVT_GT_CPLL_CFG_ERR", "xvphy_8h.html#a850b903da34740657782f29d2f142862a8ac89fccb3aabe46ebcbf23570eae4a0", null ],
       [ "XVPHY_LOG_EVT_VD_NOT_SPRTD_ERR", "xvphy_8h.html#a850b903da34740657782f29d2f142862ab7b69788e3f7081be03ae6882bdeade1", null ],
+<<<<<<< HEAD
+=======
+      [ "XVPHY_LOG_EVT_MMCM_ERR", "xvphy_8h.html#a850b903da34740657782f29d2f142862a65c8fffc6126277921b7d18c442b237a", null ],
+>>>>>>> upstream/master
       [ "XVPHY_LOG_EVT_DUMMY", "xvphy_8h.html#a850b903da34740657782f29d2f142862acb4c5887247f150fc3a121792f1e94ff", null ]
     ] ],
     [ "XVphy_OutClkSelType", "xvphy_8h.html#ae82c27883add3fd1d30d4e0a8d5ee869", null ],
@@ -92,6 +111,7 @@ var xvphy_8h =
     [ "XVphy_ProtocolType", "xvphy_8h.html#a1018e4be67be76fe085dc41338285bd2", null ],
     [ "XVphy_SysClkDataSelType", "xvphy_8h.html#a91d7e180fc85dbee0c2daeb6014597c0", null ],
     [ "XVphy_SysClkOutSelType", "xvphy_8h.html#a1ff2690f40dd23e3fb4ba55d99a6c45f", null ],
+<<<<<<< HEAD
     [ "XVphy_BufgGtReset", "xvphy_8h.html#ae544dc0c99277e35af7ed7301741b2f0", null ],
     [ "XVphy_CfgInitialize", "xvphy_8h.html#ab71ec5984965000a5c84b07805d4bf58", null ],
     [ "XVphy_CfgLineRate", "xvphy_8h.html#ad5d2ef80f68b92db024b3e690d0c410e", null ],
@@ -131,11 +151,25 @@ var xvphy_8h =
     [ "XVphy_IntrEnable", "xvphy_8h.html#ab0c6c186dbb5142d23a6a3b76148c37b", null ],
     [ "XVphy_IsBonded", "xvphy_8h.html#a7ac1ec33cd234c67df30471d148e77be", null ],
     [ "XVphy_IsPllLocked", "xvphy_8h.html#aef25e82d5f217655c1c3c3039c9e1dc3", null ],
+=======
+    [ "XVphy_CfgInitialize", "xvphy_8h.html#ab71ec5984965000a5c84b07805d4bf58", null ],
+    [ "XVphy_CfgLineRate", "xvphy_8h.html#ad5d2ef80f68b92db024b3e690d0c410e", null ],
+    [ "XVphy_Clkout1OBufTdsEnable", "xvphy_8h.html#ab5c0be51d9acd79559d092d16e7d1fe8", null ],
+    [ "XVphy_DrpRead", "xvphy_8h.html#af2ae1cb78ebf784d843ec371e68f2d96", null ],
+    [ "XVphy_DrpWrite", "xvphy_8h.html#a139392a254c9872829ff70e712ba807b", null ],
+    [ "XVphy_GetLineRateHz", "xvphy_8h.html#a83265bb40529b7550588a1ee0216fe1f", null ],
+    [ "XVphy_GetPllType", "xvphy_8h.html#acc589d8dad782b38e7da73526c30207b", null ],
+    [ "XVphy_GetVersion", "xvphy_8h.html#aa4cef4dea102e0cbb7671d8113f9d52e", null ],
+    [ "XVphy_IBufDsEnable", "xvphy_8h.html#ac5754f49fa0df65d75a6d62f4885b94c", null ],
+    [ "XVphy_InterruptHandler", "xvphy_8h.html#a75e14bbc2dcc8eeeaaed26371ae1b34c", null ],
+    [ "XVphy_IsBonded", "xvphy_8h.html#a7ac1ec33cd234c67df30471d148e77be", null ],
+>>>>>>> upstream/master
     [ "XVphy_LogDisplay", "xvphy_8h.html#a02a73b6d88ba733664e66c34f73fe0b6", null ],
     [ "XVphy_LogRead", "xvphy_8h.html#a80743b41f194185251ac269d4985784c", null ],
     [ "XVphy_LogReset", "xvphy_8h.html#aeab6f13c2dd0b30889e09de7ff2759df", null ],
     [ "XVphy_LogWrite", "xvphy_8h.html#a9a04f2b6dd2fd863b0c282a1d7a5c378", null ],
     [ "XVphy_LookupConfig", "xvphy_8h.html#a97e9150af1115bf30fe03f548f308875", null ],
+<<<<<<< HEAD
     [ "XVphy_MmcmLockedMaskEnable", "xvphy_8h.html#a096dbcd95256264a53fe8af27c8387fb", null ],
     [ "XVphy_MmcmPowerDown", "xvphy_8h.html#a59516866f229178eca67ede70680a751", null ],
     [ "XVphy_MmcmReset", "xvphy_8h.html#adc182ff22a7ec230dc163f90ec5263a3", null ],
@@ -163,4 +197,13 @@ var xvphy_8h =
     [ "XVphy_WaitForResetDone", "xvphy_8h.html#ac1c0e3c56e0d77d5d222b86be8a30cb6", null ],
     [ "XVphy_WaitUs", "xvphy_8h.html#a54b6787198c16e99851326d82568421d", null ],
     [ "XVphy_WriteCfgRefClkSelReg", "xvphy_8h.html#a5041cead7e1fe927d645c4e681e95837", null ]
+=======
+    [ "XVphy_MmcmPowerDown", "xvphy_8h.html#a59516866f229178eca67ede70680a751", null ],
+    [ "XVphy_MmcmStart", "xvphy_8h.html#a652a8b7de475a3a54ad9a5f6e40ee9d9", null ],
+    [ "XVphy_PllInitialize", "xvphy_8h.html#a3d345eb8a8206448501f6d9dcc53b92e", null ],
+    [ "XVphy_ResetGtPll", "xvphy_8h.html#ad1c3340164a0759e485ba914ef282dc3", null ],
+    [ "XVphy_ResetGtTxRx", "xvphy_8h.html#a3d258176c8a2cc605cdaf8f28a72559d", null ],
+    [ "XVphy_SelfTest", "xvphy_8h.html#a772c4c6e8f106de408926972cb2443f2", null ],
+    [ "XVphy_WaitUs", "xvphy_8h.html#a54b6787198c16e99851326d82568421d", null ]
+>>>>>>> upstream/master
 ];

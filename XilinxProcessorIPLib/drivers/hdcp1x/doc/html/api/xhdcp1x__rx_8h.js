@@ -18,6 +18,10 @@ var xhdcp1x__rx_8h =
     [ "XHdcp1x_RxPoll", "group__hdcp1x__v4__0.html#ga5ee01293294eecf9f0f2aa2b380e0116", null ],
     [ "XHdcp1x_RxReset", "group__hdcp1x__v4__0.html#gaddbe71f943e307f5efb356944b0c052d", null ],
     [ "XHdcp1x_RxSetCallback", "group__hdcp1x__v4__0.html#ga10379d782472233124be66f42559f093", null ],
+<<<<<<< HEAD
+=======
+    [ "XHdcp1x_RxSetHdmiMode", "group__hdcp1x__v4__0.html#gadc55a06b412b97147efb33690e6b1a81", null ],
+>>>>>>> upstream/master
     [ "XHdcp1x_RxSetLaneCount", "group__hdcp1x__v4__0.html#ga51b562dcf0e9f5fe995d2ef05f3cc9b1", null ],
     [ "XHdcp1x_RxSetPhysicalState", "group__hdcp1x__v4__0.html#gaf696741527cfe391ade5d66238b3cf75", null ],
     [ "XHdcp1x_RxSetRepeaterBcaps", "group__hdcp1x__v4__0.html#ga0b43677a8ea30e51ee23b673349d488e", null ],

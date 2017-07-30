@@ -78,7 +78,11 @@ struct ipi_info {
 };
 
 /*--------------------------- Declare Functions ------------------------ */
+<<<<<<< HEAD
 static int _enable_interrupt(struct proc_vring *vring_hw);
+=======
+static int _enable_interrupt(struct proc_intr *intr);
+>>>>>>> upstream/master
 static void _notify(struct hil_proc *proc, struct proc_intr *intr_info);
 static int _boot_cpu(struct hil_proc *proc, unsigned int load_addr);
 static void _shutdown_cpu(struct hil_proc *proc);
@@ -97,9 +101,9 @@ struct hil_platform_ops zynqmp_a53_r5_proc_ops = {
 	.release    = _release,
 };
 
-static int _enable_interrupt(struct proc_vring *vring_hw)
+static int _enable_interrupt(struct proc_intr *intr)
 {
-	(void)vring_hw;
+	(void)intr;
 	return 0;
 }
 

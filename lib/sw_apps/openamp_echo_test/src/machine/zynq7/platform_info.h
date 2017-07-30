@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*
  * Copyright (c) 2014, Mentor Graphics Corporation
  * All rights reserved.
@@ -29,6 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+=======
+>>>>>>> upstream/master
 #ifndef PLATFORM_INFO_H_
 #define PLATFORM_INFO_H_
 

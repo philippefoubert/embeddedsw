@@ -1,5 +1,10 @@
 var files =
 [
+<<<<<<< HEAD
+=======
+    [ "cresample_conversion_example.c", "cresample__conversion__example_8c.html", "cresample__conversion__example_8c" ],
+    [ "cresample_selftest_example.c", "cresample__selftest__example_8c.html", "cresample__selftest__example_8c" ],
+>>>>>>> upstream/master
     [ "xcresample.c", "xcresample_8c.html", "xcresample_8c" ],
     [ "xcresample.h", "xcresample_8h.html", "xcresample_8h" ],
     [ "xcresample_hw.h", "xcresample__hw_8h.html", "xcresample__hw_8h" ],

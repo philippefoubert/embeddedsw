@@ -34,11 +34,13 @@
 *
 * @file xil_io.h
 *
-* This file contains the interface for the general IO component, which
-* encapsulates the Input/Output functions for processors that do not
+* @addtogroup common_io_interfacing_apis Register IO interfacing APIs
+*
+* The xil_io.h file contains the interface for the general I/O component, which
+* encapsulates the Input/Output functions for the processors that do not
 * require any special I/O handling.
 *
-*
+* @{
 * <pre>
 * MODIFICATION HISTORY:
 *
@@ -71,6 +73,9 @@ extern "C" {
 /************************** Function Prototypes ******************************/
 u16 Xil_EndianSwap16(u16 Data);
 u32 Xil_EndianSwap32(u32 Data);
+#ifdef ENABLE_SAFETY
+extern u32 XStl_RegUpdate(u32 RegAddr, u32 RegVal);
+#endif
 
 /***************** Macros (Inline Functions) Definitions *********************/
 #if defined __GNUC__
@@ -99,15 +104,14 @@ u32 Xil_EndianSwap32(u32 Data);
 /*****************************************************************************/
 /**
 *
-* Performs an input operation for an 8-bit memory location by reading from the
-* specified address and returning the Value read from that address.
+* @brief    Performs an input operation for a memory location by reading
+*           from the specified address and returning the 8 bit Value read from
+*            that address.
 *
-* @param	Addr contains the address to perform the input operation
-*		at.
+* @param	Addr: contains the address to perform the input operation
 *
-* @return	The Value read from the specified input address.
-*
-* @note		None.
+* @return	The 8 bit Value read from the specified input address.
+
 *
 ******************************************************************************/
 static INLINE u8 Xil_In8(UINTPTR Addr)
@@ -118,15 +122,13 @@ static INLINE u8 Xil_In8(UINTPTR Addr)
 /*****************************************************************************/
 /**
 *
-* Performs an input operation for a 16-bit memory location by reading from the
-* specified address and returning the Value read from that address.
+* @brief    Performs an input operation for a memory location by reading from
+*           the specified address and returning the 16 bit Value read from that
+*           address.
 *
-* @param	Addr contains the address to perform the input operation
-*		at.
+* @param	Addr: contains the address to perform the input operation
 *
-* @return	The Value read from the specified input address.
-*
-* @note		None.
+* @return	The 16 bit Value read from the specified input address.
 *
 ******************************************************************************/
 static INLINE u16 Xil_In16(UINTPTR Addr)
@@ -137,15 +139,13 @@ static INLINE u16 Xil_In16(UINTPTR Addr)
 /*****************************************************************************/
 /**
 *
-* Performs an input operation for a 32-bit memory location by reading from the
-* specified address and returning the Value read from that address.
+* @brief    Performs an input operation for a memory location by
+*           reading from the specified address and returning the 32 bit Value
+*           read  from that address.
 *
-* @param	Addr contains the address to perform the input operation
-*		at.
+* @param	Addr: contains the address to perform the input operation
 *
-* @return	The Value read from the specified input address.
-*
-* @note		None.
+* @return	The 32 bit Value read from the specified input address.
 *
 ******************************************************************************/
 static INLINE u32 Xil_In32(UINTPTR Addr)
@@ -156,16 +156,13 @@ static INLINE u32 Xil_In32(UINTPTR Addr)
 /*****************************************************************************/
 /**
 *
-* Performs an input operation for a 64-bit memory location by reading the
-* specified Value to the the specified address.
+* @brief     Performs an input operation for a memory location by reading the
+*            64 bit Value read  from that address.
 *
-* @param	OutAddress contains the address to perform the output operation
-*		at.
-* @param	Value contains the Value to be output at the specified address.
 *
-* @return	None.
+* @param	Addr: contains the address to perform the input operation
 *
-* @note		None.
+* @return	The 64 bit Value read from the specified input address.
 *
 ******************************************************************************/
 static INLINE u64 Xil_In64(UINTPTR Addr)
@@ -176,16 +173,14 @@ static INLINE u64 Xil_In64(UINTPTR Addr)
 /*****************************************************************************/
 /**
 *
-* Performs an output operation for an 8-bit memory location by writing the
-* specified Value to the the specified address.
+* @brief    Performs an output operation for an memory location by
+*           writing the 8 bit Value to the the specified address.
 *
-* @param	Addr contains the address to perform the output operation
-*		at.
-* @param	Value contains the Value to be output at the specified address.
+* @param	Addr: contains the address to perform the output operation
+* @param	Value: contains the 8 bit Value to be written at the specified
+*           address.
 *
 * @return	None.
-*
-* @note		None.
 *
 ******************************************************************************/
 static INLINE void Xil_Out8(UINTPTR Addr, u8 Value)
@@ -197,16 +192,13 @@ static INLINE void Xil_Out8(UINTPTR Addr, u8 Value)
 /*****************************************************************************/
 /**
 *
-* Performs an output operation for a 16-bit memory location by writing the
-* specified Value to the the specified address.
+* @brief    Performs an output operation for a memory location by writing the
+*            16 bit Value to the the specified address.
 *
 * @param	Addr contains the address to perform the output operation
-*		at.
-* @param	Value contains the Value to be output at the specified address.
+* @param	Value contains the Value to be written at the specified address.
 *
 * @return	None.
-*
-* @note		None.
 *
 ******************************************************************************/
 static INLINE void Xil_Out16(UINTPTR Addr, u16 Value)
@@ -218,37 +210,36 @@ static INLINE void Xil_Out16(UINTPTR Addr, u16 Value)
 /*****************************************************************************/
 /**
 *
-* Performs an output operation for a 32-bit memory location by writing the
-* specified Value to the the specified address.
+* @brief    Performs an output operation for a memory location by writing the
+*           32 bit Value to the the specified address.
 *
 * @param	Addr contains the address to perform the output operation
-*		at.
-* @param	Value contains the Value to be output at the specified address.
+* @param	Value contains the 32 bit Value to be written at the specified
+*           address.
 *
 * @return	None.
-*
-* @note		None.
 *
 ******************************************************************************/
 static INLINE void Xil_Out32(UINTPTR Addr, u32 Value)
 {
+#ifndef ENABLE_SAFETY
 	volatile u32 *LocalAddr = (volatile u32 *)Addr;
 	*LocalAddr = Value;
+#else
+	XStl_RegUpdate(Addr, Value);
+#endif
 }
 
 /*****************************************************************************/
 /**
 *
-* Performs an output operation for a 64-bit memory location by writing the
-* specified Value to the the specified address.
+* @brief    Performs an output operation for a memory location by writing the
+*           64 bit Value to the the specified address.
 *
 * @param	Addr contains the address to perform the output operation
-*		at.
-* @param	Value contains the Value to be output at the specified address.
+* @param	Value contains 64 bit Value to be written at the specified address.
 *
 * @return	None.
-*
-* @note		None.
 *
 ******************************************************************************/
 static INLINE void Xil_Out64(UINTPTR Addr, u64 Value)
@@ -349,3 +340,6 @@ static INLINE void Xil_Out32BE(UINTPTR Addr, u32 Value)
 #endif
 
 #endif /* end of protection macro */
+/**
+* @} End of "addtogroup common_io_interfacing_apis".
+*/

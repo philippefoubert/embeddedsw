@@ -27,6 +27,8 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*********************************************************************
  * DDR slave definition
@@ -742,6 +744,23 @@ static void ddr_enable_rd_drift(void)
 	Xil_Out32(DDRPHY_DQSDR(0U), r);
 }
 
+<<<<<<< HEAD
+=======
+static void ddr_enable_drift(void)
+{
+	u32 readVal = Xil_In32(DDRC_MSTR);
+	if (0U != (readVal & DDRC_MSTR_LPDDR3)) {
+		/* enable read drift only for LPDDR3 */
+		ddr_enable_rd_drift();
+	} else if (0U != (readVal & DDRC_MSTR_LPDDR4)) {
+		/* enable read and write drift for LPDDR4 */
+		ddr_enable_rd_drift();
+		ddr_enable_wr_drift();
+	}
+	/* do not enable drift for DDR3/4, and LPDDR2 is not supported */
+}
+
+>>>>>>> upstream/master
 static bool ddrc_opmode_is(u32 m)
 {
 	u32 r = Xil_In32(DDRC_STAT);
@@ -784,6 +803,7 @@ static int ddrc_enable_sr(void)
 	return XST_SUCCESS;
 }
 
+<<<<<<< HEAD
 static void ddr_clock_set(bool en)
 {
 	u32 r = Xil_In32(DDRQOS_DDR_CLK_CTRL);
@@ -804,6 +824,15 @@ static void ddr_clock_disable(void)
 	ddr_clock_set(false);
 }
 
+=======
+static void ddr_clock_enable(void)
+{
+	u32 r = Xil_In32(DDRQOS_DDR_CLK_CTRL);
+	r |= DDRQOS_DDR_CLK_CTRL_CLKACT;
+	Xil_Out32(DDRQOS_DDR_CLK_CTRL, r);
+}
+
+>>>>>>> upstream/master
 static void store_state(PmRegisterContext *context)
 {
 	while (context->addr) {
@@ -924,6 +953,7 @@ static void DDR_reinit(bool ddrss_is_reset)
 		while (readVal & DDRPHY_PGSR0_TRAIN_ERRS)
 			;
 
+<<<<<<< HEAD
 		/* enable drift */
 		readVal = Xil_In32(DDRC_MSTR);
 		if (0U != (readVal & DDRC_MSTR_LPDDR3)) {
@@ -935,6 +965,9 @@ static void DDR_reinit(bool ddrss_is_reset)
 			ddr_enable_wr_drift();
 		}
 		/* do not enable drift for DDR3/4, and LPDDR2 is not supported */
+=======
+		ddr_enable_drift();
+>>>>>>> upstream/master
 
 		/* FIFO reset */
 		readVal = Xil_In32(DDRPHY_PGCR(0U));
@@ -949,6 +982,11 @@ static void DDR_reinit(bool ddrss_is_reset)
 
 		Xil_Out32(DDRC_DFIMISC, DDRC_DFIMISC_DFI_INIT_COMP_EN);
 		Xil_Out32(DDRC_SWCTL, DDRC_SWCTL_SW_DONE);
+<<<<<<< HEAD
+=======
+	} else {
+		ddr_enable_drift();
+>>>>>>> upstream/master
 	}
 
 	Xil_Out32(DDRC_PWRCTL, 0U);
@@ -1006,6 +1044,7 @@ static void DDR_reinit(bool ddrss_is_reset)
 		if (0U != (Xil_In32(DDRPHY_RDIMMGCR(0U)) & DDRPHY_RDIMMGCR0_RDIMM)) {
 			readVal |= DDRPHY_PIR_RDIMMINIT;
 		}
+<<<<<<< HEAD
 
 		Xil_Out32(DDRPHY_PIR, readVal);
 		do {
@@ -1014,6 +1053,16 @@ static void DDR_reinit(bool ddrss_is_reset)
 		while (readVal & DDRPHY_PGSR0_TRAIN_ERRS)
 			;
 
+=======
+
+		Xil_Out32(DDRPHY_PIR, readVal);
+		do {
+			readVal = Xil_In32(DDRPHY_PGSR(0U));
+		} while (!(readVal & DDRPHY_PGSR0_IDONE));
+		while (readVal & DDRPHY_PGSR0_TRAIN_ERRS)
+			;
+
+>>>>>>> upstream/master
 		readVal = Xil_In32(DDRC_RFSHCTL3);
 		readVal &= ~DDRC_RFSHCTL3_AUTORF_DIS;
 		Xil_Out32(DDRC_RFSHCTL3, readVal);
@@ -1060,14 +1109,18 @@ static int pm_ddr_sr_enter(void)
 		goto err;
 	}
 
+<<<<<<< HEAD
 	ddr_clock_disable();
 
+=======
+>>>>>>> upstream/master
 err:
 	return ret;
 }
 
 static int pm_ddr_sr_exit(bool ddrss_is_reset)
 {
+<<<<<<< HEAD
 	ddr_clock_enable();
 
 	if (true == ddrss_is_reset) {
@@ -1083,6 +1136,24 @@ static int pm_ddr_sr_exit(bool ddrss_is_reset)
 		restore_state(ctx_ddrphy);
 	}
 
+=======
+	if (true == ddrss_is_reset) {
+		u32 readVal;
+
+		// re-enable clock only if FPD was off
+		ddr_clock_enable();
+
+		Xil_Out32(DDRC_SWCTL, 0U);
+		restore_state(ctx_ddrc);
+
+		readVal = Xil_In32(CRF_APB_RST_DDR_SS);
+		readVal &= ~CRF_APB_RST_DDR_SS_DDR_RESET_MASK;
+		Xil_Out32(CRF_APB_RST_DDR_SS, readVal);
+
+		restore_state(ctx_ddrphy);
+	}
+
+>>>>>>> upstream/master
 	DDR_reinit(ddrss_is_reset);
 
 	return XST_SUCCESS;
@@ -1161,17 +1232,30 @@ PmSlave pmSlaveDdr_g = {
 	.node = {
 		.derived = &pmSlaveDdr_g,
 		.nodeId = NODE_DDR,
-		.typeId = PM_TYPE_DDR,
-		.parent = &pmPowerDomainFpd_g,
+		.class = &pmNodeClassSlave_g,
+		.parent = &pmPowerDomainFpd_g.power,
 		.clocks = NULL,
 		.currState = PM_DDR_STATE_ON,
 		.latencyMarg = MAX_LATENCY,
-		.ops = NULL,
-		.powerInfo = PmDdrPowerConsumptions,
-		.powerInfoCnt = ARRAY_SIZE(PmDdrPowerConsumptions),
+		.flags = 0U,
+		DEFINE_PM_POWER_INFO(PmDdrPowerConsumptions),
 	},
+	.class = NULL,
 	.reqs = NULL,
 	.wake = NULL,
 	.slvFsm = &pmSlaveDdrFsm,
-	.flags = PM_SLAVE_FLAG_IS_SHAREABLE,
+	.flags = 0U,
 };
+
+void ddr_io_retention_set(bool en)
+{
+	u32 r = Xil_In32(PMU_GLOBAL_DDR_CNTRL);
+	if (0U != en) {
+		r |= PMU_GLOBAL_DDR_CNTRL_RET_MASK;
+	} else {
+		r &= ~PMU_GLOBAL_DDR_CNTRL_RET_MASK;
+	}
+	Xil_Out32(PMU_GLOBAL_DDR_CNTRL, r);
+}
+
+#endif

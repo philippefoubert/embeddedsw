@@ -37,7 +37,12 @@ BEGIN driver v_hdmitxss
   OPTION supported_peripherals = (v_hdmi_tx_ss_v2_0);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
   OPTION DEPENDS = (v_hdmitx_v1_2 vtc_v7_2 gpio_v4_2 v_axi4s_remap_v1_1);
+=======
+  OPTION VERSION = 3.2;
+  OPTION DEPENDS = (v_hdmitx vtc);
+>>>>>>> upstream/master
   OPTION NAME = v_hdmitxss;
 
 END driver

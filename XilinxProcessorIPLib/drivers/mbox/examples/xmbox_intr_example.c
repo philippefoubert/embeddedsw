@@ -31,7 +31,7 @@
 ******************************************************************************/
 /*****************************************************************************/
 /**
-* @file xmbox_tapp_example.c
+* @file xmbox_intr_example.c
 *
 * This file contains a design example for using the Mailbox hardware and
 * driver XMbox.
@@ -65,6 +65,14 @@
 * 2.00a hm		Example that sends and receives and uses interrupts
 * 3.01a sdm  05/06/10	Cleanup for coding guidelines, removed printfs from all
 *			the functions except the main function
+* 4.1   ms   01/23/17 Modified xil_printf statement in main function to
+*                     ensure that "Successfully ran" and "Failed" strings
+*                     are available in all examples. This is a fix for
+*                     CR-965028.
+*       ms   04/05/17 Added tabspace for return statements in functions for
+*                     proper documentation while generating doxygen and
+*                     modified filename tag to include the file in doxygen
+*                     examples.
 *</pre>
 *******************************************************************************/
 
@@ -171,11 +179,11 @@ int main(void)
 
 	if (MailboxExample(&IntcInst, MBOX_DEVICE_ID, MBOX_INTR_ID)
 				!= XST_SUCCESS) {
-		printf("MailboxExample :\tFailed.\r\n");
+		printf("MailboxExample :\t mbox intr Example Failed.\r\n");
 		return XST_FAILURE;
 	}
 
-	printf("MailboxExample :\tSucceeded.\r\n");
+	printf("MailboxExample :\tSuccessfully ran mbox intr Example\r\n");
 	printf("MailboxExample :\tEnds for CPU %d.\r\n", MY_CPU_ID);
 
 	return XST_SUCCESS;
@@ -316,7 +324,8 @@ int MailboxExample_Wait(volatile int *Count, char *Name, int Threshold)
 * @param	Blocking is set to 1 for the send to block till the data is
 *		sent.
 *
-* @return	- XST_SUCCESS if the send succeeds
+* @return
+*		- XST_SUCCESS if the send succeeds
 *		- XST_FAILURE if the send fails
 *
 * @note		None
@@ -358,7 +367,8 @@ int MailboxExample_Send(XMbox *MboxInstancePtr, int CPU_Id, int Blocking)
 * @param	MboxInstancePtr is the instance pointer for the XMbox.
 * @param	CPU_Id is the CPU ID for the program that is running on.
 *
-* @return	- XST_SUCCESS if the receive succeeds
+* @return
+*		- XST_SUCCESS if the receive succeeds
 *		- XST_FAILURE if the receive fails
 *
 * @note		None

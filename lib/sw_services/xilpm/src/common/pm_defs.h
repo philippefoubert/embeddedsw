@@ -47,7 +47,7 @@
  * @{
  */
 #define PM_VERSION_MAJOR	0
-#define PM_VERSION_MINOR	2
+#define PM_VERSION_MINOR	3
 
 #define PM_VERSION	((PM_VERSION_MAJOR << 16) | PM_VERSION_MINOR)
 /*@}*/
@@ -127,7 +127,11 @@ enum XPmApiId {
 	PM_RESET_GET_STATUS,
 	PM_MMIO_WRITE,
 	PM_MMIO_READ,
+<<<<<<< HEAD
 	PM_INIT,
+=======
+	PM_INIT_FINALIZE,
+>>>>>>> upstream/master
 	PM_FPGA_LOAD,
 	PM_FPGA_GET_STATUS,
 	PM_GET_CHIPID,
@@ -163,7 +167,7 @@ enum XPmNodeId {
 	NODE_RPU,
 	NODE_RPU_0,
 	NODE_RPU_1,
-	NODE_PL,
+	NODE_PLD,
 	NODE_FPD,
 	NODE_OCM_BANK_0,
 	NODE_OCM_BANK_1,
@@ -203,7 +207,7 @@ enum XPmNodeId {
 	NODE_GPIO,
 	NODE_CAN_0,
 	NODE_CAN_1,
-	NODE_AFI,
+	NODE_EXTERN,
 	NODE_APLL,
 	NODE_VPLL,
 	NODE_DPLL,
@@ -216,6 +220,14 @@ enum XPmNodeId {
 	NODE_PCIE,
 	NODE_PCAP,
 	NODE_RTC,
+	NODE_LPD,
+	NODE_VCU,
+	NODE_IPI_RPU_1,
+	NODE_IPI_PL_0,
+	NODE_IPI_PL_1,
+	NODE_IPI_PL_2,
+	NODE_IPI_PL_3,
+	NODE_PL,
 	NODE_ID_MAX
 };
 
@@ -252,7 +264,7 @@ enum XPmSuspendReason {
  *  @name PM RAM States Enum
  */
 enum XPmRamState {
-	PM_RAM_STATE_OFF = 1,
+	PM_RAM_STATE_OFF = 0,
 	PM_RAM_STATE_RETENTION,
 	PM_RAM_STATE_ON,
 };

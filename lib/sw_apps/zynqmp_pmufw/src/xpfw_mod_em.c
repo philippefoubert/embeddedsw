@@ -35,6 +35,8 @@
 #include "xpfw_events.h"
 #include "xpfw_core.h"
 #include "xpfw_rom_interface.h"
+#include "xpfw_xpu.h"
+#include "xpfw_restart.h"
 
 #ifdef ENABLE_EM
 /**
@@ -51,6 +53,7 @@ static void RpuLsHandler(u8 ErrorId)
 	XPfw_ResetRpu();
 }
 
+#ifndef ENABLE_WDT
 /**
  * LpdSwdtHandler() - Error handler for LPD system watchdog timer error
  * @ErrorId   ID of the error
@@ -65,6 +68,7 @@ static void LpdSwdtHandler(u8 ErrorId)
 	fw_printf("EM: Initiating PS Only Reset \r\n");
 	XPfw_ResetPsOnly();
 }
+#endif
 
 /**
  * FpdSwdtHandler() - Error handler for FPD system watchdog timer error
@@ -75,17 +79,8 @@ static void LpdSwdtHandler(u8 ErrorId)
  */
 static void FpdSwdtHandler(u8 ErrorId)
 {
-	u32 status;
-
 	fw_printf("EM: FPD Watchdog Timer Error (Error ID: %d)\r\n", ErrorId);
-	fw_printf("EM: Initiating FPD Reset \r\n");
-	(void)XPfw_ResetFpd();
-
-	fw_printf("EM: Initiating ACPU0 Reset \r\n");
-	status = XpbrRstACPU0Handler();
-	if (XST_SUCCESS != status) {
-		fw_printf("EM: ROM Rst Handler Error #%lu", status);
-	}
+	XPfw_RecoveryHandler(ErrorId);
 }
 
 /* CfgInit Handler */
@@ -100,8 +95,23 @@ static void EmCfgInit(const XPfw_Module_t *ModPtr, const u32 *CfgData,
 	XPfw_EmInit();
 	/* Set handlers for error manager */
 	XPfw_EmSetAction(EM_ERR_ID_RPU_LS, EM_ACTION_CUSTOM, RpuLsHandler);
+#ifdef ENABLE_WDT
+	XPfw_EmSetAction(EM_ERR_ID_LPD_SWDT, EM_ACTION_SRST, NULL);
+#else
 	XPfw_EmSetAction(EM_ERR_ID_LPD_SWDT, EM_ACTION_CUSTOM, LpdSwdtHandler);
-	XPfw_EmSetAction(EM_ERR_ID_FPD_SWDT, EM_ACTION_CUSTOM, FpdSwdtHandler);
+#endif
+	if(XPfw_RecoveryInit() == XST_SUCCESS) {
+		XPfw_EmSetAction(EM_ERR_ID_FPD_SWDT, EM_ACTION_CUSTOM, FpdSwdtHandler);
+	}
+	XPfw_EmSetAction(EM_ERR_ID_XMPU, EM_ACTION_CUSTOM, XPfw_XpuIntrHandler);
+
+#ifdef ENABLE_SAFETY
+	/* For uncorrectable ECC errors, Set error action as SRST */
+	XPfw_EmSetAction(EM_ERR_ID_OCM_ECC, EM_ACTION_SRST, NULL);
+	XPfw_EmSetAction(EM_ERR_ID_DDR_ECC, EM_ACTION_SRST, NULL);
+#endif
+	/* Enable the interrupts at XMPU/XPPU block level */
+	XPfw_XpuIntrInit();
 
 	fw_printf("EM Module (MOD-%d): Initialized.\r\n",
 			ModPtr->ModId);

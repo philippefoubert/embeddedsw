@@ -1,6 +1,12 @@
 var NAVTREEINDEX0 =
 {
 "annotated.html":[0,0],
+<<<<<<< HEAD
+=======
+"example.html":[3],
+"example.html#ex1":[3,0],
+"example.html#ex2":[3,1],
+>>>>>>> upstream/master
 "files.html":[2],
 "functions.html":[0,1,0],
 "functions_vars.html":[0,1,1],
@@ -10,8 +16,13 @@ var NAVTREEINDEX0 =
 "globals_vars.html":[1,2],
 "group__scutimer__v2__1.html#ga1427e7cc324917e9bc062ea9cc1976ac":[2,3,6],
 "group__scutimer__v2__1.html#ga162738ee853ef5fc9c4fa35bf9c2bb8d":[2,3,15],
+<<<<<<< HEAD
 "group__scutimer__v2__1.html#ga1e7db0f5795151c2d6538dae1fd07a16":[2,1,12],
 "group__scutimer__v2__1.html#ga1e7db0f5795151c2d6538dae1fd07a16":[2,5,0],
+=======
+"group__scutimer__v2__1.html#ga1e7db0f5795151c2d6538dae1fd07a16":[2,7,0],
+"group__scutimer__v2__1.html#ga1e7db0f5795151c2d6538dae1fd07a16":[2,1,12],
+>>>>>>> upstream/master
 "group__scutimer__v2__1.html#ga242deea9cc62049619bdfd97e7a731f4":[2,3,1],
 "group__scutimer__v2__1.html#ga29b90dcea87e70190d47c53e89977c8a":[2,1,1],
 "group__scutimer__v2__1.html#ga3eedf4e335232d3303b1fd3927f10213":[2,3,9],
@@ -37,11 +48,19 @@ var NAVTREEINDEX0 =
 "group__scutimer__v2__1.html#gab653a0c97cfb913f3cabeaa3a9167586":[2,1,6],
 "group__scutimer__v2__1.html#gabf24fad576d3adab4b53eebdef424bde":[2,1,15],
 "group__scutimer__v2__1.html#gabf24fad576d3adab4b53eebdef424bde":[2,0,3],
+<<<<<<< HEAD
 "group__scutimer__v2__1.html#gac3036b3f9f6e7735d3e6a6eb74a28e95":[2,4,0],
 "group__scutimer__v2__1.html#gac3036b3f9f6e7735d3e6a6eb74a28e95":[2,1,13],
 "group__scutimer__v2__1.html#gac3ea67683ec802381c4aef819d04768b":[2,1,2],
 "group__scutimer__v2__1.html#gac54aa07186803163582a0d3c4f96a686":[2,2,0],
 "group__scutimer__v2__1.html#gac54aa07186803163582a0d3c4f96a686":[2,5,1],
+=======
+"group__scutimer__v2__1.html#gac3036b3f9f6e7735d3e6a6eb74a28e95":[2,6,0],
+"group__scutimer__v2__1.html#gac3036b3f9f6e7735d3e6a6eb74a28e95":[2,1,13],
+"group__scutimer__v2__1.html#gac3ea67683ec802381c4aef819d04768b":[2,1,2],
+"group__scutimer__v2__1.html#gac54aa07186803163582a0d3c4f96a686":[2,2,0],
+"group__scutimer__v2__1.html#gac54aa07186803163582a0d3c4f96a686":[2,7,1],
+>>>>>>> upstream/master
 "group__scutimer__v2__1.html#gac6cd65141b00c0d1940d0b8f2a081faf":[2,0,2],
 "group__scutimer__v2__1.html#gac6cd65141b00c0d1940d0b8f2a081faf":[2,1,14],
 "group__scutimer__v2__1.html#gadc11e29fe8f755683fbc6edc883e0a4d":[2,1,0],
@@ -59,6 +78,17 @@ var NAVTREEINDEX0 =
 "xscutimer_8h.html":[2,1],
 "xscutimer__g_8c.html":[2,2],
 "xscutimer__hw_8h.html":[2,3],
+<<<<<<< HEAD
 "xscutimer__selftest_8c.html":[2,4],
 "xscutimer__sinit_8c.html":[2,5]
+=======
+"xscutimer__intr__example_8c.html":[2,4],
+"xscutimer__intr__example_8c.html#a4adfacb6f1ed8ff2f47f352e002433cc":[2,4,1],
+"xscutimer__intr__example_8c.html#a840291bc02cba5474a4cb46a9b9566fe":[2,4,0],
+"xscutimer__polled__example_8c.html":[2,5],
+"xscutimer__polled__example_8c.html#a840291bc02cba5474a4cb46a9b9566fe":[2,5,0],
+"xscutimer__polled__example_8c.html#a94baaa6f3d2050eb84d2f21c346cf7d6":[2,5,1],
+"xscutimer__selftest_8c.html":[2,6],
+"xscutimer__sinit_8c.html":[2,7]
+>>>>>>> upstream/master
 };

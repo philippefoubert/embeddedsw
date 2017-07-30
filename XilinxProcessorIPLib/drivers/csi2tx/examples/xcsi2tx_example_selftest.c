@@ -56,6 +56,11 @@
 * Ver Who Date     Changes
 * --- --- -------- ------------------------------------------------------------
 * 1.0 sss 08/02/16 Initial release
+*     ms  01/23/17 Modified xil_printf statement in main function to
+*                  ensure that "Successfully ran" and "Failed" strings are
+*                  available in all examples. This is a fix for CR-965028.
+*     ms  04/05/17 Modified Comment lines in functions to recognize it
+*                  as documentation block for doxygen generation of examples.
 * </pre>
 *
 ******************************************************************************/
@@ -93,7 +98,7 @@ u32 Csi2TxSelfTestExample(u32 DeviceId);
 XCsi2Tx Csi;
 
 /*****************************************************************************/
-/*
+/**
 * The entry point for this example. It invokes the example function,
 * and reports the execution status.
 *
@@ -117,11 +122,11 @@ int main()
 	Status = Csi2TxSelfTestExample(CSI2TX_DEV_ID);
 	if (Status != XST_SUCCESS) {
 
-		xil_printf("Csi2TxSelfTestExample: Failed\n\r");
+		xil_printf("Csi2TxSelfTest Example Failed\n\r");
 		return XST_FAILURE;
 	}
 
-	xil_printf("Csi2TxSelfTestExample: Passed\n\r");
+	xil_printf("Successfully ran Csi2TxSelfTest Example\n\r");
 
 	xil_printf("--- Exiting main() --- \n\r");
 
@@ -131,7 +136,7 @@ int main()
 #endif
 
 /*****************************************************************************/
-/*
+/**
 * This function checks if the Max Lane count from the generated file matches
 * the value present in the protocol configuration register
 *

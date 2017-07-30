@@ -237,6 +237,12 @@
 *                     Generate canonical definitions, whose canonical
 *                     name is not the same as hardware instance name.
 *                     (CR #876604)
+* 2.4   ms   01/23/17 Added xil_printf statement in main function for all
+*                     examples to ensure that "Successfully ran" and "Failed"
+*                     strings are available in all examples. This is a fix
+*                     for CR-965028.
+*       ms   03/17/17 Added readme.txt file in examples folder for doxygen
+*                     generation.
 *
 * </pre>
 *

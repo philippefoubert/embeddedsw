@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -44,8 +44,10 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00  kc   10/21/13 Initial release
-*
-* </pre>
+* 2.0   vns  03/24/17 Removed READ_BUFFER_SIZE from configuration
+*                     Added FSBL_PL_CLEAR_EXCLUDE_VAL, FSBL_USB_EXCLUDE_VAL,
+*                     FSBL_PROT_BYPASS_EXCLUDE_VAL configurations
+*</pre>
 *
 * @note
 *
@@ -62,6 +64,9 @@ extern "C" {
 /************************** Constant Definitions *****************************/
 /* This is the address in DDR where bitstream will be copied temporarily */
 #define XFSBL_DDR_TEMP_ADDRESS			(0x100000U)
+
+/* This is the address in DDR where boot.bin will be copied in USB boot mode */
+#define XFSBL_DDR_TEMP_BUFFER_ADDRESS			(0x4000000U)
 
 /**************************** Type Definitions *******************************/
 
@@ -108,9 +113,6 @@ extern "C" {
 #define FSBL_DEBUG_DETAILED
 #endif
 
-/* Size of OCM buffer to store data chunks in case of DDR less system */
-#define READ_BUFFER_SIZE			(4*1024U)
-
 /**
  * @name FSBL code include options
  *
@@ -128,6 +130,11 @@ extern "C" {
  *     - FSBL_WDT_EXCLUDE WDT code will be excluded
  *     - FSBL_PERF_EXCLUDE_VAL Performance prints are excluded
  *     - FSBL_A53_TCM_ECC_EXCLUDE_VAL TCM ECC Init will be excluded for A53
+<<<<<<< HEAD
+=======
+ *     - FSBL_PL_CLEAR_EXCLUDE_VAL PL clear will be excluded unless boot.bin
+ *     	 contains bitstream
+>>>>>>> upstream/master
  */
 #define FSBL_NAND_EXCLUDE_VAL			(0U)
 #define FSBL_QSPI_EXCLUDE_VAL			(0U)
@@ -139,6 +146,9 @@ extern "C" {
 #define FSBL_WDT_EXCLUDE_VAL			(0U)
 #define FSBL_PERF_EXCLUDE_VAL			(1U)
 #define FSBL_A53_TCM_ECC_EXCLUDE_VAL	(1U)
+#define FSBL_PL_CLEAR_EXCLUDE_VAL		(1U)
+#define FSBL_USB_EXCLUDE_VAL			(1U)
+#define FSBL_PROT_BYPASS_EXCLUDE_VAL	(0U)
 
 #if FSBL_NAND_EXCLUDE_VAL
 #define FSBL_NAND_EXCLUDE
@@ -178,6 +188,18 @@ extern "C" {
 
 #if FSBL_A53_TCM_ECC_EXCLUDE_VAL
 #define FSBL_A53_TCM_ECC_EXCLUDE
+#endif
+
+#if FSBL_PL_CLEAR_EXCLUDE_VAL
+#define FSBL_PL_CLEAR_EXCLUDE
+#endif
+
+#if FSBL_USB_EXCLUDE_VAL
+#define FSBL_USB_EXCLUDE
+#endif
+
+#if FSBL_PROT_BYPASS_EXCLUDE_VAL
+#define FSBL_PROT_BYPASS_EXCLUDE
 #endif
 
 /************************** Function Prototypes ******************************/

@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2016 Xilinx, Inc. All rights reserved.
+* Copyright (C) 2016 - 2017  Xilinx, Inc. All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -49,6 +49,11 @@
 * 1.01  YH     25/07/16 Used UINTPTR instead of u32 for BaseAddress
 *                       XV_HdmiTx_WriteReg
 *                       XV_HdmiTx_ReadReg
+* 1.02  YH     14/11/16 Added BRIDGE_YUV420 and BRIDGE_PIXEL mask to PIO Out
+* 1.03  MG     06/03/17 Added XV_HDMITX_AUX_STA_PKT_RDY_MASK
+* 1.04  MMO    03/05/17 Updated the comments for XV_HdmiTx_ReadReg and
+*                            XV_HdmiTx_WriteReg
+* 1.1   MG     03/05/17 Introduced video mask peripheral
 * </pre>
 *
 ******************************************************************************/
@@ -134,6 +139,10 @@ extern "C" {
                                                     * shift */
 #define XV_HDMITX_PIO_OUT_COLOR_SPACE_SHIFT 10  /**< PIO Out Color Space
                                                     * shift */
+#define XV_HDMITX_PIO_OUT_BRIDGE_YUV420_MASK (1<<29) /**< PIO Out Bridge_YUV420
+                                                         * mask */
+#define XV_HDMITX_PIO_OUT_BRIDGE_PIXEL_MASK  (1<<30) /**< PIO Out Bridge_Pixel
+                                                         * repeat mask */
 
 // PIO peripheral PIO In register masks
 #define XV_HDMITX_PIO_IN_LNK_RDY_MASK       (1<<0)  /**< PIO In link ready
@@ -227,6 +236,8 @@ extern "C" {
                                                     *  mask */
 #define XV_HDMITX_AUX_STA_FIFO_FUL_MASK     (1<<2)  /**< AUX Status FIFO Full
                                                     *  mask */
+#define XV_HDMITX_AUX_STA_PKT_RDY_MASK     (1<<3)  /**< AUX Status FIFO Ready
+                                                    *  mask */
 #define XV_HDMITX_AUX_STA_FREE_PKTS_MASK    0x0F    /**< AUX Status Free Packets
                                                     *  mask */
 #define XV_HDMITX_AUX_STA_FREE_PKTS_SHIFT   15  /**< AUX Status Free
@@ -261,6 +272,30 @@ extern "C" {
 // Audio peripheral Status register masks
 #define XV_HDMITX_AUD_STA_IRQ_MASK      (1<<0) /**< AUD Status Interrupt mask */
 
+// Video Mask (MASK) peripheral register offsets
+// The mask is the fifth peripheral on the local bus
+#define XV_HDMITX_MASK_BASE              (5*64)
+#define XV_HDMITX_MASK_ID_OFFSET         ((XV_HDMITX_MASK_BASE)+(0*4)) /**< MASK
+                                * Identification *  Register offset */
+#define XV_HDMITX_MASK_CTRL_OFFSET       ((XV_HDMITX_MASK_BASE)+(1*4)) /**< MASK
+                                * Control Register *  offset */
+#define XV_HDMITX_MASK_CTRL_SET_OFFSET   ((XV_HDMITX_MASK_BASE)+(2*4)) /**< MASK
+                                * Control Register Set *  offset */
+#define XV_HDMITX_MASK_CTRL_CLR_OFFSET   ((XV_HDMITX_MASK_BASE)+(3*4)) /**< MASK
+                                * Control Register Clear *  offset */
+#define XV_HDMITX_MASK_STA_OFFSET        ((XV_HDMITX_MASK_BASE)+(4*4)) /**< MASK
+                                * Status Register *  offset */
+#define XV_HDMITX_MASK_RED_OFFSET        ((XV_HDMITX_MASK_BASE)+(5*4)) /**< MASK
+                                * Red Component Register *  offset */
+#define XV_HDMITX_MASK_GREEN_OFFSET        ((XV_HDMITX_MASK_BASE)+(6*4)) /**< MASK
+                                * Green Component Register *  offset */
+#define XV_HDMITX_MASK_BLUE_OFFSET        ((XV_HDMITX_MASK_BASE)+(7*4)) /**< MASK
+                                * Blue Component Register *  offset */
+
+// Video mask peripheral Control register masks
+#define XV_HDMITX_MASK_CTRL_RUN_MASK     (1<<0)  /**< MASK Control Run mask */
+#define XV_HDMITX_MASK_CTRL_NOISE_MASK   (1<<2)  /**< MASK Control Noise */
+
 // Peripheral ID and General shift values.
 #define XV_HDMITX_SHIFT_16  16  /**< 16 shift value */
 #define XV_HDMITX_MASK_16   0xFFFF  /**< 16 bit mask value */
@@ -290,7 +325,7 @@ extern "C" {
 * @return   The 32-bit value of the register.
 *
 * @note     C-style signature:
-*       u32 XV_HdmiTx_ReadReg(u32 BaseAddress, u32 RegOffset)
+*           u32 XV_HdmiTx_ReadReg(UINTPTR BaseAddress, u32 RegOffset)
 *
 ******************************************************************************/
 #define XV_HdmiTx_ReadReg(BaseAddress, RegOffset) \
@@ -311,7 +346,7 @@ extern "C" {
 * @return   None.
 *
 * @note     C-style signature:
-*       void XV_HdmiTx_WriteReg(u32 BaseAddress, u32 RegOffset, u32 Data)
+*           void XV_HdmiTx_WriteReg(UINTPTR BaseAddress, u32 RegOffset, u32 Data)
 *
 ******************************************************************************/
 #define XV_HdmiTx_WriteReg(BaseAddress, RegOffset, Data) \

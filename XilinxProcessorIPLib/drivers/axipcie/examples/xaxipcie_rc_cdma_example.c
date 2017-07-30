@@ -71,6 +71,12 @@
 * Ver   Who  Date     Changes
 * ----- ---- -------- -----------------------------------------------
 * 2.00a nm   10/19/11 Initial version of AXI PCIe Root Port example
+* 3.1   ms   01/23/17 Added xil_printf statement in main function to
+*                     ensure that "Successfully ran" and "Failed" strings
+*                     are available in all examples. This is a fix for
+*                     CR-965028.
+*       ms   04/05/17 Added tabspace for return statements in functions
+*                     for proper documentation while generating doxygen.
 *
 *</pre>
 *****************************************************************************/
@@ -81,6 +87,7 @@
 #include "xaxipcie.h"		/* XAxiPcie level 1 interface */
 #include "xaxicdma.h"		/* AXICDMA interface */
 #include "stdio.h"
+#include "xil_printf.h"
 
 /************************** Constant Definitions ****************************/
 
@@ -170,7 +177,8 @@ XAxiCdma CdmaInstance;
 *
 * @param 	None
 *
-* @return 	- XST_SUCCESS if successful
+* @return
+*		- XST_SUCCESS if successful
 *		- XST_FAILURE if unsuccessful.
 *
 * @note 	None.
@@ -194,9 +202,11 @@ int main(void)
 	/* Use AXICDMA to transfer data to/from root complex to end point. */
 	Status = DmaDataTransfer(AXIDMA_DEVICE_ID);
 	if (Status != XST_SUCCESS) {
+		xil_printf("Axipcie rc cdma Example Failed\r\n");
 		return (XST_FAILURE);
 	}
 
+	xil_printf("Successfully ran Axipcie rc cdma Example\r\n");
 	return XST_SUCCESS;
 }
 
@@ -208,7 +218,8 @@ int main(void)
 *		structure represents a root complex IP.
 * @param 	DeviceId is AXI PCIe IP unique ID
 *
-* @return	- XST_SUCCESS if successful.
+* @return
+*		- XST_SUCCESS if successful.
 *		- XST_FAILURE if unsuccessful.
 *
 * @note 	None.
@@ -522,7 +533,8 @@ void PCIeEnumerateFabric(XAxiPcie *AxiPciePtr)
 *
 * @param	DeviceId is device ID of the XAxiCdma Device.
 *
-* @return	- XST_SUCCESS if successful
+* @return
+*		- XST_SUCCESS if successful
 *		- XST_FAILURE.if unsuccessful.
 *
 * @note		If the hardware system is not built correctly this function

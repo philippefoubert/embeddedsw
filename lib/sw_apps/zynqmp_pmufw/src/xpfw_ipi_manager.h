@@ -35,6 +35,7 @@
 #include "xpfw_default.h"
 #include "xpfw_module.h"
 #include "xipipsu.h"
+#include "xpfw_crc.h"
 #include "xparameters.h"
 
 #define XPFW_IPI_MASK_COUNT XIPIPSU_MAX_TARGETS
@@ -42,9 +43,24 @@ extern u32 IpiMaskList[XPFW_IPI_MASK_COUNT];
 
 #define XPFW_IPI_MAX_MSG_LEN XIPIPSU_MAX_MSG_LEN
 
+#ifdef XPAR_XIPIPS_TARGET_PSU_CORTEXA53_0_CH0_MASK
 #define IPI_PMU_0_IER_APU_MASK	  XPAR_XIPIPS_TARGET_PSU_CORTEXA53_0_CH0_MASK
+#else
+#define IPI_PMU_0_IER_APU_MASK 0U
+#endif
+
+#ifdef XPAR_XIPIPS_TARGET_PSU_CORTEXR5_0_CH0_MASK
 #define IPI_PMU_0_IER_RPU_0_MASK  XPAR_XIPIPS_TARGET_PSU_CORTEXR5_0_CH0_MASK
+#else
+#define IPI_PMU_0_IER_RPU_0_MASK 0U
+#endif
+
+#ifdef XPAR_XIPIPS_TARGET_PSU_CORTEXR5_1_CH0_MASK
 #define IPI_PMU_0_IER_RPU_1_MASK  XPAR_XIPIPS_TARGET_PSU_CORTEXR5_1_CH0_MASK
+#else
+#define IPI_PMU_0_IER_RPU_1_MASK 0U
+#endif
+
 /**
  * Initialize the IPI driver instance
  * This should be called in the core init

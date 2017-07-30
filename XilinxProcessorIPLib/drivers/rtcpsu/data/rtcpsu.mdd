@@ -36,6 +36,10 @@ BEGIN driver rtcpsu
   OPTION supported_peripherals = (psu_rtc);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 1.4;
+>>>>>>> upstream/master
   OPTION NAME = rtcpsu;
 
 END driver

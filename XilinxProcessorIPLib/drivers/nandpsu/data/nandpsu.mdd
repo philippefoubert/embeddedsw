@@ -36,6 +36,10 @@ BEGIN driver nandpsu
   OPTION supported_peripherals = (psu_nand);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 1.2;
+>>>>>>> upstream/master
   OPTION NAME = nandpsu;
 
 END driver

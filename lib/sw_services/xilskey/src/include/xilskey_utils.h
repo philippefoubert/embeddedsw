@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2013 - 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2013 - 2017 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -62,6 +62,8 @@
 *               07/18/16 Added error codes for eFUSE PS User FUSEs programming
 *                        Added sysmonpsu driver for temperature and voltage
 *                        checks.
+* 6.2   vns     03/10/17 Added error codes for LBist, LPD/FPD SC enable bits
+*                        programming.
 *
  *****************************************************************************/
 
@@ -78,7 +80,7 @@ extern "C" {
 #include "xsysmon.h"
 #include "xtmrctr.h"
 #else
-#if defined (ARMR5) || defined (__aarch64__)
+#if defined (ARMR5) || defined (__aarch64__) || defined (ARMA53_32)
 #include "xsysmonpsu.h"
 #include "xplatform_info.h"
 #else
@@ -94,7 +96,7 @@ extern "C" {
 #define XSK_MICROBLAZE_PLATFORM
 #else
 #define XSK_ARM_PLATFORM
-#if defined (ARMR5) || (__aarch64__)
+#if defined (ARMR5) || defined (__aarch64__) || defined (ARMA53_32)
 #define XSK_ZYNQ_ULTRA_MP_PLATFORM
 #else
 #define XSK_ZYNQ_PLATFORM
@@ -639,6 +641,15 @@ typedef enum {
 	XSK_EFUSEPS_ERROR_WRITE_PUF_SYN_INVLD = 0xD800,
 	XSK_EFUSEPS_ERROR_WRITE_PUF_SYN_WRLK = 0xD900,
 	XSK_EFUSEPS_ERROR_WRITE_PUF_SYN_REG_DIS = 0xDA00,
+<<<<<<< HEAD
+=======
+	XSK_EFUSEPS_ERROR_WRITE_PUF_RESERVED_BIT = 0xDB00,
+	XSK_EFUSEPS_ERROR_WRITE_LBIST_EN_BIT = 0xDC00,
+	XSK_EFUSEPS_ERROR_WRITE_LPD_SC_EN_BIT = 0xDD00,
+	XSK_EFUSEPS_ERROR_WRITE_FPD_SC_EN_BIT = 0xDE00,
+
+	XSK_EFUSEPS_ERROR_WRITE_PBR_BOOT_ERR_BIT = 0xDF00,
+>>>>>>> upstream/master
 	/* Error codes related to PUF */
 	XSK_EFUSEPS_ERROR_PUF_INVALID_REG_MODE = 0xE000,
 	XSK_EFUSEPS_ERROR_PUF_REG_WO_AUTH = 0xE100,
@@ -646,6 +657,10 @@ typedef enum {
 	XSK_EFUSEPS_ERROR_PUF_INVALID_REQUEST = 0xE300,
 	XSK_EFUSEPS_ERROR_PUF_DATA_ALREADY_PROGRAMMED = 0xE400,
 	XSK_EFUSEPS_ERROR_PUF_DATA_OVERFLOW	= 0xE500,
+<<<<<<< HEAD
+=======
+	XSK_EFUSEPS_ERROR_CMPLTD_EFUSE_PRGRM_WITH_ERR = 0x10000,
+>>>>>>> upstream/master
 	/* If requested FUSE is write protected */
 	XSK_EFUSEPS_ERROR_FUSE_PROTECTED = 0x00080000,
 	/* If User requested to program USER FUSE to make Non-zero to 1 */

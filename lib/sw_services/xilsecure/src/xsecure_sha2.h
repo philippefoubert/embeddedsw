@@ -1,6 +1,10 @@
 /******************************************************************************
 *
+<<<<<<< HEAD
 * Copyright (C) 2016 Xilinx, Inc.  All rights reserved.
+=======
+* Copyright (C) 2016 - 17 Xilinx, Inc.  All rights reserved.
+>>>>>>> upstream/master
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -83,6 +87,10 @@ void sha_256(const unsigned char *in, const unsigned int size, unsigned char *ou
 void sha2_starts(sha2_context *ctx);
 void sha2_update(sha2_context *ctx, unsigned char* input, unsigned int ilen);
 void sha2_finish(sha2_context *ctx, unsigned char* output);
+<<<<<<< HEAD
+=======
+void sha2_hash(sha2_context *ctx, unsigned char *output);
+>>>>>>> upstream/master
 
 
 #ifdef __cplusplus

@@ -35,9 +35,13 @@ BEGIN driver v_mix
 
  OPTION supported_peripherals = (v_mix_v1_0);
  OPTION driver_state = ACTIVE;
+<<<<<<< HEAD
  OPTION DEPENDS = (video_common_v4_0);
+=======
+ OPTION DEPENDS = (video_common);
+>>>>>>> upstream/master
  OPTION copyfiles = all;
  OPTION name = v_mix;
- OPTION version = 2.0;
+ OPTION version = 2.1;
 
 END driver

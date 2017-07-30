@@ -5,7 +5,11 @@
 * Version:
 * DO NOT EDIT.
 *
+<<<<<<< HEAD
 * Copyright (C) 2010-2016 Xilinx, Inc. All Rights Reserved.*
+=======
+* Copyright (C) 2010-2017 Xilinx, Inc. All Rights Reserved.*
+>>>>>>> upstream/master
 *Permission is hereby granted, free of charge, to any person obtaining a copy
 *of this software and associated documentation files (the Software), to deal
 *in the Software without restriction, including without limitation the rights
@@ -38,3 +42,9 @@
 *******************************************************************/
 
 #define MICROBLAZE_PVR_NONE
+<<<<<<< HEAD
+=======
+#define EL3 1
+#define EL1_NONSECURE 0
+#define HYP_GUEST 0
+>>>>>>> upstream/master

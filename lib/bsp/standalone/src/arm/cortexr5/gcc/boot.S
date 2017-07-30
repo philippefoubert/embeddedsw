@@ -33,7 +33,26 @@
 /**
 * @file boot.S
 *
-* This file contains the initial startup code for the Cortex R5 processor
+* @addtogroup r5_boot_code Cortex R5 Processor Boot Code
+* @{
+* <h2> boot.S </h2>
+* The boot code performs minimum configuration which is required for an
+* application to run starting from processor's reset state. Below is a
+* sequence illustrating what all configuration is performed before control
+* reaches to main function.
+*
+* 1. Program vector table base for exception handling
+* 2. Program stack pointer for various modes (IRQ, FIQ, supervisor, undefine,
+*    abort, system)
+* 3. Disable instruction cache, data cache and MPU
+* 4. Invalidate instruction and data cache
+* 5. Configure MPU with short descriptor translation table format and program
+*    base address of translation table
+* 6. Enable data cache, instruction cache and MPU
+* 7. Enable Floating point unit
+* 8. Transfer control to _start which clears BSS sections and jumping to main
+*    application
+*
 *
 * <pre>
 * MODIFICATION HISTORY:
@@ -52,11 +71,8 @@
 *		      to avoid intervention for lock-step mode
 * 5.05 pkp   04/11/16 Enable the comparators for non-JTAG boot mode for
 *		      lock-step to avoid putting debug logic to reset
+* 6.02 pkp   02/13/17 Added support for hard float
 * </pre>
-*
-* @note
-*
-* None.
 *
 ******************************************************************************/
 
@@ -202,8 +218,10 @@ OKToRun:
 	vmov	d14,r1,r1
 	vmov	d15,r1,r1
 
-/* restore previous value for fpu access */
+#ifdef __SOFTFP__
+/* Disable the FPU if SOFTFP is defined*/
 	vmsr	FPEXC,r3
+#endif
 
 /* Disable MPU and caches */
         mrc     p15, 0, r0, c1, c0, 0       	/* Read CP15 Control Register*/
@@ -306,3 +324,6 @@ init:
 
 
 .end
+/**
+* @} End of "addtogroup r5_boot_code".
+*/

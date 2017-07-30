@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -54,6 +54,10 @@
 *                        XSK_ZYNQMP_SEC_RSA_2BITS_SET macros. Added all RSA
 *                        enable bits to enum. Modified RSAenable variable type
 *                        to u16.
+* 6.2   vns     03/10/17 Added support for LBIST, LPD and FPD sc enable,
+*                        PBR_BOOT_ERROR. Modified names of secure control
+*                        bits UseAESOnly -> EncOnly, PMUError->ErrorDisable,
+*                        PPK0Revoke->PPK0InVld and PPK1Revoke->PPK1InVld
 * </pre>
 *
 *****************************************************************************/
@@ -99,6 +103,8 @@ extern "C" {
 /* Row numbers of Efuse PS of Zynq MP */
 #define XSK_ZYNQMP_EFUSEPS_USR_KEY_END_ROW			(15)
 #define XSK_ZYNQMP_EFUSEPS_MISC_USR_CTRL_ROW			(16)
+#define XSK_ZYNQMP_EFUSEPS_PBR_BOOT_ERR_ROW			(17)
+#define XSK_ZYNQMP_EFUSEPS_RESERVED_ROW				(19)
 #define XSK_ZYNQMP_EFUSEPS_SEC_CTRL_ROW				(22)
 #define XSK_ZYNQMP_EFUSEPS_SPK_ID_ROW				(23)
 #define XSK_ZYNQMP_EFUSEPS_AES_KEY_START_ROW			(24)
@@ -163,6 +169,13 @@ extern "C" {
 			/**< If RSA authentication bits are set */
 /* For Silicon before 3.0 version */
 #define XSK_ZYNQMP_SEC_RSA_2BITS_SET		(0x3)
+
+/* For any of secure control bits which has 3 bits */
+#define XSK_ZYNQMP_SEC_ALL_3BITS_SET		(0x7)
+
+/* For any of secure control bits which has 3 bits */
+#define XSK_ZYNQMP_SEC_ALL_16BITS_SET   (0xFFFF)
+
 #define XSK_ZYNQMP_EFUSEPS_SECTRL_BIT_SHIFT	0x1
 								/**< Shift macro for SEC_CTRL
 								 *   if it has 2 bits */
@@ -228,9 +241,29 @@ typedef enum {
 	XSK_ZYNQMP_EFUSEPS_USR_WRLK_5,
 	XSK_ZYNQMP_EFUSEPS_USR_WRLK_6,
 	XSK_ZYNQMP_EFUSEPS_USR_WRLK_7,
+	XSK_ZYNQMP_EFUSEPS_LBIST_EN = 10,
+	XSK_ZYNQMP_EFUSEPS_LPD_SC_EN_0,
+	XSK_ZYNQMP_EFUSEPS_LPD_SC_EN_1,
+	XSK_ZYNQMP_EFUSEPS_LPD_SC_EN_2,
+	XSK_ZYNQMP_EFUSEPS_FPD_SC_EN_0,
+	XSK_ZYNQMP_EFUSEPS_FPD_SC_EN_1,
+	XSK_ZYNQMP_EFUSEPS_FPD_SC_EN_2,
 }XskEfusePS_MiscUserBits;
 /*@}*/
 
+<<<<<<< HEAD
+=======
+/** @name efuse PBR boot error bits
+ * @{
+ */
+typedef enum {
+	XSK_ZYNQMP_EFUSEPS_PBR_BOOT_ERR_0,
+	XSK_ZYNQMP_EFUSEPS_PBR_BOOT_ERR_1,
+	XSK_ZYNQMP_EFUSEPS_PBR_BOOT_ERR_2
+}XskEfusePS_PbrBootErrBits;
+/*@}*/
+
+>>>>>>> upstream/master
 /**
 *
 * This typedef contains secure control features of efusePs
@@ -239,20 +272,19 @@ typedef struct {
 	/* Secure and control bits */
 	u8 AesKeyRead;
 	u8 AesKeyWrite;
-	u8 UseAESOnly;
+	u8 EncOnly;
 	u8 BbramDisable;
-	u8 PMUError;
+	u8 ErrorDisable;
 	u8 JtagDisable;
 	u8 DFTDisable;
-	u8 ProgGate0;
-	u8 ProgGate1;
-	u8 ProgGate2;
+	u8 ProgGate;
 	u8 SecureLock;
 	u16 RSAEnable;
 	u8 PPK0WrLock;
-	u8 PPK0Revoke;
+	u8 PPK0InVld;
 	u8 PPK1WrLock;
-	u8 PPK1Revoke;
+	u8 PPK1InVld;
+	u8 PbrBootErr;
 
 	/* User control bits */
 	u8 UserWrLk0;
@@ -263,6 +295,18 @@ typedef struct {
 	u8 UserWrLk5;
 	u8 UserWrLk6;
 	u8 UserWrLk7;
+<<<<<<< HEAD
+=======
+
+	u8 LBistEn;
+	u8 FpdScEn;
+	u8 LpdScEn;
+
+	/* Reserved for Xilinx internal use */
+	u16 Reserved1;
+	u16 Reserved2;
+
+>>>>>>> upstream/master
 } XilSKey_SecCtrlBits;
 /*@}*/
 

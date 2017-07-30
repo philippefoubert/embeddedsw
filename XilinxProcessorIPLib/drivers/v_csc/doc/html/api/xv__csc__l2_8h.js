@@ -1,5 +1,6 @@
 var xv__csc__l2_8h =
 [
+<<<<<<< HEAD
     [ "XV_CscGetBlueGain", "group__v__csc__v1__0.html#ga3887914c8350c3ac579058df52fb0e66", null ],
     [ "XV_CscGetBrightness", "group__v__csc__v1__0.html#gaea804242a7fc694448bbcbe108707804", null ],
     [ "XV_CscGetColorFormatIn", "group__v__csc__v1__0.html#gad532c55f364f1c074b21439d1a499055", null ],
@@ -11,6 +12,19 @@ var xv__csc__l2_8h =
     [ "XV_CscGetOutputRange", "group__v__csc__v1__0.html#gabfae63458da85bfd173f8a7341fbd78d", null ],
     [ "XV_CscGetRedGain", "group__v__csc__v1__0.html#ga74218b169b1ba683ecd0c79ed9f22c44", null ],
     [ "XV_CscGetSaturation", "group__v__csc__v1__0.html#gad15cf50feb36686a80b7feaa1880dcac", null ],
+=======
+    [ "XV_CscGetBlueGain", "group__v__csc__v1__0.html#ga09e0fb8bf2b17717b6e014d6b89a40a0", null ],
+    [ "XV_CscGetBrightness", "group__v__csc__v1__0.html#ga5c45599bf63494fa842fdfb46949f9db", null ],
+    [ "XV_CscGetColorFormatIn", "group__v__csc__v1__0.html#gaa7c01b92e88b643e2c8b58402a23cfde", null ],
+    [ "XV_CscGetColorFormatOut", "group__v__csc__v1__0.html#gaf960cebc158ba892309bfb83af11d296", null ],
+    [ "XV_CscGetColorStdIn", "group__v__csc__v1__0.html#ga43a4458bb55d2fbc58b65cd72b49db48", null ],
+    [ "XV_CscGetColorStdOut", "group__v__csc__v1__0.html#ga99a8ce4a7905aae4ceae065f48cd5370", null ],
+    [ "XV_CscGetContrast", "group__v__csc__v1__0.html#ga44247904cf7266b33bdfafe0b06056dc", null ],
+    [ "XV_CscGetGreenGain", "group__v__csc__v1__0.html#gac7b104c7b9430aed10c28a8c54c507d8", null ],
+    [ "XV_CscGetOutputRange", "group__v__csc__v1__0.html#ga61bba94ca1f8272cd447ba620028273b", null ],
+    [ "XV_CscGetRedGain", "group__v__csc__v1__0.html#gaa84271d02b17ffc948826a8f2b8f642d", null ],
+    [ "XV_CscGetSaturation", "group__v__csc__v1__0.html#ga2c5f658989238bacea802495baacdcd5", null ],
+>>>>>>> upstream/master
     [ "XV_CscIs422Enabled", "group__v__csc__v1__0.html#gaf7d53698d5230e388a1250a060785643", null ],
     [ "XV_CscIsDemoWindowEnabled", "group__v__csc__v1__0.html#ga15d61516819df5462ec57bdc5b647c15", null ],
     [ "XV_CscSetColorDepth", "group__v__csc__v1__0.html#ga64197c10301089d2df889c814d682276", null ],

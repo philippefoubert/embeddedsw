@@ -14,14 +14,26 @@ var NAVTREE =
       [ "Variables", "globals_vars.html", null ],
       [ "Macros", "globals_defs.html", "globals_defs" ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xadcps_intr_example.c", "example.html#ex1", null ],
+      [ "xadcps_polled_printf_example.c", "example.html#ex2", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 
 var NAVTREEINDEX =
 [
 "annotated.html",
+<<<<<<< HEAD
 "group__xadcps__v2__2.html#gaafadd9de4db08fdf0bd4be3ef4c4d663"
+=======
+"group__xadcps__v2__2.html#gaadfe3a185c836f8b5eaef2e33cbcbcea"
+>>>>>>> upstream/master
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

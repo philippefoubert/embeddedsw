@@ -75,6 +75,11 @@
  * 7.02a srt  03/01/13 Updated DDR base address for IPI designs (CR 703656).
  * 9.1   adk  01/07/16 Updated DDR base address for Ultrascale (CR 799532) and
  *		       removed the defines for S6/V6.
+ * 9.3   ms   01/23/17 Modified xil_printf statement in main function to
+ *                     ensure that "Successfully ran" and "Failed" strings are
+ *                     available in all examples. This is a fix for CR-965028.
+ *       ms   04/05/17 Added tabspace for return statements in functions
+ *                     for proper documentation while generating doxygen.
  * </pre>
  *
  * ***************************************************************************
@@ -254,7 +259,8 @@ u32 *Packet = (u32 *) TX_BUFFER_BASE;
 *
 * @param	None
 *
-* @return	- XST_SUCCESS if tests pass
+* @return
+*		- XST_SUCCESS if tests pass
 *		- XST_FAILURE if fails.
 *
 * @note		None.
@@ -359,7 +365,7 @@ int main(void)
 			goto Done;
 		}
 
-		xil_printf("AXI DMA SG interrupt Test passed\r\n");
+		xil_printf("Successfully ran AXI DMA SG interrupt Example\r\n");
 	}
 
 	/* Disable TX and RX Ring interrupts and return success */

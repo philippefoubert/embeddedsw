@@ -15,7 +15,19 @@ var NAVTREE =
       [ "Enumerator", "globals_eval.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xwdttb_selftest_example.c", "example.html#ex1", null ],
+      [ "xwdttb_example.c", "example.html#ex2", null ],
+      [ "xwdttb_intr_example.c", "example.html#ex3", null ],
+      [ "xwdttb_low_level_example.c", "example.html#ex4", null ],
+      [ "xwdttb_winwdt_example.c", "example.html#ex5", null ],
+      [ "xwdttb_winwdt_intr_example.c", "example.html#ex6", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

@@ -11,9 +11,19 @@ var NAVTREE =
     [ "APIs", "globals.html", [
       [ "All", "globals.html", null ],
       [ "Functions", "globals_func.html", null ],
+<<<<<<< HEAD
       [ "Macros", "globals_defs.html", null ]
     ] ],
     [ "File List", "files.html", "files" ]
+=======
+      [ "Variables", "globals_vars.html", null ],
+      [ "Macros", "globals_defs.html", null ]
+    ] ],
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xaxis_switch_example.c", "example.html#ex1", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

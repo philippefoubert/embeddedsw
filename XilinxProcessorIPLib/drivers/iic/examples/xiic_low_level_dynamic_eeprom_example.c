@@ -93,6 +93,13 @@
 *		      address bits of the EEPROM internal address.
 * 3.3   sk    06/18/16 checked bytes written with the input byte count and
 *                      returns error if the value is not matched.
+* 3.4   ms   01/23/17 Added xil_printf statement in main function to
+*                     ensure that "Successfully ran" and "Failed" strings
+*                     are available in all examples. This is a fix for
+*                     CR-965028.
+*       ms   04/05/17 Modified Comment lines in functions to
+*                     recognize it as documentation block for doxygen
+*                     generation.
 * </pre>
 *
 ******************************************************************************/
@@ -102,6 +109,7 @@
 #include "xparameters.h"
 #include "xiic.h"
 #include "xil_io.h"
+#include "xil_printf.h"
 
 /************************** Constant Definitions *****************************/
 
@@ -185,13 +193,15 @@ int main(void)
 	 */
 	Status = IicLowLevelDynEeprom();
 	if (Status != XST_SUCCESS) {
+		xil_printf("IIC lowlevel dynamic eeprom Example Failed\r\n");
 		return XST_FAILURE;
 	}
-
+	xil_printf("Successfully ran IIC lowlevel dynamic eeprom Example\r\n");
 	return XST_SUCCESS;
 }
 
 /******************************************************************************
+/**
 *
 * The function uses the low level driver of IIC to read from the IIC EEPROM on
 * the ML300/ML310 board. The addresses tested starts from 128.
@@ -327,6 +337,7 @@ u8 EepromWriteByte(u8 *BufferPtr, u8 ByteCount)
 }
 
 /******************************************************************************
+/**
 *
 * This function reads a number of bytes from the IIC serial EEPROM into a
 * specified buffer.

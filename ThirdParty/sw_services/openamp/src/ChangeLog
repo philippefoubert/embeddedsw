@@ -1,5 +1,10 @@
 Change Log for OpenAMP
 =================================
+<<<<<<< HEAD
+=======
+2017.1
+	* sync with upstream github 2017.04
+>>>>>>> upstream/master
 2016.4
 	* sync with upstream github 2016.10
 2016.3

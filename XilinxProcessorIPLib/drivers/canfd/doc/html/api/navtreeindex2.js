@@ -1,11 +1,24 @@
 var NAVTREEINDEX2 =
 {
+<<<<<<< HEAD
 "group__canfd__v1__0.html#gacedd51c2e06c3be7d4b6908c6e235acb":[1,1,61],
 "group__canfd__v1__0.html#gacedd51c2e06c3be7d4b6908c6e235acb":[1,2,2],
 "group__canfd__v1__0.html#gacfc1c19e035b1f9d63e605766b19fb94":[1,3,234],
 "group__canfd__v1__0.html#gacfd326f78688ca074cbc83a27124a660":[1,1,17],
 "group__canfd__v1__0.html#gad1bbb72c208cf3330dc27a32b2546999":[1,5,0],
 "group__canfd__v1__0.html#gad1bbb72c208cf3330dc27a32b2546999":[1,1,83],
+=======
+"group__canfd__v1__0.html#gacce0f487607f85fd398f4f5c6b76326c":[1,1,71],
+"group__canfd__v1__0.html#gacce0f487607f85fd398f4f5c6b76326c":[1,4,4],
+"group__canfd__v1__0.html#gacd01488b42042693a8267fd09177594e":[1,3,323],
+"group__canfd__v1__0.html#gace8c9509daecea6a32025b8b98519d95":[1,3,337],
+"group__canfd__v1__0.html#gacedd51c2e06c3be7d4b6908c6e235acb":[1,2,2],
+"group__canfd__v1__0.html#gacedd51c2e06c3be7d4b6908c6e235acb":[1,1,61],
+"group__canfd__v1__0.html#gacfc1c19e035b1f9d63e605766b19fb94":[1,3,234],
+"group__canfd__v1__0.html#gacfd326f78688ca074cbc83a27124a660":[1,1,17],
+"group__canfd__v1__0.html#gad1bbb72c208cf3330dc27a32b2546999":[1,1,83],
+"group__canfd__v1__0.html#gad1bbb72c208cf3330dc27a32b2546999":[1,7,0],
+>>>>>>> upstream/master
 "group__canfd__v1__0.html#gad37f4e291f6693bff413d7832ca73a64":[1,3,204],
 "group__canfd__v1__0.html#gad3ba61679475084761fbb1fa72a300e1":[1,3,182],
 "group__canfd__v1__0.html#gad4caa2cb6e1d1b647a055e84debac9c6":[1,1,45],
@@ -33,12 +46,21 @@ var NAVTREEINDEX2 =
 "group__canfd__v1__0.html#gadd7b8b6d9a5c527ed796bec8ba7106b8":[1,1,8],
 "group__canfd__v1__0.html#gade4f4c5b0c424f8fced1fb4e4f1b29d2":[1,3,181],
 "group__canfd__v1__0.html#gade79c4d8d2f144cf059cd807d772a1fe":[1,3,245],
+<<<<<<< HEAD
 "group__canfd__v1__0.html#gadef0243731e4a4f2d83016445fb8dcb3":[1,1,62],
 "group__canfd__v1__0.html#gadef0243731e4a4f2d83016445fb8dcb3":[1,2,3],
 "group__canfd__v1__0.html#gadf08fc9c0189ca406ff91c891c305f6b":[1,3,312],
 "group__canfd__v1__0.html#gadf75e2f5afba9cd64e5791c153ee7e1a":[1,3,4],
 "group__canfd__v1__0.html#gadf9d0eebaa9263e44f4d384a778f0d7d":[1,1,85],
 "group__canfd__v1__0.html#gadf9d0eebaa9263e44f4d384a778f0d7d":[1,0,23],
+=======
+"group__canfd__v1__0.html#gadef0243731e4a4f2d83016445fb8dcb3":[1,2,3],
+"group__canfd__v1__0.html#gadef0243731e4a4f2d83016445fb8dcb3":[1,1,62],
+"group__canfd__v1__0.html#gadf08fc9c0189ca406ff91c891c305f6b":[1,3,312],
+"group__canfd__v1__0.html#gadf75e2f5afba9cd64e5791c153ee7e1a":[1,3,4],
+"group__canfd__v1__0.html#gadf9d0eebaa9263e44f4d384a778f0d7d":[1,0,23],
+"group__canfd__v1__0.html#gadf9d0eebaa9263e44f4d384a778f0d7d":[1,1,85],
+>>>>>>> upstream/master
 "group__canfd__v1__0.html#gadfdb9f4e9179133c294285d01d4350eb":[1,3,414],
 "group__canfd__v1__0.html#gae005385dee7164ba7b4d3171756688ba":[1,3,385],
 "group__canfd__v1__0.html#gae0743b8dd3db9ddf9cae093b4788fd8c":[1,3,124],
@@ -65,8 +87,13 @@ var NAVTREEINDEX2 =
 "group__canfd__v1__0.html#gaeea77c8eaa243d4a17c54b4b752829d8":[1,3,119],
 "group__canfd__v1__0.html#gaeed1cec76d9dc0b10eac65224393cb80":[1,3,236],
 "group__canfd__v1__0.html#gaef58068f0a0829a2acc7b1d1ef46b8a7":[1,3,409],
+<<<<<<< HEAD
 "group__canfd__v1__0.html#gaf03fb5fddc1f4f5ff4c3307dfbe2094a":[1,1,49],
 "group__canfd__v1__0.html#gaf03fb5fddc1f4f5ff4c3307dfbe2094a":[1,0,1],
+=======
+"group__canfd__v1__0.html#gaf03fb5fddc1f4f5ff4c3307dfbe2094a":[1,0,1],
+"group__canfd__v1__0.html#gaf03fb5fddc1f4f5ff4c3307dfbe2094a":[1,1,49],
+>>>>>>> upstream/master
 "group__canfd__v1__0.html#gaf06433ecd2c9ac46c4e54cc135b12e80":[1,3,341],
 "group__canfd__v1__0.html#gaf19107b8ee7a1f2af0c6196651e46739":[1,1,30],
 "group__canfd__v1__0.html#gaf22b911d794341c564ca5c9914d837ed":[1,3,193],
@@ -76,23 +103,38 @@ var NAVTREEINDEX2 =
 "group__canfd__v1__0.html#gaf2dcee26453b8f71bb9b7f270b9f1f37":[1,3,173],
 "group__canfd__v1__0.html#gaf30f6e8eb2548bc4c73219541c6c39ad":[1,3,305],
 "group__canfd__v1__0.html#gaf320a6a3fc644cd807559ebb6ebda58b":[1,3,101],
+<<<<<<< HEAD
 "group__canfd__v1__0.html#gaf332209904e74e3081b72b230208f938":[1,0,11],
 "group__canfd__v1__0.html#gaf332209904e74e3081b72b230208f938":[1,1,59],
+=======
+"group__canfd__v1__0.html#gaf332209904e74e3081b72b230208f938":[1,1,59],
+"group__canfd__v1__0.html#gaf332209904e74e3081b72b230208f938":[1,0,11],
+>>>>>>> upstream/master
 "group__canfd__v1__0.html#gaf3459bfd84186d43926280b9d5c41d43":[1,3,63],
 "group__canfd__v1__0.html#gaf405a386db63e0d74f21fecc48c62982":[1,1,23],
 "group__canfd__v1__0.html#gaf465edbadb7909b21eaf96f99141bf53":[1,3,164],
 "group__canfd__v1__0.html#gaf55090153263a6fe5ce1a9d184e7b5e7":[1,3,313],
 "group__canfd__v1__0.html#gaf59281f4231a26fdec8b1ef879c39913":[1,3,298],
+<<<<<<< HEAD
 "group__canfd__v1__0.html#gaf5ac1e7ce4a9c7eabfd07a41e77b0cdb":[1,1,80],
 "group__canfd__v1__0.html#gaf5ac1e7ce4a9c7eabfd07a41e77b0cdb":[1,0,19],
+=======
+"group__canfd__v1__0.html#gaf5ac1e7ce4a9c7eabfd07a41e77b0cdb":[1,0,19],
+"group__canfd__v1__0.html#gaf5ac1e7ce4a9c7eabfd07a41e77b0cdb":[1,1,80],
+>>>>>>> upstream/master
 "group__canfd__v1__0.html#gaf698d15bafeb3e4488fa0bad48df97bf":[1,3,272],
 "group__canfd__v1__0.html#gaf73a4ffeaceaada99354e28b4c17341a":[1,3,196],
 "group__canfd__v1__0.html#gaf76cde80e9848671506163e7e9e92cc7":[1,3,109],
 "group__canfd__v1__0.html#gaf7bc726c8264561604410de720d375ce":[1,3,146],
 "group__canfd__v1__0.html#gaf8340273b121cded3cd9be3e3d460191":[1,3,440],
 "group__canfd__v1__0.html#gaf907c3484f13340935440ee9f2ca3d23":[1,3,139],
+<<<<<<< HEAD
 "group__canfd__v1__0.html#gaf9f32033a2315425471d98af1f5496ae":[1,0,3],
 "group__canfd__v1__0.html#gaf9f32033a2315425471d98af1f5496ae":[1,1,51],
+=======
+"group__canfd__v1__0.html#gaf9f32033a2315425471d98af1f5496ae":[1,1,51],
+"group__canfd__v1__0.html#gaf9f32033a2315425471d98af1f5496ae":[1,0,3],
+>>>>>>> upstream/master
 "group__canfd__v1__0.html#gafa2f7220e72ee4f8b4dcf846cd544f21":[1,3,375],
 "group__canfd__v1__0.html#gafadeb51740f777ba407ae74e1f8a8238":[1,3,22],
 "group__canfd__v1__0.html#gafaf16949ceade676ebb936d9fa89b1eb":[1,3,2],
@@ -114,5 +156,15 @@ var NAVTREEINDEX2 =
 "xcanfd__config_8c.html":[1,2],
 "xcanfd__hw_8h.html":[1,3],
 "xcanfd__intr_8c.html":[1,4],
+<<<<<<< HEAD
 "xcanfd__selftest_8c.html":[1,5]
+=======
+"xcanfd__intr__example_8c.html":[1,5],
+"xcanfd__intr__example_8c.html#ae66f6b31b5ad750f1fe042a706a4e3d4":[1,5,0],
+"xcanfd__polled__example_8c.html":[1,6],
+"xcanfd__polled__example_8c.html#a840291bc02cba5474a4cb46a9b9566fe":[1,6,0],
+"xcanfd__polled__example_8c.html#ac8323e4578603639b3344cf7d3eef17a":[1,6,1],
+"xcanfd__selftest_8c.html":[1,7],
+"xcanfd__sinit_8c.html":[1,8]
+>>>>>>> upstream/master
 };

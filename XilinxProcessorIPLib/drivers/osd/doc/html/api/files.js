@@ -1,5 +1,9 @@
 var files =
 [
+<<<<<<< HEAD
+=======
+    [ "osd_selftest_example.c", "osd__selftest__example_8c.html", "osd__selftest__example_8c" ],
+>>>>>>> upstream/master
     [ "xosd.c", "xosd_8c.html", "xosd_8c" ],
     [ "xosd.h", "xosd_8h.html", "xosd_8h" ],
     [ "xosd_hw.h", "xosd__hw_8h.html", "xosd__hw_8h" ],

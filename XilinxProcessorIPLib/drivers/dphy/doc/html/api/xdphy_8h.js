@@ -8,6 +8,10 @@ var xdphy_8h =
     [ "XDPHY_HANDLE_DLANE2", "group__dphy__v1__0.html#gaa979f3f4c507dfbdbc19b501423c4779", null ],
     [ "XDPHY_HANDLE_DLANE3", "group__dphy__v1__0.html#ga67bee2a87d8a5d2f7e41f0040d483506", null ],
     [ "XDPHY_HANDLE_ESCTIMEOUT", "group__dphy__v1__0.html#gaebf0cf546a1583bb760192a048237186", null ],
+<<<<<<< HEAD
+=======
+    [ "XDPHY_HANDLE_HSSETTLE", "group__dphy__v1__0.html#gac5509a1d6033303f285032a111128be6", null ],
+>>>>>>> upstream/master
     [ "XDPHY_HANDLE_HSTIMEOUT", "group__dphy__v1__0.html#ga15385f55f404bccfe3e4e278ce70a16a", null ],
     [ "XDPHY_HANDLE_IDELAY", "group__dphy__v1__0.html#ga1ec5ec6f1d8ac8d7a6356bb13343325c", null ],
     [ "XDPHY_HANDLE_INIT_TIMER", "group__dphy__v1__0.html#gaca6c78233546e7273afd557897339463", null ],

@@ -14,7 +14,24 @@ var NAVTREE =
       [ "Variables", "globals_vars.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xemaclite_example.h", "example.html#ex1", null ],
+      [ "xemaclite_example_util.c", "example.html#ex2", null ],
+      [ "xemaclite_internal_loopback_example.c", "example.html#ex3", null ],
+      [ "xemaclite_intr_example.c", "example.html#ex4", null ],
+      [ "xemaclite_phy_loopback_example.c", "example.html#ex5", null ],
+      [ "xemaclite_ping_reply_example.c", "example.html#ex6", null ],
+      [ "xemaclite_ping_req_example.c", "example.html#ex7", null ],
+      [ "xemaclite_polled_example.c", "example.html#ex8", null ],
+      [ "xemaclite_selftest_example.c", "example.html#ex9", [
+        [ "EXAMPLES IN EDK/SDK:", "example.html#INCLUDING", null ]
+      ] ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

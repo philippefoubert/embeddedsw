@@ -1,6 +1,12 @@
 var NAVTREEINDEX0 =
 {
 "annotated.html":[0,0],
+<<<<<<< HEAD
+=======
+"example.html":[3],
+"example.html#ex1":[3,0],
+"example.html#ex2":[3,1],
+>>>>>>> upstream/master
 "files.html":[2],
 "functions.html":[0,1,0],
 "functions_vars.html":[0,1,1],
@@ -20,7 +26,11 @@ var NAVTREEINDEX0 =
 "group__gpiops__v3__1.html#ga13b3e68acd59636ebaed5c71055e583c":[2,1,34],
 "group__gpiops__v3__1.html#ga158c9afe847d2b5f6bab24d20926c359":[2,1,15],
 "group__gpiops__v3__1.html#ga158c9afe847d2b5f6bab24d20926c359":[2,0,1],
+<<<<<<< HEAD
 "group__gpiops__v3__1.html#ga173133193aeba362fa0a5c6e7cdd8dfa":[2,6,0],
+=======
+"group__gpiops__v3__1.html#ga173133193aeba362fa0a5c6e7cdd8dfa":[2,8,0],
+>>>>>>> upstream/master
 "group__gpiops__v3__1.html#ga173133193aeba362fa0a5c6e7cdd8dfa":[2,1,35],
 "group__gpiops__v3__1.html#ga1d91233cc0556e3eb8d39cc856b6436c":[2,5,2],
 "group__gpiops__v3__1.html#ga1d91233cc0556e3eb8d39cc856b6436c":[2,1,18],
@@ -63,12 +73,21 @@ var NAVTREEINDEX0 =
 "group__gpiops__v3__1.html#ga8f80173cb28cbac5bab53c4fc7c7dd96":[2,1,6],
 "group__gpiops__v3__1.html#ga963415d9096b5887c5388cea74cd1116":[2,1,40],
 "group__gpiops__v3__1.html#ga963415d9096b5887c5388cea74cd1116":[2,5,16],
+<<<<<<< HEAD
 "group__gpiops__v3__1.html#ga9c49687af4625a0ed49f376d3ff1b045":[2,7,0],
 "group__gpiops__v3__1.html#ga9c49687af4625a0ed49f376d3ff1b045":[2,1,32],
 "group__gpiops__v3__1.html#gaaa0415781a99043db06849daa027d5c5":[2,1,7],
 "group__gpiops__v3__1.html#gab8661a0444fd67d2b87a14b3c196e571":[2,1,13],
 "group__gpiops__v3__1.html#gac182a9828e0ecfdc7a1cbe0c5a1a763f":[2,0,3],
 "group__gpiops__v3__1.html#gac182a9828e0ecfdc7a1cbe0c5a1a763f":[2,1,19],
+=======
+"group__gpiops__v3__1.html#ga9c49687af4625a0ed49f376d3ff1b045":[2,9,0],
+"group__gpiops__v3__1.html#ga9c49687af4625a0ed49f376d3ff1b045":[2,1,32],
+"group__gpiops__v3__1.html#gaaa0415781a99043db06849daa027d5c5":[2,1,7],
+"group__gpiops__v3__1.html#gab8661a0444fd67d2b87a14b3c196e571":[2,1,13],
+"group__gpiops__v3__1.html#gac182a9828e0ecfdc7a1cbe0c5a1a763f":[2,1,19],
+"group__gpiops__v3__1.html#gac182a9828e0ecfdc7a1cbe0c5a1a763f":[2,0,3],
+>>>>>>> upstream/master
 "group__gpiops__v3__1.html#gac5c6fe277747f034cd30c3f3e770dc5b":[2,1,0],
 "group__gpiops__v3__1.html#gac994de03aa64e2b6b3c6b6da9d76e020":[2,1,3],
 "group__gpiops__v3__1.html#gaca8012790789d80573f4b2fa9e601e7c":[2,1,31],
@@ -77,12 +96,21 @@ var NAVTREEINDEX0 =
 "group__gpiops__v3__1.html#gacd63e0e5c7ed18517d54104e4ad6dcd4":[2,1,36],
 "group__gpiops__v3__1.html#gacda78d38a3b2dbf4398c5df2c88e0424":[2,1,43],
 "group__gpiops__v3__1.html#gacda78d38a3b2dbf4398c5df2c88e0424":[2,0,11],
+<<<<<<< HEAD
 "group__gpiops__v3__1.html#gad1e07837d6bfe1cf16d0b8a454a7de29":[2,5,1],
 "group__gpiops__v3__1.html#gad1e07837d6bfe1cf16d0b8a454a7de29":[2,1,17],
 "group__gpiops__v3__1.html#gadc4ea201a1c488a1b667a77f3c6fd23b":[2,5,8],
 "group__gpiops__v3__1.html#gadc4ea201a1c488a1b667a77f3c6fd23b":[2,1,26],
 "group__gpiops__v3__1.html#gadfc4a76613b301ad3af6d2014505e745":[2,2,0],
 "group__gpiops__v3__1.html#gadfc4a76613b301ad3af6d2014505e745":[2,7,1],
+=======
+"group__gpiops__v3__1.html#gad1e07837d6bfe1cf16d0b8a454a7de29":[2,1,17],
+"group__gpiops__v3__1.html#gad1e07837d6bfe1cf16d0b8a454a7de29":[2,5,1],
+"group__gpiops__v3__1.html#gadc4ea201a1c488a1b667a77f3c6fd23b":[2,1,26],
+"group__gpiops__v3__1.html#gadc4ea201a1c488a1b667a77f3c6fd23b":[2,5,8],
+"group__gpiops__v3__1.html#gadfc4a76613b301ad3af6d2014505e745":[2,2,0],
+"group__gpiops__v3__1.html#gadfc4a76613b301ad3af6d2014505e745":[2,9,1],
+>>>>>>> upstream/master
 "group__gpiops__v3__1.html#gae57e0fee992d409f0ff32d35e68f6fbc":[2,1,2],
 "group__gpiops__v3__1.html#gae8082ec62bd44c68e3334b77c87fca96":[2,1,8],
 "group__gpiops__v3__1.html#gae84916ec202e4d3a8a46a20857753eec":[2,0,10],
@@ -98,6 +126,16 @@ var NAVTREEINDEX0 =
 "xgpiops__hw_8c.html":[2,3],
 "xgpiops__hw_8h.html":[2,4],
 "xgpiops__intr_8c.html":[2,5],
+<<<<<<< HEAD
 "xgpiops__selftest_8c.html":[2,6],
 "xgpiops__sinit_8c.html":[2,7]
+=======
+"xgpiops__intr__example_8c.html":[2,6],
+"xgpiops__intr__example_8c.html#a840291bc02cba5474a4cb46a9b9566fe":[2,6,0],
+"xgpiops__polled__example_8c.html":[2,7],
+"xgpiops__polled__example_8c.html#a840291bc02cba5474a4cb46a9b9566fe":[2,7,1],
+"xgpiops__polled__example_8c.html#ab92c6abab68712971c3b15511c0b6f24":[2,7,0],
+"xgpiops__selftest_8c.html":[2,8],
+"xgpiops__sinit_8c.html":[2,9]
+>>>>>>> upstream/master
 };

@@ -29,12 +29,31 @@
 * this Software without prior written authorization from Xilinx.
 *
 ******************************************************************************/
-
-
+/*****************************************************************************/
+/**
+*
+* @file xaxivdma_example_selftest.c
+*
+* <pre>
+* MODIFICATION HISTORY:
+*
+* Ver   Who  Date     Changes
+* ----- ---- -------- -------------------------------------------------------
+* 6.2   ms   01/23/17 Modified xil_printf statement in main function to
+*                     ensure that "Successfully ran" and "Failed" strings
+*                     are available in all examples. This is a fix for
+*                     CR-965028.
+*       ms   04/05/17 Modified Comment lines in functions to
+*                     recognize it as documentation block for doxygen
+*                     generation of examples.
+* </pre>
+*
+*****************************************************************************/
 /***************************** Include Files *********************************/
 #include "xaxivdma.h"
 #include "xparameters.h"
 #include "xdebug.h"
+#include "xil_printf.h"
 
 /******************** Constant Definitions **********************************/
 
@@ -65,7 +84,7 @@ XAxiVdma AxiVdma;
 
 
 /*****************************************************************************/
-/*
+/**
 * The entry point for this example. It invokes the example function,
 * and reports the execution status.
 *
@@ -90,11 +109,11 @@ int main()
 
 	if (Status != XST_SUCCESS) {
 
-		xil_printf("AxiVDMASelfTestExample: Failed\r\n");
+		xil_printf("AxiVDMASelfTest Example Failed\r\n");
 		return XST_FAILURE;
 	}
 
-	xil_printf("AxiVDMASelfTestExample: Passed\r\n");
+	xil_printf("Successfully ran AxiVDMASelfTest Example\r\n");
 
 	xil_printf("--- Exiting main() --- \r\n");
 
@@ -104,13 +123,14 @@ int main()
 #endif
 
 /*****************************************************************************/
-/*
+/**
 * This function performance a reset of the VDMA device and checks the device is
 * coming out of reset or not.
 *
 * @param	DeviceId is the DMA device id.
 *
-* @return	- XST_SUCCESS if channel reset is successful
+* @return
+*		- XST_SUCCESS if channel reset is successful
 *		- XST_FAILURE if channel reset fails.
 *
 * @note		None.

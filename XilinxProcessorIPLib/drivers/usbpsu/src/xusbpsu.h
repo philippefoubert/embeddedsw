@@ -46,7 +46,20 @@
 * 1.0   sg    06/06/16 First release
 * 1.1   sg    10/24/16 Update for backward compatability
 *                      Added XUsbPsu_IsSuperSpeed function in xusbpsu.c
+<<<<<<< HEAD
 *
+=======
+* 1.2   mn    01/20/17 removed unnecessary declaration of
+*                      XUsbPsu_SetConfiguration in xusbpsu.h
+* 1.2   mn    01/30/17 Corrected InstancePtr->UnalignedTx with
+*                      Ept->UnalignedTx in xusbpsu_controltransfers.c
+* 1.2   mus   02/10/17 Updated data structures to fix compilation errors for IAR
+*                      compiler
+*       ms    03/17/17 Added readme.txt file in examples folder for doxygen
+*                      generation.
+*       ms    04/10/17 Modified filename tag to include the file in doxygen
+*                      examples.
+>>>>>>> upstream/master
 * </pre>
 *
 *****************************************************************************/
@@ -68,7 +81,7 @@ extern "C" {
  * The header sleep.h and API usleep() can only be used with an arm design.
  * MB_Sleep() is used for microblaze design.
  */
-#if defined (__arm__) || defined (__aarch64__)
+#if defined (__arm__) || defined (__aarch64__) || (__ICCARM__)
 #include "sleep.h"
 #endif
 
@@ -275,13 +288,20 @@ struct XUsbPsu_EvtBuffer {
 /**
  * Transfer Request Block - Hardware format
  */
+#if defined (__ICCARM__)
+#pragma pack(push, 1)
+#endif
 struct XUsbPsu_Trb {
 	u32		BufferPtrLow;
 	u32		BufferPtrHigh;
 	u32		Size;
 	u32		Ctrl;
+#if defined (__ICCARM__)
+};
+#pragma pack(pop)
+#else
 } __attribute__((packed));
-
+#endif
 
 /*
  * Endpoint Parameters
@@ -295,14 +315,21 @@ struct XUsbPsu_EpParams {
 /**
  * USB Standard Control Request
  */
+#if defined (__ICCARM__)
+#pragma pack(push, 1)
+#endif
 typedef struct {
         u8  bRequestType;
         u8  bRequest;
         u16 wValue;
         u16 wIndex;
         u16 wLength;
+#if defined (__ICCARM__)
+}SetupPacket;
+#pragma pack(pop)
+#else
 } __attribute__ ((packed)) SetupPacket;
-
+#endif
 /**
  * Endpoint representation
  */
@@ -312,7 +339,13 @@ struct XUsbPsu_Ep {
 						 *   when data is sent for IN Ep
 						 *   and received for OUT Ep
 						 */
+#if defined (__ICCARM__)
+    #pragma data_alignment = 64
+	struct XUsbPsu_Trb	EpTrb;
+	#pragma data_alignment = 4
+#else
 	struct XUsbPsu_Trb	EpTrb ALIGNMENT_CACHELINE;/**< TRB used by endpoint */
+#endif
 	u32	EpStatus;		/**< Flags to represent Endpoint status */
 	u32	RequestedBytes;	/**< RequestedBytes for transfer */
 	u32	BytesTxed;		/**< Actual Bytes transferred */
@@ -334,9 +367,16 @@ struct XUsbPsu_Ep {
  * USB Device Controller representation
  */
 struct XUsbPsu {
+#if defined (__ICCARM__)
+    #pragma data_alignment = 64
+	SetupPacket SetupData;
+	struct XUsbPsu_Trb Ep0_Trb;
+	#pragma data_alignment = 4
+#else
 	SetupPacket SetupData ALIGNMENT_CACHELINE;
 					/**< Setup Packet buffer */
 	struct XUsbPsu_Trb Ep0_Trb ALIGNMENT_CACHELINE;
+#endif
 					/**< TRB for control transfers */
 	XUsbPsu_Config *ConfigPtr;	/**< Configuration info pointer */
 	struct XUsbPsu_Ep eps[XUSBPSU_ENDPOINTS_NUM]; /**< Endpoints */
@@ -346,11 +386,18 @@ struct XUsbPsu {
 	u32 DevDescSize;
 	u32 ConfigDescSize;
 	void (*Chapter9)(struct XUsbPsu *, SetupPacket *);
-	void (*ClassHandler)(struct XUsbPsu *, SetupPacket *);
+	void (*ResetIntrHandler)(struct XUsbPsu *);
+	void (*DisconnectIntrHandler)(struct XUsbPsu *);
 	void *DevDesc;
 	void *ConfigDesc;
+#if defined(__ICCARM__)
+    #pragma data_alignment = XUSBPSU_EVENT_BUFFERS_SIZE
+	u8 EventBuffer[XUSBPSU_EVENT_BUFFERS_SIZE];
+	#pragma data_alignment = 4
+#else
 	u8 EventBuffer[XUSBPSU_EVENT_BUFFERS_SIZE]
 						__attribute__((aligned(XUSBPSU_EVENT_BUFFERS_SIZE)));
+#endif
 	u8 NumOutEps;
 	u8 NumInEps;
 	u8 ControlDir;
@@ -363,14 +410,22 @@ struct XUsbPsu {
 	u8 UnalignedTx;
 	u8 IsConfigDone;
 	u8 IsThreeStage;
+	void *data_ptr; /* pointer for storing applications data */
 };
 
+#if defined (__ICCARM__)
+#pragma pack(push, 1)
+#endif
 struct XUsbPsu_Event_Type {
 	u32	Is_DevEvt:1;
 	u32	Type:7;
 	u32	Reserved8_31:24;
+#if defined (__ICCARM__)
+};
+#pragma pack(pop)
+#else
 } __attribute__((packed));
-
+#endif
 /**
  * struct XUsbPsu_event_depvt - Device Endpoint Events
  * @Is_EpEvt: indicates this is an endpoint event
@@ -390,6 +445,9 @@ struct XUsbPsu_Event_Type {
  * @Parameters: Parameters of the current event. Refer to databook for
  *	more information.
  */
+#if defined (__ICCARM__)
+#pragma pack(push, 1)
+#endif
 struct XUsbPsu_Event_Epevt {
 	u32	Is_EpEvt:1;
 	u32	Epnumber:5;
@@ -397,8 +455,12 @@ struct XUsbPsu_Event_Epevt {
 	u32	Reserved11_10:2;
 	u32	Status:4;
 	u32	Parameters:16;
+#if defined (__ICCARM__)
+};
+#pragma pack(pop)
+#else
 } __attribute__((packed));
-
+#endif
 /**
  * struct XUsbPsu_event_devt - Device Events
  * @Is_DevEvt: indicates this is a non-endpoint event
@@ -421,6 +483,9 @@ struct XUsbPsu_Event_Epevt {
  * @Event_Info: Information about this event
  * @Reserved31_25: Reserved, not used
  */
+#if defined (__ICCARM__)
+#pragma pack(push, 1)
+#endif
 struct XUsbPsu_Event_Devt {
 	u32	Is_DevEvt:1;
 	u32	Device_Event:7;
@@ -428,8 +493,12 @@ struct XUsbPsu_Event_Devt {
 	u32	Reserved15_12:4;
 	u32	Event_Info:9;
 	u32	Reserved31_25:7;
+#if defined (__ICCARM__)
+};
+#pragma pack(pop)
+#else
 } __attribute__((packed));
-
+#endif
 /**
  * struct XUsbPsu_event_gevt - Other Core Events
  * @one_bit: indicates this is a non-endpoint event (not used)
@@ -437,13 +506,20 @@ struct XUsbPsu_Event_Devt {
  * @phy_port_number: self-explanatory
  * @reserved31_12: Reserved, not used.
  */
+#if defined (__ICCARM__)
+#pragma pack(push, 1)
+#endif
 struct XUsbPsu_Event_Gevt {
 	u32	Is_GlobalEvt:1;
 	u32	Device_Event:7;
 	u32	Phy_Port_Number:4;
 	u32	Reserved31_12:20;
+#if defined (__ICCARM__)
+};
+#pragma pack(pop)
+#else
 } __attribute__((packed));
-
+#endif
 /**
  * union XUsbPsu_event - representation of Event Buffer contents
  * @raw: raw 32-bit event
@@ -461,16 +537,22 @@ union XUsbPsu_Event {
 };
 
 /***************** Macros (Inline Functions) Definitions *********************/
-
+#if defined (__ICCARM__)
+#define IS_ALIGNED(x, a)	(((x) & ((u32)(a) - 1)) == 0U)
+#else
 #define IS_ALIGNED(x, a)	(((x) & ((typeof(x))(a) - 1)) == 0U)
+#endif
 
+#if defined (__ICCARM__)
+#define roundup(x, y) (((((x) + (u32)(y - 1)) / (u32)y) * (u32)y))
+
+#else
 #define roundup(x, y) (                                 \
-{                                                       \
-        const typeof(y) y__ = (y);                        \
-        (((x) + (u32)(y__ - 1)) / (u32)y__) * (u32)y__;                \
-}                                                       \
+        (((x) + (u32)((const typeof(y))y - 1)) / \
+			(u32)((const typeof(y))y)) * \
+				(u32)((const typeof(y))y)               \
 )
-
+#endif
 #define DECLARE_DEV_DESC(Instance, desc)			\
 	(Instance).DevDesc = &(desc); 					\
 	(Instance).DevDescSize = sizeof((desc))
@@ -478,6 +560,32 @@ union XUsbPsu_Event {
 #define DECLARE_CONFIG_DESC(Instance, desc) 		\
 	(Instance).ConfigDesc = &(desc); 				\
 	(Instance).ConfigDescSize = sizeof((desc))
+
+static inline void *XUsbPsu_get_drvdata(struct XUsbPsu *InstancePtr) {
+	return InstancePtr->data_ptr;
+}
+
+static inline void XUsbPsu_set_drvdata(struct XUsbPsu *InstancePtr, void *data) {
+	InstancePtr->data_ptr = data;
+}
+
+static inline void XUsbPsu_set_ch9handler(
+		struct XUsbPsu *InstancePtr,
+		void (*func)(struct XUsbPsu *, SetupPacket *)) {
+	InstancePtr->Chapter9 = func;
+}
+
+static inline void XUsbPsu_set_rsthandler(
+		struct XUsbPsu *InstancePtr,
+		void (*func)(struct XUsbPsu *)) {
+	InstancePtr->ResetIntrHandler = func;
+}
+
+static inline void XUsbPsu_set_disconnect(
+		struct XUsbPsu *InstancePtr,
+		void (*func)(struct XUsbPsu *)) {
+	InstancePtr->DisconnectIntrHandler = func;
+}
 
 /************************** Function Prototypes ******************************/
 
@@ -557,8 +665,6 @@ void XUsbPsu_EpXferComplete(struct XUsbPsu *InstancePtr,
  */
 s32 XUsbPsu_RecvSetup(struct XUsbPsu *InstancePtr);
 void XUsbPsu_Ep0StallRestart(struct XUsbPsu *InstancePtr);
-s32 XUsbPsu_SetConfiguration(struct XUsbPsu *InstancePtr,
-				SetupPacket *Ctrl);
 void XUsbPsu_Ep0DataDone(struct XUsbPsu *InstancePtr,
 		const struct XUsbPsu_Event_Epevt *Event);
 void XUsbPsu_Ep0StatusDone(struct XUsbPsu *InstancePtr,

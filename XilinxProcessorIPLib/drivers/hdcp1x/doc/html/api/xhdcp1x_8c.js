@@ -34,6 +34,10 @@ var xhdcp1x_8c =
     [ "XHdcp1x_Reset", "group__hdcp1x__v4__0.html#ga5a42371924892562d7f6df80d5907a1f", null ],
     [ "XHdcp1x_SetDebugLogMsg", "group__hdcp1x__v4__0.html#ga0d8820c98c821780e9cbede688cc2957", null ],
     [ "XHdcp1x_SetDebugPrintf", "group__hdcp1x__v4__0.html#gac2d6cb2bf146bfd87fc255200b09cd79", null ],
+<<<<<<< HEAD
+=======
+    [ "XHdcp1x_SetHdmiMode", "group__hdcp1x__v4__0.html#gae607ce47975decbc6e4e45d51889dc19", null ],
+>>>>>>> upstream/master
     [ "XHdcp1x_SetKeySelect", "group__hdcp1x__v4__0.html#ga405e80474c58ef82e4c27ab99ae70f54", null ],
     [ "XHdcp1x_SetKsvRevokeCheck", "group__hdcp1x__v4__0.html#ga4dc3ae5f39d71120d46f7dacf1f61b4e", null ],
     [ "XHdcp1x_SetLaneCount", "group__hdcp1x__v4__0.html#ga230854e10d59500a41137b4f5951042b", null ],

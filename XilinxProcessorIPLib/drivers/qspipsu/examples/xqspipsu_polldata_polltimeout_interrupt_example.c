@@ -43,7 +43,7 @@
 /*****************************************************************************/
 /**
 *
-* @file xqspipsu_polldata_polltimeout_interrupt_example.c.c
+* @file xqspipsu_polldata_polltimeout_interrupt_example.c
 *
 *
 * This file contains a design example using the QSPIPSU driver (XQspiPsu)
@@ -75,7 +75,13 @@
 * 1.2   nsk  08/05/16 First release
 * 1.3   nsk  09/16/16 Update for dual parallel configuration
 * 1.3	nsk  09/19/16 Update documentation
+<<<<<<< HEAD
 *
+=======
+*       ms  04/05/17 Modified Comment lines in functions to
+*                    recognize it as documentation block and modified filename
+*                    tag to include the file in doxygen examples.
+>>>>>>> upstream/master
 *</pre>
 *
 ******************************************************************************/
@@ -481,7 +487,8 @@ int main(void)
 	return XST_SUCCESS;
 }
 
-/*****************************************************************************
+/*****************************************************************************/
+/**
 *
 * The purpose of this function is to illustrate how to use the XQspiPsu
 * device driver in single, parallel and stacked modes using
@@ -656,7 +663,8 @@ int QspiPsuInterruptFlashExample(XScuGic *IntcInstancePtr, XQspiPsu *QspiPsuInst
 	return XST_SUCCESS;
 }
 
-/*****************************************************************************
+/*****************************************************************************/
+/**
 *
 * Callback handler.
 *
@@ -689,7 +697,49 @@ void QspiPsuHandler(void *CallBackRef, u32 StatusEvent, unsigned int ByteCount)
 	}
 }
 
-/*****************************************************************************
+/*****************************************************************************/
+/**
+*
+* This function configures the values required to poll the device
+* for status.
+*
+* @param	QspiPtr is a pointer to the QSPIPSU driver component to use.
+*
+* @return	None.
+*
+* @note		None.
+*
+*****************************************************************************/
+void QspiPsuConfigurePoll(XQspiPsu *QspiPsuPtr)
+{
+	u8 FlashStatus[2];
+
+	if (QspiPsuPtr->Config.ConnectionMode == XQSPIPSU_CONNECTION_MODE_PARALLEL)
+		XQspiPsu_SelectFlash(QspiPsuPtr, XQSPIPSU_SELECT_FLASH_CS_BOTH,
+				XQSPIPSU_SELECT_FLASH_BUS_BOTH);
+	else
+		XQspiPsu_SelectFlash(QspiPsuPtr, XQSPIPSU_SELECT_FLASH_CS_LOWER,
+				XQSPIPSU_SELECT_FLASH_BUS_LOWER);
+
+	FlashMsg[0].TxBfrPtr = NULL;
+	FlashMsg[0].RxBfrPtr = FlashStatus;
+	FlashMsg[0].ByteCount = 2;
+	FlashMsg[0].BusWidth = XQSPIPSU_SELECT_MODE_SPI;
+	FlashMsg[0].Flags = XQSPIPSU_MSG_FLAG_POLL;
+	if(FSRFlag)
+		FlashMsg[0].PollData = 0x80;
+	else
+		FlashMsg[0].PollData = 0x01;
+
+	FlashMsg[0].PollTimeout = 0xFFFFFFFF;
+	FlashMsg[0].PollStatusCmd = StatusCmd;
+	FlashMsg[0].PollBusMask = POLL_CFG_WRITE_BUSMASK_VALUE;
+	if (QspiPsuPtr->Config.ConnectionMode == XQSPIPSU_CONNECTION_MODE_PARALLEL)
+		FlashMsg[0].Flags |= XQSPIPSU_MSG_FLAG_STRIPE;
+
+}
+/*****************************************************************************/
+/**
 *
 * This function configures the values required to poll the device
 * for status.
@@ -904,8 +954,8 @@ int FlashReadID(XQspiPsu *QspiPsuPtr)
 	return XST_SUCCESS;
 }
 
-/******************************************************************************
-*
+/*****************************************************************************/
+/**
 *
 * This function writes to the  serial Flash connected to the QSPIPSU interface.
 * All the data put into the buffer must be in the same page of the device with
@@ -1024,8 +1074,8 @@ int FlashWrite(XQspiPsu *QspiPsuPtr, u32 Address, u32 ByteCount, u8 Command,
 	return 0;
 }
 
-/******************************************************************************
-*
+/*****************************************************************************/
+/**
 *
 * This function erases the sectors in the  serial Flash connected to the
 * QSPIPSU interface.
@@ -1205,7 +1255,8 @@ int FlashErase(XQspiPsu *QspiPsuPtr, u32 Address, u32 ByteCount, u8 *WriteBfrPtr
 }
 
 
-/******************************************************************************
+/*****************************************************************************/
+/**
 *
 * This function performs a read. Default setting is in DMA mode.
 *
@@ -1325,7 +1376,8 @@ int FlashRead(XQspiPsu *QspiPsuPtr, u32 Address, u32 ByteCount, u8 Command,
 	return 0;
 }
 
-/******************************************************************************
+/*****************************************************************************/
+/**
 *
 * This functions performs a bulk erase operation when the
 * flash device has a single die. Works for both Spansion and Micron
@@ -1428,7 +1480,8 @@ int BulkErase(XQspiPsu *QspiPsuPtr, u8 *WriteBfrPtr)
 	return 0;
 }
 
-/******************************************************************************
+/*****************************************************************************/
+/**
 *
 * This functions performs a die erase operation on all the die in
 * the flash device. This function uses the die erase command for
@@ -1540,7 +1593,8 @@ int DieErase(XQspiPsu *QspiPsuPtr, u8 *WriteBfrPtr)
 	return 0;
 }
 
-/******************************************************************************
+/*****************************************************************************/
+/**
 *
 * This functions translates the address based on the type of interconnection.
 * In case of stacked, this function asserts the corresponding slave select.

@@ -29,8 +29,8 @@
 * this Software without prior written authorization from Xilinx.
 *
 ******************************************************************************/
-/******************************************************************************
-*
+/*****************************************************************************/
+/**
 * @file xspi_stm_flash_example.c
 *
 * This file contains a design example using the SPI driver (XSpi) and hardware
@@ -57,7 +57,11 @@
 *		      Updated to use the HAL APIs/macros. Replaced call to
 *		      XSpi_Initialize API with XSpi_LookupConfig and
 *		      XSpi_CfgInitialize.
-*
+* 4.2   ms   01/23/17 Added xil_printf statement in main function to
+*                     ensure that "Successfully ran" and "Failed" strings
+*                     are available in all examples. This is a fix for
+*                     CR-965028.
+*       ms   04/05/17 Modified Comment lines to follow doxygen rules.
 * </pre>
 *
 ******************************************************************************/
@@ -68,7 +72,7 @@
 #include "xintc.h"		/* Interrupt controller device driver */
 #include "xspi.h"		/* SPI device driver */
 #include "xil_exception.h"
-
+#include "xil_printf.h"
 
 /************************** Constant Definitions *****************************/
 
@@ -365,6 +369,7 @@ int main()
 		}
 	}
 
+	xil_printf("Successfully ran Spi stm flash Example\r\n");
 	return XST_SUCCESS;
 }
 

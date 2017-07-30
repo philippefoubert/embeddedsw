@@ -8,7 +8,11 @@ var struct_x_v___hdmi_rx_ss___config =
     [ "HdmiRx", "struct_x_v___hdmi_rx_ss___config.html#ad08f9bc0025dc447f1d91d62e03d6c89", null ],
     [ "HighAddress", "struct_x_v___hdmi_rx_ss___config.html#a562269100fac731d4735038b6fdeb37a", null ],
     [ "MaxBitsPerPixel", "struct_x_v___hdmi_rx_ss___config.html#aee79d98ebde06a2f3605a6e3a1566316", null ],
+<<<<<<< HEAD
     [ "Ppc", "struct_x_v___hdmi_rx_ss___config.html#ae3bc6c803098c13d8b8d6bce5920c10f", null ],
     [ "Remapper", "struct_x_v___hdmi_rx_ss___config.html#a74e4f03873c0df1e5a7c2a72ab457c70", null ],
     [ "RemapperReset", "struct_x_v___hdmi_rx_ss___config.html#a11cc6236b64f53541a70fb7568b052d0", null ]
+=======
+    [ "Ppc", "struct_x_v___hdmi_rx_ss___config.html#ae3bc6c803098c13d8b8d6bce5920c10f", null ]
+>>>>>>> upstream/master
 ];

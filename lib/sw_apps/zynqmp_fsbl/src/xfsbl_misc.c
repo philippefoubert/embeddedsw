@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,8 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00  kc   10/21/13 Initial release
+* 2.0   bv   12/02/16 Made compliance to MISRAC 2012 guidelines
+*       vns  01/29/17 Added API XFsbl_AdmaCopy to trasfer data using ADMA
 *
 * </pre>
 *
@@ -67,20 +69,6 @@ typedef struct {
 } XFsblPs_ZynqmpDevices;
 
 /***************** Macros (Inline Functions) Definitions *********************/
-#if 0
-__inline void XFsbl_Printf(u32 DebugType,char *Format, ...)
-{
-#ifdef STDOUT_BASEADDRESS
-	va_list Args;
-	if (((DebugType) & XFsblDbgCurrentTypes) != 0)
-	{
-		va_start(Args, Format);
-		xil_printf(Format, Args);
-		va_end(Args);
-	}
-#endif
-}
-#endif
 /************************** Function Prototypes ******************************/
 static void XFsbl_UndefHandler (void);
 #ifndef ARMA53_64
@@ -94,32 +82,16 @@ static void XFsbl_FiqHandler (void);
 /**
  * functions from xfsbl_main.c
  */
-extern void XFsbl_ErrorLockDown(u32 ErrorStatus);
-
+static s32 XFsbl_Strcmp(const char* Str1Ptr,  const char* Str2Ptr);
 /************************** Variable Definitions *****************************/
 #if defined (XPAR_PSU_DDR_0_S_AXI_BASEADDR) && !defined (ARMR5)
 #ifdef ARMA53_64
-extern INTPTR MMUTableL1;
-extern INTPTR MMUTableL2;
+extern void MMUTableL1(void);
+extern void MMUTableL2(void);
 #else
-extern u32 MMUTable;
+extern void MMUTable(void);
 #endif
 #endif
-
-/* Lookup table for Device-SVD Id and DeviceId Name */
-XFsblPs_ZynqmpDevices ZynqmpDevices[] = {
-	{0x10, "3",},
-	{0x11, "2",},
-	{0x20, "5",},
-	{0x21, "4",},
-	{0x30, "7",},
-	{0x38, "9",},
-	{0x39, "6",},
-	{0x40, "11",},
-	{0x50, "15",},
-	{0x58, "19",},
-	{0x59, "17",},
-};
 
 /****************************************************************************/
 /**
@@ -143,7 +115,7 @@ XFsblPs_ZynqmpDevices ZynqmpDevices[] = {
 *****************************************************************************/
 void XFsbl_PrintArray (u32 DebugType, const u8 Buf[], u32 Len, const char *Str)
 {
-	u32 Index=0U;
+	u32 Index;
 
 	if ((DebugType & XFsblDbgCurrentTypes) != 0U)
 	{
@@ -197,12 +169,12 @@ char *XFsbl_Strcpy(char *DestPtr, const char *SrcPtr)
  ******************************************************************************/
 char * XFsbl_Strcat(char* Str1Ptr, const char* Str2Ptr)
 {
-	while( *Str1Ptr )
+	while( *Str1Ptr > '\0')
 	{
 		Str1Ptr++;
 	}
 
-	while( *Str2Ptr )
+	while( *Str2Ptr > '\0')
 	{
 		*Str1Ptr = *Str2Ptr;
 		Str1Ptr++; Str2Ptr++;
@@ -225,9 +197,9 @@ char * XFsbl_Strcat(char* Str1Ptr, const char* Str2Ptr)
  * 				lower/greater value in Str1Ptr
  *
  ******************************************************************************/
-int XFsbl_Strcmp(const char* Str1Ptr, const char* Str2Ptr)
+static s32 XFsbl_Strcmp( const char* Str1Ptr, const char* Str2Ptr)
 {
-	int retVal;
+	s32 retVal;
 
 	while (*Str1Ptr == *Str2Ptr) {
 		if (*Str1Ptr == '\0') {
@@ -238,7 +210,7 @@ int XFsbl_Strcmp(const char* Str1Ptr, const char* Str2Ptr)
 		Str2Ptr++;
 	}
 
-	if( *(unsigned char *)Str1Ptr < *(unsigned char *)Str1Ptr) {
+	if( *Str1Ptr < *Str2Ptr) {
 		retVal = -1;
 	}
 	else {
@@ -260,35 +232,13 @@ END:
  * @return	None
  *
  ******************************************************************************/
-void XFsbl_MemSet(void *SrcPtr, u8 Char, u32 Len)
-{
-	u8 *UsPtr = SrcPtr;
-
-	while (Len != 0)
-	{
-		*UsPtr = Char;
-		UsPtr++;
-		Len--;
-	}
-}
-
-/*****************************************************************************/
-/**
- *
- *
- *
- * @param	None
- *
- * @return	None
- *
- ******************************************************************************/
-void *XFsbl_MemCpy(void * DestPtr, const void * SrcPtr, u32 Len)
+void* XFsbl_MemCpy(void * DestPtr, const void * SrcPtr, u32 Len)
 {
 	u8 *Dst = DestPtr;
 	const u8 *Src = SrcPtr;
 
 	/* Loop and copy.  */
-	while (Len != 0)
+	while (Len != 0U)
 	{
 		*Dst = *Src;
 		Dst++;
@@ -309,49 +259,6 @@ void *XFsbl_MemCpy(void * DestPtr, const void * SrcPtr, u32 Len)
  * @return	None
  *
  ******************************************************************************/
-int XFsbl_MemCmp(const void *Str1Ptr, const void *Str2Ptr, u32 Count)
-{
-	const u8 *S1Ptr = (const u8 *)Str1Ptr;
-	const u8 *S2Ptr = (const u8 *)Str2Ptr;
-	int Status = 0;
-
-	while (Count--)
-	{
-	  if (*S1Ptr != *S2Ptr)
-	  {
-	    Status = ((*S1Ptr < *S2Ptr) ? -1 : 1);
-	    break;
-    }
-	  S1Ptr++;
-	  S2Ptr++;
-  }
-
-	return Status;
-}
-
-/*****************************************************************************/
-/**
- *
- *
- *
- * @param       None
- *
- * @return      None
- *
- ******************************************************************************/
-u32 XFsbl_Htonl(u32 Value1)
-{
-    u32 Value2 = 0;
-
-        Value2 |= (Value1 & 0xFF000000) >> 24;
-        Value2 |= (Value1 & 0x00FF0000) >> 8;
-        Value2 |= (Value1 & 0x0000FF00) << 8;
-        Value2 |= (Value1 & 0x000000FF) << 24;
-
-        return Value2;
-}
-
-
 
 /*****************************************************************************/
 /**
@@ -376,35 +283,35 @@ void XFsbl_MakeSdFileName(char *XFsbl_SdEmmcFileName,
 	{
 		/* SD file name is BOOT.BIN when Multiboot register value is 0 */
 		if (DrvNum == XFSBL_SD_DRV_NUM_0) {
-			(void)XFsbl_Strcpy((char *)XFsbl_SdEmmcFileName, "BOOT.BIN");
+			(void)XFsbl_Strcpy(XFsbl_SdEmmcFileName, "BOOT.BIN");
 		}
 		else {
 			/* For second SD instance, include drive number 1 as well */
-			(void)XFsbl_Strcpy((char *)XFsbl_SdEmmcFileName, "1:/BOOT.BIN");
+			(void)XFsbl_Strcpy(XFsbl_SdEmmcFileName, "1:/BOOT.BIN");
 		}
 	}
 	else
 	{
 		/* set default SD file name as BOOT0000.BIN */
 		if (DrvNum == XFSBL_SD_DRV_NUM_0) {
-			(void)XFsbl_Strcpy((char *)XFsbl_SdEmmcFileName, "BOOT0000.BIN");
+			(void)XFsbl_Strcpy(XFsbl_SdEmmcFileName, "BOOT0000.BIN");
 			FileNameLen = XFSBL_BASE_FILE_NAME_LEN_SD_0;
 		}
 		else {
 			/* For second SD instance, include drive number 1 as well */
-			(void)XFsbl_Strcpy((char *)XFsbl_SdEmmcFileName, "1:/BOOT0000.BIN");
+			(void)XFsbl_Strcpy(XFsbl_SdEmmcFileName, "1:/BOOT0000.BIN");
 			FileNameLen = XFSBL_BASE_FILE_NAME_LEN_SD_1;
 		}
 
 		/* Update file name (to BOOTXXXX.BIN) based on Multiboot register value */
-		for(Index = FileNameLen - 1;
-				Index >= FileNameLen - XFSBL_NUM_DIGITS_IN_FILE_NAME;
+		for(Index = FileNameLen - 1U;
+				Index >= (FileNameLen - XFSBL_NUM_DIGITS_IN_FILE_NAME);
 				Index--)
 		{
-			Value = MultiBootNum % 10;
-			MultiBootNum = MultiBootNum / 10;
-			XFsbl_SdEmmcFileName[Index] += (s8)Value;
-			if (MultiBootNum == 0)
+			Value = MultiBootNum % 10U;
+			MultiBootNum = MultiBootNum / 10U;
+			XFsbl_SdEmmcFileName[Index] += (char)Value;
+			if (MultiBootNum == 0U)
 			{
 				break;
 			}
@@ -617,7 +524,7 @@ u32 XFsbl_PowerUpIsland(u32 PwrIslandMask)
 	u32 Status = XFSBL_SUCCESS;
 
 	/* Skip power-up request for QEMU */
-	if (XGet_Zynq_UltraMp_Platform_info() != XPLAT_ZYNQ_ULTRA_MPQEMU)
+	if (XGet_Zynq_UltraMp_Platform_info() != (u32)XPLAT_ZYNQ_ULTRA_MPQEMU)
 	{
 		/* There is a single island for both R5_0 and R5_1 */
 		if ((PwrIslandMask & PMU_GLOBAL_PWR_STATE_R5_1_MASK) ==
@@ -659,7 +566,7 @@ u32 XFsbl_IsolationRestore(u32 IsolationMask)
 	u32 Status = XFSBL_SUCCESS;
 
 	/* Skip power-up request for QEMU */
-	if (XGet_Zynq_UltraMp_Platform_info() != XPLAT_ZYNQ_ULTRA_MPQEMU)
+	if (XGet_Zynq_UltraMp_Platform_info() != (u32)XPLAT_ZYNQ_ULTRA_MPQEMU)
 	{
 
 		/* Isolation request enable */
@@ -693,6 +600,7 @@ u32 XFsbl_IsolationRestore(u32 IsolationMask)
 ******************************************************************************/
 void XFsbl_SetTlbAttributes(INTPTR Addr, UINTPTR attrib)
 {
+	void (*Funcptr)(void);
 #ifdef ARMA53_64
 	INTPTR *ptr;
 	INTPTR section;
@@ -702,14 +610,16 @@ void XFsbl_SetTlbAttributes(INTPTR Addr, UINTPTR attrib)
 		/* block size is 2MB for addressed < 4GB*/
 		block_size = BLOCK_SIZE_2MB;
 		section = Addr / block_size;
-		ptr = &MMUTableL2 + section;
+		Funcptr = &MMUTableL2;
+		ptr = (INTPTR*)Funcptr + section;
 	}
 	/* if region is greater than 4GB MMUTable level 1 need to be modified */
 	else{
 		/* block size is 1GB for addressed > 4GB */
 		block_size = BLOCK_SIZE_1GB;
 		section = Addr / block_size;
-		ptr = &MMUTableL1 + section;
+		Funcptr = &MMUTableL1;
+		ptr = (INTPTR*)Funcptr + section;
 	}
 	*ptr = (Addr & (~(block_size-1))) | attrib;
 
@@ -722,8 +632,9 @@ void XFsbl_SetTlbAttributes(INTPTR Addr, UINTPTR attrib)
 	u32 section;
 
 	section = Addr / 0x100000U;
-	ptr = &MMUTable;
-	ptr += section;
+	Funcptr = &MMUTable;
+	ptr = (u32*)Funcptr + section;
+
 	if(ptr != NULL) {
 		*ptr = (Addr & 0xFFF00000U) | attrib;
 	}
@@ -748,8 +659,22 @@ void XFsbl_SetTlbAttributes(INTPTR Addr, UINTPTR attrib)
 * @return	string containing Device Id Name or "UNKN" if none found
 *
 ******************************************************************************/
-char *XFsbl_GetSiliconIdName(void)
+const char *XFsbl_GetSiliconIdName(void)
 {
+	/* Lookup table for Device-SVD Id and DeviceId Name */
+	static XFsblPs_ZynqmpDevices ZynqmpDevices[] = {
+		{0x10U, "3",},
+		{0x11U, "2",},
+		{0x20U, "5",},
+		{0x21U, "4",},
+		{0x30U, "7",},
+		{0x38U, "9",},
+		{0x39U, "6",},
+		{0x40U, "11",},
+		{0x50U, "15",},
+		{0x58U, "19",},
+		{0x59U, "17",},
+	};
 	u32 DevSvdId;
 	u32 Index;
 
@@ -758,7 +683,7 @@ char *XFsbl_GetSiliconIdName(void)
 	DevSvdId &= CSU_IDCODE_DEVICE_CODE_MASK | CSU_IDCODE_SVD_MASK;
 	DevSvdId >>= CSU_IDCODE_SVD_SHIFT;
 
-	for (Index = 0; Index < ARRAY_SIZE(ZynqmpDevices); Index++) {
+	for (Index = 0U; Index < ARRAY_SIZE(ZynqmpDevices); Index++) {
 		if (ZynqmpDevices[Index].Id == DevSvdId) {
 			return ZynqmpDevices[Index].Name;
 		}
@@ -777,7 +702,7 @@ char *XFsbl_GetSiliconIdName(void)
 * @return	"CG" or "EG" based on IPDISABLE register
 *
 ******************************************************************************/
-char *XFsbl_GetProcEng(void)
+const char *XFsbl_GetProcEng(void)
 {
 
 	if ((XFsbl_In32(EFUSE_IPDISABLE) & EFUSE_IPDISABLE_CG_MASK) ==
@@ -802,7 +727,7 @@ char *XFsbl_GetProcEng(void)
 ******************************************************************************/
 u32 XFsbl_CheckSupportedCpu(u32 CpuId)
 {
-	u32 Status = XFSBL_SUCCESS;
+	u32 Status;
 
 	if ((0 == XFsbl_Strcmp(XFsbl_GetProcEng(), "CG")) &&
 			((CpuId == XIH_PH_ATTRB_DEST_CPU_A53_2) ||
@@ -812,7 +737,92 @@ u32 XFsbl_CheckSupportedCpu(u32 CpuId)
 	}
 
 	/* Add code to check for support of other CPUs/cores in future */
+	Status = XFSBL_SUCCESS;
 
 END:
 	return Status;
+}
+
+/******************************************************************************
+*
+* This function copies data memory to memory using ADMA.
+*
+* @param	DestPtr is a pointer to destination buffer to which data needs
+*		to be copied.
+* @param	SrcPtr is a pointer to the source buffer.
+* @param	size holds the size of the data to be transfered.
+*
+* @return
+*		Success on successful copy
+*		Error on failure.
+*
+* @note		Cache invalidation and flushing should be taken care by user
+*		Before calling this API ADMA also should be configured to
+*		simple DMA.
+*
+******************************************************************************/
+u32 XFsbl_AdmaCopy(void * DestPtr, void * SrcPtr, u32 Size)
+{
+	u32 RegVal;
+	u64 SrcAddr = (UINTPTR)SrcPtr;
+	u64 DstAddr = (UINTPTR)DestPtr;
+	u32 Status = XFSBL_SUCCESS;
+
+	/* Wait until the DMA is in idle state */
+	do {
+		RegVal = XFsbl_In32(ADMA_CH0_ZDMA_CH_STATUS);
+		RegVal &= ADMA_CH0_ZDMA_CH_STATUS_STATE_MASK;
+	} while ((RegVal != ADMA_CH0_ZDMA_CH_STATUS_STATE_DONE) &&
+			(RegVal != ADMA_CH0_ZDMA_CH_STATUS_STATE_ERR));
+
+	/* Write source Address */
+	XFsbl_Out32(ADMA_CH0_ZDMA_CH_SRC_DSCR_WORD0,
+			(SrcAddr & ADMA_CH0_ZDMA_CH_DST_DSCR_WORD0_LSB_MASK));
+	XFsbl_Out32(ADMA_CH0_ZDMA_CH_SRC_DSCR_WORD1,
+		(((u64)SrcAddr >> 32U) &
+				ADMA_CH0_ZDMA_CH_DST_DSCR_WORD1_MSB_MASK));
+
+	/* Write Destination Address */
+	XFsbl_Out32(ADMA_CH0_ZDMA_CH_DST_DSCR_WORD0,
+		(u32)(DstAddr & ADMA_CH0_ZDMA_CH_DST_DSCR_WORD0_LSB_MASK));
+	XFsbl_Out32(ADMA_CH0_ZDMA_CH_DST_DSCR_WORD1,
+			(u32)((DstAddr >> 32U) &
+			ADMA_CH0_ZDMA_CH_DST_DSCR_WORD1_MSB_MASK));
+
+	/* Size to be Transferred. Recommended to set both src and dest sizes */
+	XFsbl_Out32(ADMA_CH0_ZDMA_CH_SRC_DSCR_WORD2, Size);
+	XFsbl_Out32(ADMA_CH0_ZDMA_CH_DST_DSCR_WORD2, Size);
+
+
+	/* coherence enable */
+	RegVal = XFsbl_In32(ADMA_CH0_ZDMA_CH_SRC_DSCR_WORD3);
+	XFsbl_Out32(ADMA_CH0_ZDMA_CH_SRC_DSCR_WORD3, RegVal | 0x1U);
+
+	RegVal = XFsbl_In32(ADMA_CH0_ZDMA_CH_DST_DSCR_WORD3);
+		XFsbl_Out32(ADMA_CH0_ZDMA_CH_DST_DSCR_WORD3, RegVal | 0x1U);
+
+	/* DMA Enable */
+	RegVal = XFsbl_In32(ADMA_CH0_ZDMA_CH_CTRL2);
+	RegVal |= ADMA_CH0_ZDMA_CH_CTRL2_EN_MASK;
+	XFsbl_Out32(ADMA_CH0_ZDMA_CH_CTRL2, RegVal);
+
+	/* Check the status of the transfer by polling on DMA Done */
+	do {
+		RegVal = XFsbl_In32(ADMA_CH0_ZDMA_CH_ISR);
+		RegVal &= ADMA_CH0_ZDMA_CH_ISR_DMA_DONE_MASK;
+	} while (RegVal != ADMA_CH0_ZDMA_CH_ISR_DMA_DONE_MASK);
+
+	/* Clear DMA status */
+	RegVal = XFsbl_In32(ADMA_CH0_ZDMA_CH_ISR);
+	RegVal |= ADMA_CH0_ZDMA_CH_ISR_DMA_DONE_MASK;
+	XFsbl_Out32(ADMA_CH0_ZDMA_CH_ISR, ADMA_CH0_ZDMA_CH_ISR_DMA_DONE_MASK);
+
+	/* Read the channel status for errors */
+	RegVal = XFsbl_In32(ADMA_CH0_ZDMA_CH_STATUS);
+	if (RegVal == ADMA_CH0_ZDMA_CH_STATUS_STATE_ERR) {
+		Status = XFSBL_FAILURE;
+	}
+
+	return Status;
+
 }

@@ -123,6 +123,13 @@ o	RAW8,RAW10,RAW12,RAW14,RGB888,YUV422-8Bit,User defined  Data types
 * Ver Who  Date     Changes
 * --- --- -------- -----------------------------------------------------------
 * 1.0 sss 07/14/16 Initial release
+*     ms  01/23/17 Modified xil_printf statement in main function for all
+*                  examples to ensure that "Successfully ran" and "Failed"
+*                  strings are available in all examples. This is a fix
+*                  for CR-965028.
+*     ms  03/17/17 Added readme.txt file in examples folder for doxygen
+*                  generation.
+*     vsa 15/12/17 Add support for Clock Mode
 * </pre>
 *
 ******************************************************************************/
@@ -146,6 +153,16 @@ extern "C" {
 #include "xcsi2txss_hw.h"
 
 /************************** Constant Definitions *****************************/
+/** @name Clock Modes for CSI2 Tx
+ *
+ * These macros are used to set/get the clock mode in CSI2 Tx.
+ * CCM  - continuous clock mode.
+ * NCCM - non-continuous clock mode.
+ * @{
+ */
+#define XCSI2TXSS_CCM	0
+#define XCSI2TXSS_NCCM	1
+/*@}*/
 
 /** @name Interrupt Types for setting Callbacks
  *
@@ -252,6 +269,8 @@ void XCsi2TxSs_LineGen(XCsi2TxSs *InstancePtr, u32 Value);
 void XCsi2TxSs_SetGSPEntry(XCsi2TxSs *InstancePtr, u32 Value);
 u32 XCsi2TxSs_GetPixelMode(XCsi2TxSs *InstancePtr);
 u32 XCsi2TxSs_GetMaxLaneCount(XCsi2TxSs *InstancePtr);
+void XCsi2TxSs_SetClkMode(XCsi2TxSs *InstancePtr, u8 Mode);
+u32 XCsi2TxSs_GetClkMode(XCsi2TxSs *InstancePtr);
 
 /* Self test function in xcsi2txss_selftest.c */
 u32 XCsi2TxSs_SelfTest(XCsi2TxSs *InstancePtr);

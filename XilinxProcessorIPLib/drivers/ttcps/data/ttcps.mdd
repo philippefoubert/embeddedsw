@@ -36,6 +36,10 @@ BEGIN driver ttcps
   OPTION supported_peripherals = (ps7_ttc psu_ttc);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 3.3;
+>>>>>>> upstream/master
   OPTION NAME = ttcps;
 
 END driver

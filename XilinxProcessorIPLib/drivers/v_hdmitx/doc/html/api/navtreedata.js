@@ -23,7 +23,11 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
+<<<<<<< HEAD
 "xv__hdmitx__hw_8h.html#ad69a761dfc73ee26434f08f27c83dcdf"
+=======
+"xv__hdmitx__hw_8h.html#aadeed071f9ae80ff300b531ea298f42a"
+>>>>>>> upstream/master
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

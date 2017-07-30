@@ -61,6 +61,12 @@
  * 3.1   rco  07/26/17 Moved timing table extern definition to xvidc.c
  *                     Added video-in-memory color formats
  *                     Updated XVidC_RegisterCustomTimingModes API signature
+ * 4.1   rco  11/23/17 Added new memory formats
+ *                     Added xil_printf include statement
+ *                     Added new API XVidC_GetVideoModeIdWBlanking
+ *                     Fix C++ warnings
+ *       ms   03/17/17 Added readme.txt file in examples folder for doxygen
+ *                     generation.
  * </pre>
  *
 *******************************************************************************/
@@ -75,6 +81,7 @@ extern "C" {
 /******************************* Include Files ********************************/
 
 #include "xil_types.h"
+#include "xil_printf.h"
 
 /************************** Constant Definitions ******************************/
 
@@ -336,6 +343,11 @@ typedef enum {
     XVIDC_CSF_MEM_Y_UV8_420,    // [15:0] Y:Y 8:8, [15:0] V:U 8:8
     XVIDC_CSF_MEM_RGB8,         // [23:0] B:G:R 8:8:8
     XVIDC_CSF_MEM_YUV8,         // [24:0] V:U:Y 8:8:8
+	XVIDC_CSF_MEM_Y_UV10,       // [31:0] x:Y:Y:Y 2:10:10:10 [31:0] x:U:V:U 2:10:10:10
+	XVIDC_CSF_MEM_Y_UV10_420,   // [31:0] x:Y:Y:Y 2:10:10:10 [31:0] x:U:V:U 2:10:10:10
+	XVIDC_CSF_MEM_Y8,           // [31:0] Y:Y:Y:Y 8:8:8:8
+	XVIDC_CSF_MEM_Y10,          // [31:0] x:Y:Y:Y 2:10:10:10
+	XVIDC_CSF_MEM_BGRA8,        // [31:0] A:R:G:B 8:8:8:8
 
 	XVIDC_CSF_NUM_SUPPORTED,    // includes the reserved slots
 	XVIDC_CSF_UNKNOWN,
@@ -500,25 +512,27 @@ u32 XVidC_GetPixelClockHzByHVFr(u32 HTotal, u32 VTotal, u8 FrameRate);
 u32 XVidC_GetPixelClockHzByVmId(XVidC_VideoMode VmId);
 XVidC_VideoFormat XVidC_GetVideoFormat(XVidC_VideoMode VmId);
 u8 XVidC_IsInterlaced(XVidC_VideoMode VmId);
-XVidC_VideoMode XVidC_GetVideoModeId(u32 Width, u32 Height, u32 FrameRate,
-		                             u8 IsInterlaced);
 const XVidC_VideoTimingMode* XVidC_GetVideoModeData(XVidC_VideoMode VmId);
 const char *XVidC_GetVideoModeStr(XVidC_VideoMode VmId);
-char *XVidC_GetFrameRateStr(XVidC_VideoMode VmId);
-char *XVidC_GetColorFormatStr(XVidC_ColorFormat ColorFormatId);
+const char *XVidC_GetFrameRateStr(XVidC_VideoMode VmId);
+const char *XVidC_GetColorFormatStr(XVidC_ColorFormat ColorFormatId);
 XVidC_FrameRate XVidC_GetFrameRate(XVidC_VideoMode VmId);
 const XVidC_VideoTiming* XVidC_GetTimingInfo(XVidC_VideoMode VmId);
 void XVidC_ReportStreamInfo(const XVidC_VideoStream *Stream);
 void XVidC_ReportTiming(const XVidC_VideoTiming *Timing, u8 IsInterlaced);
-char *XVidC_Get3DFormatStr(XVidC_3DFormat Format);
+const char *XVidC_Get3DFormatStr(XVidC_3DFormat Format);
 u32 XVidC_SetVideoStream(XVidC_VideoStream *VidStrmPtr, XVidC_VideoMode VmId,
 			             XVidC_ColorFormat ColorFormat, XVidC_ColorDepth Bpc,
 			             XVidC_PixelsPerClock Ppc);
 u32 XVidC_Set3DVideoStream(XVidC_VideoStream *VidStrmPtr, XVidC_VideoMode VmId,
 			               XVidC_ColorFormat ColorFormat, XVidC_ColorDepth Bpc,
 			               XVidC_PixelsPerClock Ppc, XVidC_3DInfo *Info3DPtr);
+XVidC_VideoMode XVidC_GetVideoModeId(u32 Width, u32 Height, u32 FrameRate,
+		                             u8 IsInterlaced);
 XVidC_VideoMode XVidC_GetVideoModeIdRb(u32 Width, u32 Height, u32 FrameRate,
-		u8 IsInterlaced, u8 RbN);
+		                               u8 IsInterlaced, u8 RbN);
+XVidC_VideoMode XVidC_GetVideoModeIdWBlanking(const XVidC_VideoTiming *Timing,
+		                                      u32 FrameRate, u8 IsInterlaced);
 
 /******************* Macros (Inline Functions) Definitions ********************/
 

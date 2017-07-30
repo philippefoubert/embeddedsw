@@ -32,7 +32,7 @@
 /*****************************************************************************/
 /**
  *
- * @file xtrafgen_streamingmaster_example.c
+ * @file xtrafgen_master_streaming_example.c
  *
  * This file demonstrates how to use the xtrafgen driver on the Xilinx AXI
  * Traffic Generator core. The AXI Traffic Generator IP is designed to 
@@ -61,7 +61,14 @@
  * 1.01a adk  03/09/13 First release
  * 2.00a adk  16/09/13 Fixed CR:737291
  * 2.01a adk  15/11/13 Fixed CR:760808
- *
+ * 4.1   ms   01/23/17 Modified xil_printf statement in main function to
+ *                     ensure that "Successfully ran" and "Failed" strings
+ *                     are available in all examples. This is a fix for
+ *                     CR-965028.
+ *       ms   04/05/17 Added tabspace for return statements in functions for
+ *                     proper documentation while generating doxygen and also
+ *                     modified filename tag to include the file in doxygen
+ *                     examples.
  * </pre>
  *
  * ***************************************************************************
@@ -128,7 +135,8 @@ XLlFifo  XLlFifoInstance;
 *
 * @param        None
 *
-* @return       - XST_SUCCESS if tests pass
+* @return
+*				- XST_SUCCESS if tests pass
 *               - XST_FAILURE if fails.
 *
 * @note         None.
@@ -148,7 +156,7 @@ int main()
 		return XST_FAILURE;
 	}
 
-	xil_printf("Traffic Gen Streaming Example Test passed\n\r");
+	xil_printf("Successfully ran Traffic Gen Streaming Example\n\r");
 	xil_printf("--- Exiting main() ---\n\r");
 
 	return XST_SUCCESS;
@@ -178,7 +186,8 @@ int main()
 *			typically XPAR_<TRAFGEN_instance>_DEVICE_ID value from
 *			xparameters.h.
 *
-* @return	-XST_SUCCESS to indicate success
+* @return
+*			-XST_SUCCESS to indicate success
 *			-XST_FAILURE to indicate failure
 *
 ******************************************************************************/

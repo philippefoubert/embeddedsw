@@ -15,7 +15,17 @@ var NAVTREE =
       [ "Typedefs", "globals_type.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xdevcfg_selftest_example.c", "example.html#ex1", null ],
+      [ "xdevcfg_interrupt_example.c", "example.html#ex2", null ],
+      [ "xdevcfg_polled_example.c", "example.html#ex3", null ],
+      [ "xdevcfg_reg_readback_example.c", "example.html#ex4", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

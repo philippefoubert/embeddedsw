@@ -131,6 +131,11 @@ void XUsbPsu_DisconnectIntr(struct XUsbPsu *InstancePtr)
 
 	InstancePtr->IsConfigDone = 0U;
 	InstancePtr->Speed = XUSBPSU_SPEED_UNKNOWN;
+
+	/* Call the handler if necessary */
+	if (InstancePtr->DisconnectIntrHandler != NULL) {
+		InstancePtr->DisconnectIntrHandler(InstancePtr);
+	}
 }
 
 /****************************************************************************/
@@ -168,6 +173,11 @@ void XUsbPsu_ResetIntr(struct XUsbPsu *InstancePtr)
 	RegVal = XUsbPsu_ReadReg(InstancePtr, XUSBPSU_DCFG);
 	RegVal &= ~(XUSBPSU_DCFG_DEVADDR_MASK);
 	XUsbPsu_WriteReg(InstancePtr, XUSBPSU_DCFG, RegVal);
+
+	/* Call the handler if necessary */
+	if (InstancePtr->ResetIntrHandler != NULL) {
+		InstancePtr->ResetIntrHandler(InstancePtr);
+	}
 }
 
 /****************************************************************************/
@@ -369,7 +379,7 @@ void XUsbPsu_EventBufferHandler(struct XUsbPsu *InstancePtr)
                               (u32)XUSBPSU_EVENT_BUFFERS_SIZE);
 
 	while (Evt->Count > 0) {
-		Event.Raw = *(UINTPTR *)(Evt->BuffAddr + Evt->Offset);
+		Event.Raw = *(UINTPTR *)((UINTPTR)Evt->BuffAddr + Evt->Offset);
 
 		/*
          * Process the event received

@@ -176,9 +176,17 @@ The OpenAMP library will be generated to `build/usr/local/lib` directory,
 headers will be generated to `build/usr/local/include` directory, and the
 applications executable will be generated to `build/usr/local/bin`
 directory.
+<<<<<<< HEAD
 * `-DWITH_APPS=ON` is to build the demonstration applications.
   If you have used `-DWITH_APPS=ON` to build the demos, you can try them on
   your Linux host as follows:
+=======
+
+* `-DWITH_APPS=ON` is to build the demonstration applications.
+  If you have used `-DWITH_APPS=ON` to build the demos, you can try them on
+  your Linux host as follows:
+
+>>>>>>> upstream/master
     ```
     # Start echo test server to wait for message to echo
     $ sudo LD_LIBRARY_PATH=<openamp_built>/usr/local/lib:<libmetal_built>/usr/local/lib \
@@ -190,6 +198,7 @@ directory.
 
 ### Example to compile OpenAMP Linux Userspace for Zynq UltraScale+ MPSoC
 We can use yocto to build the OpenAMP Linux userspace library and application.
+<<<<<<< HEAD
 * Put the libmetal yocto recipe to your yocto layer. Here is the example of
   libmetal recipe:
   https://github.com/Xilinx/meta-petalinux/blob/master/recipes-support/libmetal/libmetal_0.1.0.bb
@@ -226,6 +235,21 @@ We can use yocto to build the OpenAMP Linux userspace library and application.
         EXTRA_OECMAKE_append_zynqmp = "-DWITH_APPS=ON"
         ```
 * You can use yocto to build OpenAMP demo applications into your root file system.
+=======
+open-amp and libmetal recipes are in this yocto layer:
+https://github.com/OpenAMP/meta-openamp
+* Add the `meta-openamp` layer to your layers in your yocto build project's `bblayers.conf` file.
+* Add `libmetal` and `open-amp` to your packages list. E.g. add `libmetal` and `open-amp` to the
+  `IMAGE_INSTALL_append` in the `local.conf` file.
+* You can also add OpenAMP demos Linux applications packages to your yocto packages list. OpenAMP
+  demo examples recipes are also in `meta-openamp`:
+  https://github.com/OpenAMP/meta-openamp/tree/master/recipes-openamp/openamp-examples
+
+In order to user OpenAMP(RPMsg) in Linux userspace, you will need to have put the IPI device,
+  vring memory and shared buffer memory to your Linux kernel device tree. The device tree example
+  can be found here:
+  https://github.com/OpenAMP/open-amp/blob/master/apps/machine/zynqmp/openamp-linux-userspace.dtsi
+>>>>>>> upstream/master
 
 ## Supported System and Machines
 For now, it supports:

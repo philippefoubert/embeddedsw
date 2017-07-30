@@ -7,13 +7,29 @@ var NAVTREE =
       [ "Typedefs", "globals_type.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xaxicdma_example_hybrid_intr.c", "example.html#ex1", null ],
+      [ "xaxicdma_example_hybrid_poll.c", "example.html#ex2", null ],
+      [ "xaxicdma_example_sg_intr.c", "example.html#ex3", null ],
+      [ "xaxicdma_example_sg_poll.c", "example.html#ex4", null ],
+      [ "xaxicdma_example_simple_intr.c", "example.html#ex5", null ],
+      [ "xaxicdma_example_simple_poll.c", "example.html#ex6", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 
 var NAVTREEINDEX =
 [
+<<<<<<< HEAD
 "files.html"
+=======
+"example.html"
+>>>>>>> upstream/master
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

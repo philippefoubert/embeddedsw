@@ -53,7 +53,14 @@
  * Ver   Who  Date     Changes
  * ----- ---- -------- -------------------------------------------------------
  * 3.00a adk 08/10/2013 initial release CR:727787
- *
+ * 5.1   ms  01/23/17   Modified xil_printf statement in main function to
+ *                      ensure that "Successfully ran" and "Failed" strings
+ *                      are available in all examples. This is a fix for
+ *                      CR-965028.
+ *       ms  04/05/17   Added tabspace for return statements in functions for
+ *                      proper documentation and Modified Comment lines
+ *                      to consider it as a documentation block while
+ *                      generating doxygen.
  * </pre>
  *
  * ***************************************************************************
@@ -155,7 +162,8 @@ u32 DestinationBuffer[MAX_DATA_BUFFER_SIZE * WORD_SIZE];
 *
 * @param	None
 *
-* @return	- XST_SUCCESS if tests pass
+* @return
+*		- XST_SUCCESS if tests pass
 * 		- XST_FAILURE if fails.
 *
 * @note		None
@@ -174,7 +182,7 @@ int main()
 		return XST_FAILURE;
 	}
 
-	xil_printf("Axi Streaming FIFO Interrupt Example Test passed\n\r");
+	xil_printf("Successfully ran Axi Streaming FIFO Interrupt Example\n\r");
 	xil_printf("--- Exiting main() ---\n\r");
 
 	return XST_SUCCESS;
@@ -198,7 +206,8 @@ int main()
 *		typically XPAR_<AXI_FIFO_instance>_DEVICE_ID value from
 *		xparameters.h.
 *
-* @return	-XST_SUCCESS to indicate success
+* @return
+*		-XST_SUCCESS to indicate success
 *		-XST_FAILURE to indicate failure
 *
 ******************************************************************************/
@@ -293,7 +302,7 @@ int XLlFifoInterruptExample(XLlFifo *InstancePtr, u16 DeviceId)
 }
 
 /*****************************************************************************/
-/*
+/**
 *
 * TxSend routine, It will send the requested amount of data at the
 * specified addr.
@@ -303,7 +312,8 @@ int XLlFifoInterruptExample(XLlFifo *InstancePtr, u16 DeviceId)
 *
 * @param	SourceAddr is the address of the memory
 *
-* @return	-XST_SUCCESS to indicate success
+* @return
+*		-XST_SUCCESS to indicate success
 *		-XST_FAILURE to indicate failure
 *
 * @note		None

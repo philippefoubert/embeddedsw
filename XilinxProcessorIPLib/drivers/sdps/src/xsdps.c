@@ -74,6 +74,13 @@
 *       sk     10/13/16 Reduced the delay during power cycle to 1ms as per spec
 *       sk     10/19/16 Used emmc_hwreset pin to reset eMMC.
 *       sk     11/07/16 Enable Rst_n bit in ext_csd reg if not enabled.
+<<<<<<< HEAD
+=======
+* 3.2   sk     11/30/16 Modified the voltage switching sequence as per spec.
+*       sk     02/01/17 Added HSD and DDR mode support for eMMC.
+*       vns    02/09/17 Added ARMA53_32 support for ZynqMP CR#968397
+*       sk     03/20/17 Add support for EL1 non-secure mode.
+>>>>>>> upstream/master
 * </pre>
 *
 ******************************************************************************/
@@ -95,7 +102,10 @@
 #define SD_CLK_19_MHZ		19000000U
 #define SD_CLK_26_MHZ		26000000U
 #define EXT_CSD_DEVICE_TYPE_BYTE	196U
-#define EXT_CSD_SEC_COUNT	212U
+#define EXT_CSD_SEC_COUNT_BYTE1		212U
+#define EXT_CSD_SEC_COUNT_BYTE2		213U
+#define EXT_CSD_SEC_COUNT_BYTE3		214U
+#define EXT_CSD_SEC_COUNT_BYTE4		215U
 #define EXT_CSD_DEVICE_TYPE_HIGH_SPEED			0x2U
 #define EXT_CSD_DEVICE_TYPE_DDR_1V8_HIGH_SPEED	0x4U
 #define EXT_CSD_DEVICE_TYPE_DDR_1V2_HIGH_SPEED	0x8U
@@ -421,7 +431,8 @@ s32 XSdPs_SdCardInitialize(XSdPs *InstancePtr)
 
 	/* There is no support to switch to 1.8V and use UHS mode on 1.0 silicon */
 #ifndef UHS_BROKEN
-    if ((RespOCR & XSDPS_OCR_S18) != 0U) {
+    if (((RespOCR & XSDPS_OCR_S18) != 0U) &&
+		(InstancePtr->Config.BusWidth == XSDPS_WIDTH_8)) {
 		InstancePtr->Switch1v8 = 1U;
 		Status = XSdPs_Switch_Voltage(InstancePtr);
 		if (Status != XST_SUCCESS) {
@@ -641,9 +652,8 @@ static u8 ExtCsd[512] __attribute__ ((aligned(32)));
 			goto RETURN_PATH;
 		}
 
-#if defined (ARMR5) || defined (__aarch64__)
-		if ((InstancePtr->Switch1v8 != 0U) &&
-				(InstancePtr->BusWidth == XSDPS_4_BIT_WIDTH)) {
+#if defined (ARMR5) || defined (__aarch64__) || defined (ARMA53_32)
+		if (InstancePtr->Switch1v8 != 0U) {
 
 			/* Identify the UHS mode supported by card */
 			XSdPs_Identify_UhsMode(InstancePtr, ReadBuff);
@@ -663,9 +673,10 @@ static u8 ExtCsd[512] __attribute__ ((aligned(32)));
 			 */
 			if (SCR[0] != 0U) {
 				/* Check for high speed support */
-				if ((ReadBuff[13] & HIGH_SPEED_SUPPORT) != 0U) {
+				if (((ReadBuff[13] & HIGH_SPEED_SUPPORT) != 0U) &&
+						(InstancePtr->BusWidth >= XSDPS_4_BIT_WIDTH)) {
 					InstancePtr->Mode = XSDPS_HIGH_SPEED_MODE;
-#if defined (ARMR5) || defined (__aarch64__)
+#if defined (ARMR5) || defined (__aarch64__) || defined (ARMA53_32)
 					InstancePtr->Config_TapDelay = XSdPs_hsd_sdr25_tapdelay;
 #endif
 					Status = XSdPs_Change_BusSpeed(InstancePtr);
@@ -675,7 +686,7 @@ static u8 ExtCsd[512] __attribute__ ((aligned(32)));
 					}
 				}
 			}
-#if defined (ARMR5) || defined (__aarch64__)
+#if defined (ARMR5) || defined (__aarch64__) || defined (ARMA53_32)
 		}
 #endif
 
@@ -695,10 +706,14 @@ static u8 ExtCsd[512] __attribute__ ((aligned(32)));
 			goto RETURN_PATH;
 		}
 
-		InstancePtr->SectorCount = *(u32 *)&ExtCsd[EXT_CSD_SEC_COUNT];
+		InstancePtr->SectorCount = ((u32)ExtCsd[EXT_CSD_SEC_COUNT_BYTE4]) << 24;
+		InstancePtr->SectorCount |= (u32)ExtCsd[EXT_CSD_SEC_COUNT_BYTE3] << 16;
+		InstancePtr->SectorCount |= (u32)ExtCsd[EXT_CSD_SEC_COUNT_BYTE2] << 8;
+		InstancePtr->SectorCount |= (u32)ExtCsd[EXT_CSD_SEC_COUNT_BYTE1];
 
-		if ((ExtCsd[EXT_CSD_DEVICE_TYPE_BYTE] &
-				EXT_CSD_DEVICE_TYPE_HIGH_SPEED) != 0U) {
+		if (((ExtCsd[EXT_CSD_DEVICE_TYPE_BYTE] &
+				EXT_CSD_DEVICE_TYPE_HIGH_SPEED) != 0U) &&
+				(InstancePtr->BusWidth >= XSDPS_4_BIT_WIDTH)) {
 			InstancePtr->Mode = XSDPS_HIGH_SPEED_MODE;
 			Status = XSdPs_Change_BusSpeed(InstancePtr);
 			if (Status != XST_SUCCESS) {
@@ -732,15 +747,39 @@ static u8 ExtCsd[512] __attribute__ ((aligned(32)));
 			goto RETURN_PATH;
 		}
 
-		InstancePtr->SectorCount = *(u32 *)&ExtCsd[EXT_CSD_SEC_COUNT];
+		InstancePtr->SectorCount = ((u32)ExtCsd[EXT_CSD_SEC_COUNT_BYTE4]) << 24;
+		InstancePtr->SectorCount |= (u32)ExtCsd[EXT_CSD_SEC_COUNT_BYTE3] << 16;
+		InstancePtr->SectorCount |= (u32)ExtCsd[EXT_CSD_SEC_COUNT_BYTE2] << 8;
+		InstancePtr->SectorCount |= (u32)ExtCsd[EXT_CSD_SEC_COUNT_BYTE1];
 
-		if ((ExtCsd[EXT_CSD_DEVICE_TYPE_BYTE] &
+		/* Check for card supported speed */
+		if (((ExtCsd[EXT_CSD_DEVICE_TYPE_BYTE] &
 				(EXT_CSD_DEVICE_TYPE_SDR_1V8_HS200 |
-				EXT_CSD_DEVICE_TYPE_SDR_1V2_HS200)) != 0U) {
+				EXT_CSD_DEVICE_TYPE_SDR_1V2_HS200)) != 0U) &&
+				(InstancePtr->BusWidth >= XSDPS_4_BIT_WIDTH)) {
 			InstancePtr->Mode = XSDPS_HS200_MODE;
-#if defined (ARMR5) || defined (__aarch64__)
+#if defined (ARMR5) || defined (__aarch64__) || defined (ARMA53_32)
 			InstancePtr->Config_TapDelay = XSdPs_sdr104_hs200_tapdelay;
 #endif
+		} else if (((ExtCsd[EXT_CSD_DEVICE_TYPE_BYTE] &
+				(EXT_CSD_DEVICE_TYPE_DDR_1V8_HIGH_SPEED |
+				EXT_CSD_DEVICE_TYPE_DDR_1V2_HIGH_SPEED)) != 0U) &&
+				(InstancePtr->BusWidth >= XSDPS_4_BIT_WIDTH)) {
+			InstancePtr->Mode = XSDPS_DDR52_MODE;
+#if defined (ARMR5) || defined (__aarch64__) || defined (ARMA53_32)
+			InstancePtr->Config_TapDelay = XSdPs_ddr50_tapdelay;
+#endif
+		} else if (((ExtCsd[EXT_CSD_DEVICE_TYPE_BYTE] &
+				EXT_CSD_DEVICE_TYPE_HIGH_SPEED) != 0U) &&
+				(InstancePtr->BusWidth >= XSDPS_4_BIT_WIDTH)) {
+			InstancePtr->Mode = XSDPS_HIGH_SPEED_MODE;
+#if defined (ARMR5) || defined (__aarch64__) || defined (ARMA53_32)
+			InstancePtr->Config_TapDelay = XSdPs_hsd_sdr25_tapdelay;
+#endif
+		} else
+			InstancePtr->Mode = XSDPS_DEFAULT_SPEED_MODE;
+
+		if (InstancePtr->Mode != XSDPS_DEFAULT_SPEED_MODE) {
 			Status = XSdPs_Change_BusSpeed(InstancePtr);
 			if (Status != XST_SUCCESS) {
 				Status = XST_FAILURE;
@@ -753,7 +792,35 @@ static u8 ExtCsd[512] __attribute__ ((aligned(32)));
 				goto RETURN_PATH;
 			}
 
-			if (ExtCsd[EXT_CSD_HS_TIMING_BYTE] != EXT_CSD_HS_TIMING_HS200) {
+			if (InstancePtr->Mode == XSDPS_HS200_MODE) {
+				if (ExtCsd[EXT_CSD_HS_TIMING_BYTE] != EXT_CSD_HS_TIMING_HS200) {
+					Status = XST_FAILURE;
+					goto RETURN_PATH;
+				}
+			}
+
+			if ((InstancePtr->Mode == XSDPS_HIGH_SPEED_MODE) ||
+					InstancePtr->Mode == XSDPS_DDR52_MODE) {
+				if (ExtCsd[EXT_CSD_HS_TIMING_BYTE] != EXT_CSD_HS_TIMING_HIGH) {
+					Status = XST_FAILURE;
+					goto RETURN_PATH;
+				}
+
+				if (InstancePtr->Mode == XSDPS_DDR52_MODE) {
+					Status = XSdPs_Change_BusWidth(InstancePtr);
+					if (Status != XST_SUCCESS) {
+						Status = XST_FAILURE;
+						goto RETURN_PATH;
+					}
+				}
+			}
+		}
+
+		/* Enable Rst_n_Fun bit if it is disabled */
+		if(ExtCsd[EXT_CSD_RST_N_FUN_BYTE] == EXT_CSD_RST_N_FUN_TEMP_DIS) {
+			Arg = XSDPS_MMC_RST_FUN_EN_ARG;
+			Status = XSdPs_Set_Mmc_ExtCsd(InstancePtr, Arg);
+			if (Status != XST_SUCCESS) {
 				Status = XST_FAILURE;
 				goto RETURN_PATH;
 			}
@@ -769,11 +836,13 @@ static u8 ExtCsd[512] __attribute__ ((aligned(32)));
 			}
 		}
 	}
-
-	Status = XSdPs_SetBlkSize(InstancePtr, XSDPS_BLK_SIZE_512_MASK);
-	if (Status != XST_SUCCESS) {
-		Status = XST_FAILURE;
-		goto RETURN_PATH;
+	if ((InstancePtr->Mode != XSDPS_DDR52_MODE) ||
+			(InstancePtr->CardType == XSDPS_CARD_SD)) {
+		Status = XSdPs_SetBlkSize(InstancePtr, XSDPS_BLK_SIZE_512_MASK);
+		if (Status != XST_SUCCESS) {
+			Status = XST_FAILURE;
+			goto RETURN_PATH;
+		}
 	}
 
 RETURN_PATH:
@@ -853,7 +922,7 @@ static s32 XSdPs_Switch_Voltage(XSdPs *InstancePtr)
 {
 	s32 Status;
 	u16 CtrlReg;
-	u32 ReadReg;
+	u32 ReadReg, ClockReg;
 
 	/* Send switch voltage command */
 	Status = XSdPs_CmdTransfer(InstancePtr, CMD11, 0U, 0U);
@@ -877,9 +946,6 @@ static s32 XSdPs_Switch_Voltage(XSdPs *InstancePtr)
 	XSdPs_WriteReg16(InstancePtr->Config.BaseAddress, XSDPS_CLK_CTRL_OFFSET,
 			CtrlReg);
 
-	/* Wait minimum 5mSec */
-	(void)usleep(5000U);
-
 	/* Enabling 1.8V in controller */
 	CtrlReg = XSdPs_ReadReg16(InstancePtr->Config.BaseAddress,
 			XSDPS_HOST_CTRL2_OFFSET);
@@ -887,12 +953,39 @@ static s32 XSdPs_Switch_Voltage(XSdPs *InstancePtr)
 	XSdPs_WriteReg16(InstancePtr->Config.BaseAddress, XSDPS_HOST_CTRL2_OFFSET,
 			CtrlReg);
 
-	/* Start clock */
-	Status = XSdPs_Change_ClkFreq(InstancePtr, XSDPS_CLK_400_KHZ);
-	if (Status != XST_SUCCESS) {
+	/* Wait minimum 5mSec */
+	(void)usleep(5000U);
+
+	/* Check for 1.8V signal enable bit is cleared by Host */
+	CtrlReg = XSdPs_ReadReg16(InstancePtr->Config.BaseAddress,
+				XSDPS_HOST_CTRL2_OFFSET);
+	if ((CtrlReg & XSDPS_HC2_1V8_EN_MASK) == 0U) {
 		Status = XST_FAILURE;
 		goto RETURN_PATH;
 	}
+
+	/* Wait for internal clock to stabilize */
+	ClockReg = XSdPs_ReadReg16(InstancePtr->Config.BaseAddress,
+				XSDPS_CLK_CTRL_OFFSET);
+	XSdPs_WriteReg16(InstancePtr->Config.BaseAddress,
+				XSDPS_CLK_CTRL_OFFSET,
+				ClockReg | XSDPS_CC_INT_CLK_EN_MASK);
+	ClockReg = XSdPs_ReadReg16(InstancePtr->Config.BaseAddress,
+						XSDPS_CLK_CTRL_OFFSET);
+	while((ClockReg & XSDPS_CC_INT_CLK_STABLE_MASK) == 0U) {
+		ClockReg = XSdPs_ReadReg16(InstancePtr->Config.BaseAddress,
+					XSDPS_CLK_CTRL_OFFSET);
+	}
+
+	/* Enable SD clock */
+	ClockReg = XSdPs_ReadReg16(InstancePtr->Config.BaseAddress,
+			XSDPS_CLK_CTRL_OFFSET);
+	XSdPs_WriteReg16(InstancePtr->Config.BaseAddress,
+			XSDPS_CLK_CTRL_OFFSET,
+			ClockReg | XSDPS_CC_SD_CLK_EN_MASK);
+
+	/* Wait for 1mSec */
+	(void)usleep(1000U);
 
 	/* Wait for CMD and DATA line to go high */
 	ReadReg = XSdPs_ReadReg(InstancePtr->Config.BaseAddress,

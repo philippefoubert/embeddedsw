@@ -1,5 +1,9 @@
 var files =
 [
+<<<<<<< HEAD
+=======
+    [ "vtc_selftest_example.c", "vtc__selftest__example_8c.html", "vtc__selftest__example_8c" ],
+>>>>>>> upstream/master
     [ "xvtc.c", "xvtc_8c.html", "xvtc_8c" ],
     [ "xvtc.h", "xvtc_8h.html", "xvtc_8h" ],
     [ "xvtc_hw.h", "xvtc__hw_8h.html", "xvtc__hw_8h" ],

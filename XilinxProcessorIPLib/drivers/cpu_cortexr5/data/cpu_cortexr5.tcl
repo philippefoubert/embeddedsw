@@ -35,6 +35,7 @@
 # Ver   Who  Date     Changes
 # ----- ---- -------- -----------------------------------------------
 # 1.00  pkp  07/21/14 Initial common::version
+# 1.2   mus  02/20/17 Updated tcl to guard xparameters.h by protection macros
 #
 ##############################################################################
 #uses "xillib.tcl"
@@ -72,6 +73,9 @@ proc xdefine_cortexr5_params {drvhandle} {
     set lprocs [lsort $lprocs]
 
     set config_inc [::hsi::utils::open_include_file "xparameters.h"]
+    puts $config_inc "#ifndef XPARAMETERS_H   /* prevent circular inclusions */"
+    puts $config_inc "#define XPARAMETERS_H   /* by using protection macros */"
+    puts $config_inc ""
     puts $config_inc "/* Definition for CPU ID */"
 
     foreach periph $periphs {
@@ -90,6 +94,53 @@ proc xdefine_cortexr5_params {drvhandle} {
     }
 
     close $config_inc
+
+    set oslist [hsi::get_os];
+    if { [llength $oslist] != 1 } {
+        return 0;
+    }
+    set os [lindex $oslist 0];
+
+    if { $os == "freertos901_xilinx" } {
+        set extra_flags [::common::get_property VALUE [hsi::get_comp_params -filter { NAME == extra_compiler_flags } ] ]
+        regsub -- {-mfloat-abi=hard} $extra_flags "" extra_flags
+        common::set_property -name VALUE -value $extra_flags -objects  [hsi::get_comp_params -filter { NAME == extra_compiler_flags } ]
+    }
+    set procdrv [hsi::get_sw_processor]
+    set compiler [common::get_property CONFIG.compiler $procdrv]
+    set compiler_name [file tail $compiler]
+    set extra_flags [::common::get_property VALUE [hsi::get_comp_params -filter { NAME == extra_compiler_flags } ] ]
+    if {[string compare -nocase $compiler_name "iccarm"] == 0} {
+	set temp_flag $extra_flags
+	if {[string compare -nocase $temp_flag "--debug -DARMR5"] != 0} {
+		regsub -- {-g -DARMR5 -Wall -Wextra} $temp_flag "" temp_flag
+		regsub -- {--debug} $temp_flag "" temp_flag
+		regsub -- {-mfloat-abi=hard} $temp_flag "" temp_flag
+                regsub -- {-mfpu=vfpv3-d16} $temp_flag "" temp_flag
+		set extra_flags "--debug -DARMR5 $temp_flag"
+		common::set_property -name VALUE -value $extra_flags -objects  [hsi::get_comp_params -filter { NAME == extra_compiler_flags } ]
+	}
+
+	set compiler_flags [::common::get_property VALUE [hsi::get_comp_params -filter { NAME == compiler_flags } ] ]
+	if {[string compare -nocase $compiler_flags "-Om --cpu=Cortex-R5"] != 0} {
+		regsub -- {-O2 -c} $compiler_flags "" compiler_flags
+		regsub -- {-mcpu=cortex-r5} $compiler_flags "" compiler_flags
+		regsub -- {-Om --cpu=Cortex-R5 } $compiler_flags "" compiler_flags
+		set compiler_flags "-Om --cpu=Cortex-R5 $compiler_flags"
+		common::set_property -name VALUE -value $compiler_flags -objects  [hsi::get_comp_params -filter { NAME == compiler_flags } ]
+	}
+   } else {
+		#Append LTO flag in EXTRA_COMPILER_FLAGS for zynqmp_fsbl_bsp
+		set is_zynqmp_fsbl_bsp [common::get_property CONFIG.ZYNQMP_FSBL_BSP [hsi::get_os]]
+		if {$is_zynqmp_fsbl_bsp == true} {
+			set extra_flags [common::get_property CONFIG.extra_compiler_flags [hsi::get_sw_processor]]
+			#Append LTO flag in EXTRA_COMPILER_FLAGS if not exist previoulsy.
+			if {[string first "-flto" $extra_flags] == -1 } {
+				append extra_flags " -Os -flto -ffat-lto-objects"
+				common::set_property -name {EXTRA_COMPILER_FLAGS} -value $extra_flags -objects [hsi::get_sw_processor]
+			}
+		}
+   }
 }
 
 proc xdefine_addr_params_for_ext_intf {drvhandle file_name} {
@@ -152,4 +203,16 @@ proc xdefine_addr_params_for_ext_intf {drvhandle file_name} {
       }
 
     close $file_handle
+}
+
+proc post_generate_final {drv_handle} {
+
+	set type [get_property CLASS $drv_handle]
+	if {[string equal $type "driver"]} {
+	   return
+	}
+
+	set file_handle [::hsi::utils::open_include_file "xparameters.h"]
+	puts $file_handle "#endif  /* end of protection macro */"
+	close $file_handle
 }

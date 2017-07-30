@@ -31,7 +31,7 @@
 ******************************************************************************/
 /******************************************************************************/
 /**
-* @file mbox_example.c
+* @file xmbox_example.c
 *
 * This file contains a design example for using the Mailbox hardware and driver
 * XMbox
@@ -56,6 +56,12 @@
 * 1.00a va            First release
 * 1.00a ecm  06/09/07 Cleanup, new coding standard, check into XCS
 * 3.01a sdm  05/06/10 Cleanup for coding guidelines
+* 4.1   ms   01/23/17 Modified xil_printf statement in main function to
+*                     ensure that "Successfully ran" and "Failed" strings
+*                     are available in all examples. This is a fix for
+*                     CR-965028.
+*       ms   04/10/17 Modified filename tag to include the file in doxygen
+*                     examples.
 *</pre>
 *******************************************************************************/
 
@@ -122,9 +128,9 @@ int main(void)
 
 	Status = ProdCon();
 	if (Status != XST_SUCCESS) {
-		printf ("PRODCON :\tFailed.\r\n");
+		printf ("PRODCON :\t mbox Example Failed.\r\n");
 	} else {
-		printf ("PRODCON :\tSucceeded.\r\n");
+		printf ("PRODCON :Successfully ran mbox Example\r\n");
 	}
 
 	printf ("PRODCON :\tEnds.\r\n");

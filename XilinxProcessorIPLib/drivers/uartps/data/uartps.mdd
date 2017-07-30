@@ -36,6 +36,10 @@ BEGIN driver uartps
   OPTION supported_peripherals = (ps7_uart psu_uart);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 3.4;
+>>>>>>> upstream/master
   OPTION NAME = uartps;
 
   BEGIN INTERFACE stdin

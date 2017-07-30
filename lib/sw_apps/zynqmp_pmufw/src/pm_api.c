@@ -27,6 +27,8 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*********************************************************************
  * PM API calls definitions: api ids, arguments and functions used for
@@ -127,7 +129,7 @@ static const PmApiEntry pmApiTable[] = {
 		.argTypes = { ARG_UINT32, ARG_UNDEF, ARG_UNDEF, ARG_UNDEF,
 			      ARG_UNDEF }
 	}, {
-		.apiId = PM_INIT,
+		.apiId = PM_INIT_FINALIZE,
 		.argTypes = { ARG_UNDEF, ARG_UNDEF, ARG_UNDEF, ARG_UNDEF,
 			      ARG_UNDEF }
 	}, {
@@ -142,6 +144,13 @@ static const PmApiEntry pmApiTable[] = {
 		.apiId = PM_GET_CHIPID,
 		.argTypes = { ARG_UNDEF, ARG_UNDEF, ARG_UNDEF, ARG_UNDEF,
 			      ARG_UNDEF },
+<<<<<<< HEAD
+=======
+	}, {
+			.apiId = PM_SECURE_RSA_AES,
+			.argTypes = { ARG_UINT32, ARG_UINT32, ARG_UINT32, ARG_UINT32,
+				      ARG_UNDEF }
+>>>>>>> upstream/master
 	},
 };
 
@@ -305,12 +314,12 @@ done:
  *
  * @return  Extracted acknowledge argument from payload, if payload does not
  *          contain acknowledge argument (because of APIs call declaration),
- *          return REQUEST_ACK_NO
+ *          return REQUEST_ACK_BLOCKING
  */
 u32 PmRequestAcknowledge(const u32 *args)
 {
 	u32 i;
-	u32 ack = REQUEST_ACK_NO;
+	u32 ack = REQUEST_ACK_BLOCKING;
 	const PmApiEntry* entry = NULL;
 
 	for (i = 0U; i < ARRAY_SIZE(pmApiTable); i++) {
@@ -334,3 +343,5 @@ u32 PmRequestAcknowledge(const u32 *args)
 done:
 	return ack;
 }
+
+#endif

@@ -45,6 +45,10 @@ BEGIN driver mutex
   OPTION supported_peripherals = (mutex);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 4.2;
+>>>>>>> upstream/master
   OPTION NAME = mutex;
   
 END driver

@@ -37,6 +37,10 @@ BEGIN driver cresample
   OPTION supported_peripherals = (v_cresample);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 4.1;
+>>>>>>> upstream/master
   OPTION NAME = cresample;
 
 END driver

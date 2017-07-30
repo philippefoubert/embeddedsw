@@ -9,7 +9,11 @@ endif
 ifeq "${PROC}" "r5"
 PROCESSOR = zynqmp_fsbl_bsp/psu_cortexr5_0
 endif
+<<<<<<< HEAD
 
+=======
+LTO_FLAGS = -Wall -Wextra -Os -flto -ffat-lto-objects
+>>>>>>> upstream/master
 
 LIBRARIES = ${PROCESSOR}/lib/libxil.a
 BSP_MAKEFILES := $(wildcard $(PROCESSOR)/libsrc/*/src/Makefile)
@@ -34,16 +38,28 @@ $(PROCESSOR)/lib/libxil.a: $(PROCESSOR)/lib/libxil_init.a
 ifeq "${PROC}" "a53"
 ifeq "${A53_STATE}" "64"
 	$(MAKE) -C $(subst /make.include,,$@) -s include  "SHELL=$(SHELL)" "COMPILER=aarch64-none-elf-gcc" \
+<<<<<<< HEAD
 		"ARCHIVER=aarch64-none-elf-ar" "COMPILER_FLAGS=  -O2 -c" "EXTRA_COMPILER_FLAGS=-g"
 endif
 ifeq "${A53_STATE}" "32"
 	$(MAKE) -C $(subst /make.include,,$@) -s include  "SHELL=$(SHELL)" "COMPILER=arm-none-eabi-gcc" \
 		"ARCHIVER=arm-none-eabi-ar" "COMPILER_FLAGS=  -O2 -c" "EXTRA_COMPILER_FLAGS=-DARMA53_32 -g -march=armv7-a"
+=======
+		"ARCHIVER=aarch64-none-elf-ar" "COMPILER_FLAGS=  -O2 -c" "EXTRA_COMPILER_FLAGS=-g $(LTO_FLAGS)"
+endif
+ifeq "${A53_STATE}" "32"
+	$(MAKE) -C $(subst /make.include,,$@) -s include  "SHELL=$(SHELL)" "COMPILER=arm-none-eabi-gcc" \
+		"ARCHIVER=arm-none-eabi-ar" "COMPILER_FLAGS=  -O2 -c" "EXTRA_COMPILER_FLAGS=-DARMA53_32 -g -march=armv7-a $(LTO_FLAGS)"
+>>>>>>> upstream/master
 endif
 endif
 ifeq "${PROC}" "r5"
 	$(MAKE) -C $(subst /make.include,,$@) -s include  "SHELL=$(SHELL)" "COMPILER=armr5-none-eabi-gcc" \
+<<<<<<< HEAD
 		"ARCHIVER=armr5-none-eabi-ar" "COMPILER_FLAGS=  -O2 -c -mcpu=cortex-r5" "EXTRA_COMPILER_FLAGS=-g -DARMR5"
+=======
+		"ARCHIVER=armr5-none-eabi-ar" "COMPILER_FLAGS=  -O2 -c -mcpu=cortex-r5" "EXTRA_COMPILER_FLAGS=-g -DARMR5 -Wall -Wextra -mfloat-abi=hard -mfpu=vfpv3-d16 $(LTO_FLAGS)"
+>>>>>>> upstream/master
 endif
 
 %/make.libs: include
@@ -51,6 +67,7 @@ endif
 ifeq "${PROC}" "a53"
 ifeq "${A53_STATE}" "64"
 	$(MAKE) -C $(subst /make.libs,,$@) -s libs  "SHELL=$(SHELL)" "COMPILER=aarch64-none-elf-gcc" \
+<<<<<<< HEAD
 		"ARCHIVER=aarch64-none-elf-ar" "COMPILER_FLAGS=  -O2 -c" "EXTRA_COMPILER_FLAGS=-g"
 endif
 ifeq "${A53_STATE}" "32"
@@ -60,6 +77,17 @@ endif
 endif
 ifeq "${PROC}" "r5"
 	$(MAKE) -C $(subst /make.libs,,$@) -s libs  "SHELL=$(SHELL)" "COMPILER=armr5-none-eabi-gcc" "ARCHIVER=armr5-none-eabi-ar" "COMPILER_FLAGS=  -O2 -c -mcpu=cortex-r5" "EXTRA_COMPILER_FLAGS=-g -DARMR5"
+=======
+		"ARCHIVER=aarch64-none-elf-ar" "COMPILER_FLAGS=  -O2 -c" "EXTRA_COMPILER_FLAGS=-g $(LTO_FLAGS)"
+endif
+ifeq "${A53_STATE}" "32"
+	$(MAKE) -C $(subst /make.libs,,$@) -s libs  "SHELL=$(SHELL)" "COMPILER=arm-none-eabi-gcc" \
+		"ARCHIVER=arm-none-eabi-ar" "COMPILER_FLAGS=  -O2 -c" "EXTRA_COMPILER_FLAGS=-DARMA53_32 -g -march=armv7-a $(LTO_FLAGS)"
+endif
+endif
+ifeq "${PROC}" "r5"
+	$(MAKE) -C $(subst /make.libs,,$@) -s libs  "SHELL=$(SHELL)" "COMPILER=armr5-none-eabi-gcc" "ARCHIVER=armr5-none-eabi-ar" "COMPILER_FLAGS=  -O2 -c -mcpu=cortex-r5" "EXTRA_COMPILER_FLAGS=-g -DARMR5 -Wall -Wextra -mfloat-abi=hard -mfpu=vfpv3-d16 $(LTO_FLAGS)"
+>>>>>>> upstream/master
 endif
 
 clean:

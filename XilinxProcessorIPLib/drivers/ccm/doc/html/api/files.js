@@ -1,5 +1,9 @@
 var files =
 [
+<<<<<<< HEAD
+=======
+    [ "ccm_selftest_example.c", "ccm__selftest__example_8c.html", "ccm__selftest__example_8c" ],
+>>>>>>> upstream/master
     [ "xccm.c", "xccm_8c.html", "xccm_8c" ],
     [ "xccm.h", "xccm_8h.html", "xccm_8h" ],
     [ "xccm_hw.h", "xccm__hw_8h.html", "xccm__hw_8h" ],

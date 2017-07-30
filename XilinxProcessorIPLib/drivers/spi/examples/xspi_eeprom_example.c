@@ -29,8 +29,8 @@
 * this Software without prior written authorization from Xilinx.
 *
 ******************************************************************************/
-/******************************************************************************
-*
+/*****************************************************************************/
+/**
 * @file xspi_eeprom_example.c
 *
 *
@@ -57,6 +57,11 @@
 *		      Updated to use the HAL APIs/macros. Replaced call to
 *		      XSpi_Initialize API with XSpi_LookupConfig and
 *		      XSpi_CfgInitialize.
+* 4.2   ms   01/23/17 Added xil_printf statement in main function to
+*                     ensure that "Successfully ran" and "Failed" strings
+*                     are available in all examples. This is a fix for
+*                     CR-965028.
+*       ms   04/05/17 Modified Comment lines to follow doxygen rules.
 *</pre>
 *
 ******************************************************************************/
@@ -67,7 +72,7 @@
 #include "xspi.h"               /* SPI device driver */
 #include "xintc.h"              /* Interrupt controller device driver */
 #include "xil_exception.h"
-
+#include "xil_printf.h"
 
 
 /************************** Constant Definitions *****************************/
@@ -196,7 +201,8 @@ int Test;
 EepromBuffer ReadBuffer;
 EepromBuffer WriteBuffer;
 
-/*****************************************************************************
+/******************************************************************************/
+/**
 *
 * The purpose of this function is to illustrate how to use the XSpi
 * device driver. This test writes and reads data from a Microchip serial EEPROM.
@@ -320,10 +326,12 @@ int main()
 		}
 	}
 
+	xil_printf("Successfully ran Spi eeprom Example\r\n");
 	return XST_SUCCESS;
 }
 
-/******************************************************************************
+/******************************************************************************/
+/**
 *
 * This function is the handler which performs processing for the SPI driver.
 * It is called from an interrupt context such that the amount of processing
@@ -359,7 +367,8 @@ void SpiHandler(void *CallBackRef, u32 StatusEvent, unsigned int ByteCount)
 	}
 }
 
-/******************************************************************************
+/******************************************************************************/
+/**
 *
 * This function reads from the Microchip serial EEPROM connected to the
 * SPI interface.
@@ -400,8 +409,8 @@ void EepromRead(XSpi *SpiPtr, u16 Address, int ByteCount, EepromBuffer Buffer)
 	while (TransferInProgress);
 }
 
-/******************************************************************************
-*
+/******************************************************************************/
+/**
 *
 * This function writes to the Microchip serial EEPROM connected to the
 * SPI interface.  This function is not designed to be a driver to handle all

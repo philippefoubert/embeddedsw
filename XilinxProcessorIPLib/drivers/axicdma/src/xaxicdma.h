@@ -334,6 +334,17 @@
  * 4.1   sk   11/10/15 Used UINTPTR instead of u32 for Baseaddress CR# 867425.
  *                     Changed the prototype of XAxiCdma_CfgInitialize API.
  * 4.3   mi   09/21/16 Fixed compilation warnings.
+<<<<<<< HEAD
+=======
+ *       ms   01/22/17 Modified xil_printf statement in main function for all
+ *            examples to ensure that "Successfully ran" and "Failed" strings
+ *            are available in all examples. This is a fix for CR-965028.
+ *       ms   03/17/17 Added readme.txt file in examples folder for doxygen
+ *                     generation.
+ *       ms   04/05/17 Modified Comment lines in functions of axicdma
+ *                     examples to recognize it as documentation block
+ *                     for doxygen generation of examples.
+>>>>>>> upstream/master
  * </pre>
  *****************************************************************************/
 

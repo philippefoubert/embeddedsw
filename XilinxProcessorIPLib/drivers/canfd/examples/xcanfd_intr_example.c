@@ -32,7 +32,7 @@
 /****************************************************************************/
 /**
 *
-* @file xcan_intr_example.c
+* @file xcanfd_intr_example.c
 *
 * Contains an example of how to use the XCan driver directly.  The example here
 * shows using the driver/device in interrupt mode.
@@ -55,6 +55,11 @@
 * Ver   Who	Date	 Changes
 * ----- -----  -------- -----------------------------------------------
 * 1.0   nsk    06/04/15 First release
+* 1.2   ms     01/23/17 Modified xil_printf statement in main function to
+*                       ensure that "Successfully ran" and "Failed" strings are
+*                       available in all examples. This is a fix for CR-965028.
+*       ms     04/05/17 Added tabspace for return statements in functions
+*                       for proper documentation while generating doxygen.
 *
 * </pre>
 *
@@ -180,7 +185,8 @@ volatile static int SendDone;
 *
 * @param	None.
 *
-* @return	- XST_SUCCESS if the example has completed successfully.
+* @return
+*		- XST_SUCCESS if the example has completed successfully.
 *		- XST_FAILURE if the example has failed.
 *
 * @note		None.
@@ -193,7 +199,7 @@ int main()
 		xil_printf("XCanFd Interrupt Mode example Failed\n\r");
 		return XST_FAILURE;
 	}
-	xil_printf("XCanFd Interrupt Mode example Passed\n\r");
+	xil_printf("Successfully ran XCanFd Interrupt Mode example\n\r");
 	return XST_SUCCESS;
 }
 

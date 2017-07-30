@@ -1,11 +1,20 @@
 var xemacps__bdring_8h =
 [
+<<<<<<< HEAD
     [ "XEmacPs_BdRingCntCalc", "group__emacps__v3__1.html#gaae091e92725b11c4da6ce000affe0db4", null ],
     [ "XEmacPs_BdRingGetCnt", "group__emacps__v3__1.html#ga668214818403599166ca19be2c2e7a6b", null ],
     [ "XEmacPs_BdRingGetFreeCnt", "group__emacps__v3__1.html#ga88cc3308c11b97edb1d55967de714391", null ],
     [ "XEmacPs_BdRingMemCalc", "group__emacps__v3__1.html#gab6113feb0e04d9bd9695d5ccce7893e5", null ],
     [ "XEmacPs_BdRingNext", "group__emacps__v3__1.html#gac262c2285bfbf1f68548432ebb6993bb", null ],
     [ "XEmacPs_BdRingPrev", "group__emacps__v3__1.html#gaae51702e2f0b3aca1ebb452be51a0472", null ],
+=======
+    [ "XEmacPs_BdRingCntCalc", "group__emacps__v3__1.html#gaf634277466b3d759cf1770ef4e263886", null ],
+    [ "XEmacPs_BdRingGetCnt", "group__emacps__v3__1.html#ga668214818403599166ca19be2c2e7a6b", null ],
+    [ "XEmacPs_BdRingGetFreeCnt", "group__emacps__v3__1.html#ga2206d6117c95bb46b85ee4d45dcafb00", null ],
+    [ "XEmacPs_BdRingMemCalc", "group__emacps__v3__1.html#gaf5234fa28a21cd02e35fc3d49b73ff4d", null ],
+    [ "XEmacPs_BdRingNext", "group__emacps__v3__1.html#ga78e691ca1e87aca56ebead6d6b6057a4", null ],
+    [ "XEmacPs_BdRingPrev", "group__emacps__v3__1.html#gade23035ee29807c56ca61ab241d4ba0c", null ],
+>>>>>>> upstream/master
     [ "XEmacPs_BdRingAlloc", "group__emacps__v3__1.html#gabadbd5215bb371a7f10f8bd1acc2db38", null ],
     [ "XEmacPs_BdRingCheck", "group__emacps__v3__1.html#ga6e48d113604e65a01d5ef23b4d8186c7", null ],
     [ "XEmacPs_BdRingClone", "group__emacps__v3__1.html#gac18e6a6caef3d31a7f8ff684657fc0df", null ],

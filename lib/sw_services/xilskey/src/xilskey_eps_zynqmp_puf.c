@@ -1,6 +1,10 @@
 /******************************************************************************
 *
+<<<<<<< HEAD
 * Copyright (C) 2016 Xilinx, Inc.  All rights reserved.
+=======
+* Copyright (C) 2016-17 Xilinx, Inc.  All rights reserved.
+>>>>>>> upstream/master
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +47,10 @@
 * 6.1   vns  10/17/16 First release.
 *       vns  11/07/16 Fixed shutter value to 0x0100005e, as sysosc selection
 *                     is fixed for PUF registration.
+<<<<<<< HEAD
+=======
+* 6.2   vns  02/18/17 Added masking for PUF auxilary read.
+>>>>>>> upstream/master
 * </pre>
 *
 *****************************************************************************/
@@ -503,6 +511,10 @@ u32 XilSKey_ZynqMp_EfusePs_ReadPufAux(u32 *Address, u8 ReadOption)
 		Status = XilSKey_ZynqMp_EfusePs_ReadRow(
 				XSK_ZYNQMP_EFUSEPS_PUF_AUX_ROW,
 				XSK_ZYNQMP_EFUSEPS_EFUSE_0, &Data);
+<<<<<<< HEAD
+=======
+		Data = Data & XSK_ZYNQMP_EFUSEPS_PUF_MISC_AUX_MASK;
+>>>>>>> upstream/master
 		if (Status != XST_SUCCESS) {
 			goto END;
 		}
@@ -709,7 +721,12 @@ u32 XilSKey_Write_Puf_EfusePs_SecureBits(XilSKey_Puf_Secure *WriteSecureBits)
 	/* If user requests any of the secure bit to be programmed */
 	if ((WriteSecureBits->SynInvalid != 0x00) ||
 		(WriteSecureBits->SynWrLk != 0x00) ||
+<<<<<<< HEAD
 		(WriteSecureBits->RegisterDis != 0x00)) {
+=======
+		(WriteSecureBits->RegisterDis != 0x00) ||
+		(WriteSecureBits->Reserved != 0x00)) {
+>>>>>>> upstream/master
 		/* Unlock the controller */
 		XilSKey_ZynqMp_EfusePs_CtrlrUnLock();
 
@@ -773,6 +790,22 @@ u32 XilSKey_Write_Puf_EfusePs_SecureBits(XilSKey_Puf_Secure *WriteSecureBits)
 		}
 	}
 
+<<<<<<< HEAD
+=======
+	if ((WriteSecureBits->Reserved != 0x00) &&
+		(DataInBits[XSK_ZYNQMP_EFUSEPS_PUF_RESERVED] == 0x00)) {
+		Status = XilSKey_ZynqMp_EfusePs_WriteAndVerifyBit(Row,
+				XSK_ZYNQMP_EFUSEPS_PUF_RESERVED, EfuseType);
+		if (Status != XST_SUCCESS) {
+			xPuf_printf(Debug,"API: Failed programming reserved"
+							" bit\r\n");
+			Status = (Status +
+					XSK_EFUSEPS_ERROR_WRITE_PUF_RESERVED_BIT);
+			goto END;
+		}
+	}
+
+>>>>>>> upstream/master
 END:
 	/* Lock the controller back */
 	XilSKey_ZynqMp_EfusePs_CtrlrLock();
@@ -876,6 +909,12 @@ static inline u32 XilSKey_Read_Puf_EfusePs_SecureBits_Regs(
 	SecureBits->RegisterDis =
 		(RegData & XSK_ZYNQMP_EFUSEPS_PUF_MISC_REG_DIS_MASK) >>
 			XSK_ZYNQMP_EFUSEPS_PUF_MISC_REG_DIS_SHIFT;
+<<<<<<< HEAD
+=======
+	SecureBits->Reserved =
+			(RegData & XSK_ZYNQMP_EFUSEPS_PUF_MISC_RESERVED_MASK) >>
+				XSK_ZYNQMP_EFUSEPS_PUF_MISC_RESERVED_SHIFT;
+>>>>>>> upstream/master
 END:
 
 	return Status;

@@ -61,11 +61,12 @@
  */
 struct XPm_Master {
 	const enum XPmNodeId node_id; /**< Node ID */
+	const u32 pwrctl;             /** < Power Control Register Address */
 	const u32 pwrdn_mask;         /**< Power Down Mask */
 	XIpiPsu *ipi;                 /**< IPI Instance */
 };
 
-const enum XPmNodeId pm_get_subsystem_node(void);
+enum XPmNodeId pm_get_subsystem_node(void);
 struct XPm_Master *pm_get_master(const u32 cpuid);
 struct XPm_Master *pm_get_master_by_node(const enum XPmNodeId nid);
 
@@ -75,7 +76,7 @@ struct XPm_Master *pm_get_master_by_node(const enum XPmNodeId nid);
 #define APU_3_PWRCTL_CPUPWRDWNREQ_MASK	0x00000008U
 #define IPI_RPU_MASK			0x00000100U
 
-#define UNDEFINED_CPUID		(~0)
+#define UNDEFINED_CPUID		(~0U)
 
 #define pm_read(addr)		Xil_In32(addr)
 #define pm_write(addr, value)	Xil_Out32(addr, value)
@@ -102,6 +103,7 @@ void XPm_ClientSuspend(const struct XPm_Master *const master);
 void XPm_ClientAbortSuspend(void);
 void XPm_ClientWakeup(const struct XPm_Master *const master);
 void XPm_ClientSuspendFinalize(void);
+void XPm_ClientSetPrimaryMaster(void);
 
 /* Do not modify below this line */
 extern const enum XPmNodeId subsystem_node;

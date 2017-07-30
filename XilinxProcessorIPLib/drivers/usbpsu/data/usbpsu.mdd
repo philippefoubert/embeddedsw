@@ -33,9 +33,13 @@ OPTION psf_version = 2.1;
 
 BEGIN driver usbpsu
 
-  OPTION supported_peripherals = (psu_usb);
+  OPTION supported_peripherals = (psu_usb_xhci);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 1.2;
+>>>>>>> upstream/master
   OPTION NAME = usbpsu;
 
 END driver

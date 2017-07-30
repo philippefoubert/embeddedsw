@@ -36,6 +36,10 @@ BEGIN driver prd
   OPTION supported_peripherals = (pr_decoupler);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 1.1;
+>>>>>>> upstream/master
   OPTION NAME = prd;
 
 END driver

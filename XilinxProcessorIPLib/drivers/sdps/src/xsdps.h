@@ -139,6 +139,14 @@
 *       sk     10/19/16 Used emmc_hwreset pin to reset eMMC.
 *       sk     11/07/16 Enable Rst_n bit in ext_csd reg if not enabled.
 *       sk     11/16/16 Issue DLL reset at 31 iteration to load new zero value.
+<<<<<<< HEAD
+=======
+* 3.2   sk     11/30/16 Modified the voltage switching sequence as per spec.
+*       sk     02/01/17 Added HSD and DDR mode support for eMMC.
+*       sk     02/01/17 Consider bus width parameter from design for switching
+*       vns    02/09/17 Added ARMA53_32 support for ZynqMP CR#968397
+*       sk     03/20/17 Add support for EL1 non-secure mode.
+>>>>>>> upstream/master
 *
 * </pre>
 *
@@ -243,8 +251,13 @@ s32 XSdPs_MmcCardInitialize(XSdPs *InstancePtr);
 s32 XSdPs_CardInitialize(XSdPs *InstancePtr);
 s32 XSdPs_Get_Mmc_ExtCsd(XSdPs *InstancePtr, u8 *ReadBuff);
 s32 XSdPs_Set_Mmc_ExtCsd(XSdPs *InstancePtr, u32 Arg);
+<<<<<<< HEAD
 #if defined (ARMR5) || defined (__aarch64__)
+=======
+#if defined (ARMR5) || defined (__aarch64__) || defined (ARMA53_32)
+>>>>>>> upstream/master
 void XSdPs_Identify_UhsMode(XSdPs *InstancePtr, u8 *ReadBuff);
+void XSdPs_ddr50_tapdelay(u32 Bank, u32 DeviceId, u32 CardType);
 void XSdPs_hsd_sdr25_tapdelay(u32 Bank, u32 DeviceId, u32 CardType);
 void XSdPs_sdr104_hs200_tapdelay(u32 Bank, u32 DeviceId, u32 CardType);
 #endif

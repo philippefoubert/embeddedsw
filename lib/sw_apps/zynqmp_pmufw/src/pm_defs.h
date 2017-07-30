@@ -47,7 +47,7 @@
  * (PM_VERSION_MAJOR << 16) | PM_VERSION_MINOR
  */
 #define PM_VERSION_MAJOR    0U
-#define PM_VERSION_MINOR    2U
+#define PM_VERSION_MINOR    3U
 
 #define PM_VERSION	((PM_VERSION_MAJOR << 16) | PM_VERSION_MINOR)
 
@@ -99,15 +99,22 @@
 #define PM_MMIO_WRITE               19U
 #define PM_MMIO_READ                20U
 
-#define PM_INIT                     21U
+#define PM_INIT_FINALIZE            21U
 
 #define PM_FPGA_LOAD                22U
 #define PM_FPGA_GET_STATUS          23U
 
 #define PM_GET_CHIPID               24U
 
+<<<<<<< HEAD
 #define PM_API_MIN	PM_GET_API_VERSION
 #define PM_API_MAX	PM_GET_CHIPID
+=======
+#define PM_SECURE_RSA_AES           25U
+
+#define PM_API_MIN	PM_GET_API_VERSION
+#define PM_API_MAX	PM_SECURE_RSA_AES
+>>>>>>> upstream/master
 
 /* PM API callback ids */
 #define PM_INIT_SUSPEND_CB      30U
@@ -124,7 +131,7 @@
 #define NODE_RPU        6U
 #define NODE_RPU_0      7U
 #define NODE_RPU_1      8U
-#define NODE_PL         9U
+#define NODE_PLD        9U
 #define NODE_FPD        10U
 #define NODE_OCM_BANK_0 11U
 #define NODE_OCM_BANK_1 12U
@@ -164,7 +171,7 @@
 #define NODE_GPIO       46U
 #define NODE_CAN_0      47U
 #define NODE_CAN_1      48U
-#define NODE_AFI        49U
+#define NODE_EXTERN     49U
 #define NODE_APLL       50U
 #define NODE_VPLL       51U
 #define NODE_DPLL       52U
@@ -178,6 +185,7 @@
 #define NODE_PCAP       60U
 #define NODE_RTC        61U
 #define NODE_LPD        62U
+<<<<<<< HEAD
 
 #define NODE_MIN        NODE_APU
 #define NODE_MAX        NODE_LPD
@@ -185,6 +193,18 @@
 /* System init synchronization */
 #define PM_INIT_COMPLETED_KEY    0x5A5A5A5AU
 #define PM_INIT_SYNC_REGISTER    PMU_GLOBAL_PERS_GLOB_GEN_STORAGE5
+=======
+#define NODE_VCU        63U
+#define NODE_IPI_RPU_1  64U
+#define NODE_IPI_PL_0   65U
+#define NODE_IPI_PL_1   66U
+#define NODE_IPI_PL_2   67U
+#define NODE_IPI_PL_3   68U
+#define NODE_PL         69U
+
+#define NODE_MIN        NODE_APU
+#define NODE_MAX        NODE_PL
+>>>>>>> upstream/master
 
 /* Request acknowledge argument values */
 #define REQUEST_ACK_NO          1U

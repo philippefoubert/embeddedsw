@@ -13,7 +13,17 @@ var NAVTREE =
       [ "Functions", "globals_func.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xaxipcie_ep_cdma_example.c", "example.html#ex1", null ],
+      [ "xaxipcie_ep_enable_example.c", "example.html#ex2", null ],
+      [ "xaxipcie_rc_cdma_example.c", "example.html#ex3", null ],
+      [ "xaxipcie_rc_enumerate_example.c", "example.html#ex4", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

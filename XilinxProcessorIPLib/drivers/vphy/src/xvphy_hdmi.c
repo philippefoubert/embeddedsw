@@ -55,6 +55,19 @@
  * 1.3   gm   01/11/16 Added error message in XVphy_HdmiCpllParam when DRU is
  *                     enabled and RX TMDS ratio is 1/40
  *                     Fixed rounding of DRU refclk frequency
+<<<<<<< HEAD
+=======
+ *                     Fixed a bug in XVphy_SetHdmiRxParam to update the ChId
+ *                        when DRU is enabled
+ * 1.4   gm   29/11/16 Added preprocessor directives for sw footprint reduction
+ *                     Added TX datawidth dynamic reconfiguration
+ *                     Incorporated AXIlite Freq auto extraction
+ *                     Added extra routine for 2/4 byte tranceiver modes
+ *                     Added logging and register access for ERR_IRQ impl
+ *                     Removed XVphy_HdmiMmcmStart API
+ *                     Fixed c++ compiler warnings
+ * 1.5   gm   27/04/17 Added Div in HdmiCfgCalcMmcmParam search algorithm
+>>>>>>> upstream/master
  * </pre>
  *
 *******************************************************************************/
@@ -62,8 +75,10 @@
 /******************************* Include Files ********************************/
 
 #include "xparameters.h"
+#if defined (XPAR_XV_HDMITX_0_DEVICE_ID) || defined (XPAR_XV_HDMIRX_0_DEVICE_ID)
 #include "xstatus.h"
 #include "xvphy.h"
+#include "xvphy_i.h"
 #include "xvphy_hdmi.h"
 
 /****************************** Type Definitions ******************************/
@@ -88,8 +103,6 @@ extern void XVphy_Ch2Ids(XVphy *InstancePtr, XVphy_ChannelId ChId,
 		u8 *Id0, u8 *Id1);
 static const XVphy_GtHdmiChars *GetGtHdmiPtr(XVphy *InstancePtr);
 static void XVphy_HdmiSetSystemClockSelection(XVphy *InstancePtr, u8 QuadId);
-static u32 XVphy_HdmiMmcmWriteParameters(XVphy *InstancePtr, u8 QuadId,
-		XVphy_DirectionType Dir);
 
 /**************************** Function Definitions ****************************/
 
@@ -130,17 +143,48 @@ u32 XVphy_HdmiInitialize(XVphy *InstancePtr, u8 QuadId, XVphy_Config *CfgPtr,
 			XVPHY_GT_STATE_IDLE;
 		InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].RxState =
 			XVPHY_GT_STATE_IDLE;
+		//Initialize Transceiver Width values
+		if (InstancePtr->Config.TransceiverWidth == 2) {
+			InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+				TxDataWidth = 20;
+			InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+				TxIntDataWidth = 2;
+			InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+				RxDataWidth = 20;
+			InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+				RxIntDataWidth = 2;
+		}
+		else {
+			InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+				TxDataWidth = 40;
+			InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+				TxIntDataWidth = 4;
+			InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+				RxDataWidth = 40;
+			InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+				RxIntDataWidth = 4;
+		}
 	}
 	/* Interrupt Disable. */
-	XVphy_IntrDisable(InstancePtr, XVPHY_INTR_HANDLER_TYPE_TXRESET_DONE |
-			XVPHY_INTR_HANDLER_TYPE_RXRESET_DONE |
-			XVPHY_INTR_HANDLER_TYPE_CPLL_LOCK |
-			XVPHY_INTR_HANDLER_TYPE_QPLL0_LOCK |
-			XVPHY_INTR_HANDLER_TYPE_TXALIGN_DONE |
-			XVPHY_INTR_HANDLER_TYPE_QPLL1_LOCK |
-			XVPHY_INTR_HANDLER_TYPE_TX_CLKDET_FREQ_CHANGE |
-			XVPHY_INTR_HANDLER_TYPE_RX_CLKDET_FREQ_CHANGE |
-			XVPHY_INTR_HANDLER_TYPE_TX_TMR_TIMEOUT |
+	XVphy_IntrDisable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_TXRESET_DONE);
+	XVphy_IntrDisable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_RXRESET_DONE);
+	XVphy_IntrDisable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_CPLL_LOCK);
+	XVphy_IntrDisable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_QPLL0_LOCK);
+	XVphy_IntrDisable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_TXALIGN_DONE);
+	XVphy_IntrDisable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_QPLL1_LOCK);
+	XVphy_IntrDisable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_TX_CLKDET_FREQ_CHANGE);
+	XVphy_IntrDisable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_RX_CLKDET_FREQ_CHANGE);
+	XVphy_IntrDisable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_TX_TMR_TIMEOUT);
+	XVphy_IntrDisable(InstancePtr,
 			XVPHY_INTR_HANDLER_TYPE_RX_TMR_TIMEOUT);
 
 	/* Setup HDMI interrupt handler callback*/
@@ -179,10 +223,6 @@ u32 XVphy_HdmiInitialize(XVphy *InstancePtr, u8 QuadId, XVphy_Config *CfgPtr,
 		XVphy_PowerDownGtPll(InstancePtr, QuadId, XVPHY_CHANNEL_ID_CHA,
 				TRUE);
 	}
-	//XVphy_MmcmLockedMaskEnable(InstancePtr, QuadId, XVPHY_DIR_TX, TRUE);
-	//XVphy_MmcmLockedMaskEnable(InstancePtr, QuadId, XVPHY_DIR_RX, TRUE);
-	//XVphy_MmcmPowerDown(InstancePtr, QuadId, XVPHY_DIR_TX, TRUE);
-	//XVphy_MmcmPowerDown(InstancePtr, QuadId, XVPHY_DIR_RX, TRUE);
 	XVphy_MmcmReset(InstancePtr, QuadId, XVPHY_DIR_TX, TRUE);
 	XVphy_MmcmReset(InstancePtr, QuadId, XVPHY_DIR_RX, TRUE);
 	XVphy_IBufDsEnable(InstancePtr, QuadId, XVPHY_DIR_TX, (FALSE));
@@ -210,8 +250,8 @@ u32 XVphy_HdmiInitialize(XVphy *InstancePtr, u8 QuadId, XVphy_Config *CfgPtr,
 
 	XVphy_Ch2Ids(InstancePtr, XVPHY_CHANNEL_ID_CHA, &Id0, &Id1);
 	for (Id = Id0; Id <= Id1; Id++) {
-		XVphy_SetTxVoltageSwing(InstancePtr, QuadId, Id, 0x1);
-		XVphy_SetTxPreEmphasis(InstancePtr, QuadId, Id, 0x1);
+		XVphy_SetTxVoltageSwing(InstancePtr, QuadId, (XVphy_ChannelId)Id, 0x1);
+		XVphy_SetTxPreEmphasis(InstancePtr, QuadId, (XVphy_ChannelId)Id, 0x1);
 	}
 
 	/* Clear Interrupt Register */
@@ -219,15 +259,25 @@ u32 XVphy_HdmiInitialize(XVphy *InstancePtr, u8 QuadId, XVphy_Config *CfgPtr,
 			0xFFFFFFFF);
 
 	/* Interrupt Enable. */
-	XVphy_IntrEnable(InstancePtr, XVPHY_INTR_HANDLER_TYPE_TXRESET_DONE |
-			XVPHY_INTR_HANDLER_TYPE_RXRESET_DONE |
-			XVPHY_INTR_HANDLER_TYPE_CPLL_LOCK |
-			XVPHY_INTR_HANDLER_TYPE_QPLL0_LOCK |
-			XVPHY_INTR_HANDLER_TYPE_TXALIGN_DONE |
-			XVPHY_INTR_HANDLER_TYPE_QPLL1_LOCK |
-			XVPHY_INTR_HANDLER_TYPE_TX_CLKDET_FREQ_CHANGE |
-			XVPHY_INTR_HANDLER_TYPE_RX_CLKDET_FREQ_CHANGE |
-			XVPHY_INTR_HANDLER_TYPE_TX_TMR_TIMEOUT |
+	XVphy_IntrEnable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_TXRESET_DONE);
+	XVphy_IntrEnable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_RXRESET_DONE);
+	XVphy_IntrEnable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_CPLL_LOCK);
+	XVphy_IntrEnable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_QPLL0_LOCK);
+	XVphy_IntrEnable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_TXALIGN_DONE);
+	XVphy_IntrEnable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_QPLL1_LOCK);
+	XVphy_IntrEnable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_TX_CLKDET_FREQ_CHANGE);
+	XVphy_IntrEnable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_RX_CLKDET_FREQ_CHANGE);
+	XVphy_IntrEnable(InstancePtr,
+			XVPHY_INTR_HANDLER_TYPE_TX_TMR_TIMEOUT);
+	XVphy_IntrEnable(InstancePtr,
 			XVPHY_INTR_HANDLER_TYPE_RX_TMR_TIMEOUT);
 	XVphy_ClkDetEnable(InstancePtr, TRUE);
 
@@ -712,7 +762,7 @@ u32 XVphy_ClkDetGetRefClkFreqHz(XVphy *InstancePtr, XVphy_DirectionType Dir)
 u32 XVphy_DruGetRefClkFreqHz(XVphy *InstancePtr)
 {
 	u32 DruFreqHz = XVphy_ReadReg(InstancePtr->Config.BaseAddr,
-			XVPHY_CLKDET_FREQ_DRU_REG);;
+			XVPHY_CLKDET_FREQ_DRU_REG);
 
 
 
@@ -1052,6 +1102,7 @@ u32 XVphy_HdmiCfgCalcMmcmParam(XVphy *InstancePtr, u8 QuadId,
 	u32 RefClk;
 	u8 Div;
 	u8 Mult;
+	u8 MultDiv;
 	u8 Valid;
 	u64 LineRate = 0;
 	XVphy_Mmcm *MmcmPtr;
@@ -1059,6 +1110,7 @@ u32 XVphy_HdmiCfgCalcMmcmParam(XVphy *InstancePtr, u8 QuadId,
 
 	/* Suppress Warning Messages */
 	ChId = ChId;
+<<<<<<< HEAD
 
 	if (Dir == XVPHY_DIR_RX) {
 		RefClk = InstancePtr->HdmiRxRefClkHz;
@@ -1070,180 +1122,219 @@ u32 XVphy_HdmiCfgCalcMmcmParam(XVphy *InstancePtr, u8 QuadId,
 	else {
 		RefClk = InstancePtr->HdmiTxRefClkHz;
 		MmcmPtr= &InstancePtr->Quads[QuadId].TxMmcm;
+=======
+>>>>>>> upstream/master
 
-		RefClk = RefClk / (GetGtHdmiPtr(InstancePtr))->TxMmcmScale;
-		Mult = (GetGtHdmiPtr(InstancePtr))->TxMmcmFvcoMax / RefClk;
+	/* Get line rate. */
+	PllType = XVphy_GetPllType(InstancePtr, 0, Dir,
+			XVPHY_CHANNEL_ID_CH1);
 
-		/* Get line rate. */
-		PllType = XVphy_GetPllType(InstancePtr, 0, XVPHY_DIR_TX,
-				XVPHY_CHANNEL_ID_CH1);
+	switch (PllType) {
+		case XVPHY_PLL_TYPE_QPLL:
+		case XVPHY_PLL_TYPE_QPLL0:
+		case XVPHY_PLL_TYPE_PLL0:
+			LineRate = InstancePtr->Quads[QuadId].Cmn0.LineRateHz;
+			break;
+		case XVPHY_PLL_TYPE_QPLL1:
+		case XVPHY_PLL_TYPE_PLL1:
+			LineRate = InstancePtr->Quads[QuadId].Cmn1.LineRateHz;
+			break;
+		default:
+			LineRate = InstancePtr->Quads[QuadId].Ch1.LineRateHz;
+			break;
+	}
 
-		switch (PllType) {
-			case XVPHY_PLL_TYPE_QPLL:
-			case XVPHY_PLL_TYPE_QPLL0:
-			case XVPHY_PLL_TYPE_PLL0:
-				LineRate = InstancePtr->Quads[QuadId].Cmn0.LineRateHz;
-				break;
-			case XVPHY_PLL_TYPE_QPLL1:
-			case XVPHY_PLL_TYPE_PLL1:
-				LineRate = InstancePtr->Quads[QuadId].Cmn1.LineRateHz;
-				break;
-			default:
-				LineRate = InstancePtr->Quads[QuadId].Ch1.LineRateHz;
-				break;
-		}
+	if (((LineRate / 1000000) > 2970) && (Ppc == XVIDC_PPC_1)) {
+		XVphy_LogWrite(InstancePtr, XVPHY_LOG_EVT_1PPC_ERR, 1);
+		XVphy_CfgErrIntr(InstancePtr, XVPHY_ERRIRQ_MMCM_CFG, 1);
+		return (XST_FAILURE);
 	}
 
 	Div = 1;
 
-	if (((LineRate / 1000000) > 2970) && (Ppc == XVIDC_PPC_1)) {
-		XVphy_LogWrite(InstancePtr, XVPHY_LOG_EVT_1PPC_ERR, 1);
-		return (XST_FAILURE);
-	}
-
-	/* In case of 4 pixels per clock, the M must be a multiple of four. */
-	if (Ppc == XVIDC_PPC_4) {
-		Mult = Mult / 4;
-		Mult = Mult * 4;
-	}
-	/* Else the M must be a multiple of two. */
-	else if (Ppc == XVIDC_PPC_2) {
-		Mult = Mult / 2;
-		Mult = Mult * 2;
-	}
-
-	if (!((Mult >= 1) && (Mult < 65))) {
-		return (XST_FAILURE); /* Mult is out of range. */
-	}
-
-	Valid = (FALSE);
 	do {
-		MmcmPtr->ClkFbOutMult = Mult;
-		MmcmPtr->DivClkDivide = Div;
+		if (Dir == XVPHY_DIR_RX) {
+			RefClk = InstancePtr->HdmiRxRefClkHz;
+			MmcmPtr= &InstancePtr->Quads[QuadId].RxMmcm;
 
-		/* Link clock: TMDS clock ratio 1/40. */
-		if ((LineRate / 1000000) >= 3400) {
-			MmcmPtr->ClkOut0Div = Mult;
+			RefClk = RefClk / (GetGtHdmiPtr(InstancePtr))->RxMmcmScale;
+			Mult = (GetGtHdmiPtr(InstancePtr))->RxMmcmFvcoMax * Div / RefClk;
 		}
-		/* Link clock: TMDS clock ratio 1/10. */
 		else {
-			MmcmPtr->ClkOut0Div = Mult * 4;
+			RefClk = InstancePtr->HdmiTxRefClkHz;
+			MmcmPtr= &InstancePtr->Quads[QuadId].TxMmcm;
+
+			RefClk = RefClk / (GetGtHdmiPtr(InstancePtr))->TxMmcmScale;
+			Mult = (GetGtHdmiPtr(InstancePtr))->TxMmcmFvcoMax * Div / RefClk;
 		}
 
-		/* TMDS Clock */
-		MmcmPtr->ClkOut1Div = Mult * ((Dir == XVPHY_DIR_TX) ?
-				(InstancePtr->HdmiTxSampleRate) : 1);
 
-		/* Video clock. */
-		MmcmPtr->ClkOut2Div = 0;
+		/* In case of 4 pixels per clock, the M must be a multiple of four. */
+		if (Ppc == XVIDC_PPC_4) {
+			Mult = Mult / 4;
+			Mult = Mult * 4;
+		}
+		/* Else the M must be a multiple of two. */
+		else if (Ppc == XVIDC_PPC_2) {
+			Mult = Mult / 2;
+			Mult = Mult * 2;
+		}
 
-		switch (Bpc) {
-		case XVIDC_BPC_10:
-			/* Quad pixel. */
-			if (Ppc == (XVIDC_PPC_4)) {
-				MmcmPtr->ClkOut2Div = (Mult * 5 *
-					((Dir == XVPHY_DIR_TX) ?
-					(InstancePtr->HdmiTxSampleRate) : 1));
-			}
-			/* Dual pixel. */
-			else if (Ppc == (XVIDC_PPC_2)) {
-				/* The clock ratio is 2.5 */
-				/* The PLL only supports integer values */
-				/* The mult must be dividable by two (2 * 2.5 = 5)
-					to get an integer number */
-				if ((Mult % 2) == 0) {
-					MmcmPtr->ClkOut2Div = (Mult * 5 / 2 *
-						((Dir == XVPHY_DIR_TX)?
-						(InstancePtr->HdmiTxSampleRate) : 1));
+
+		Valid = (FALSE);
+		do {
+            MultDiv = Mult / Div;
+			MmcmPtr->ClkFbOutMult = Mult;
+			MmcmPtr->DivClkDivide = Div;
+
+			if (InstancePtr->Config.TransceiverWidth == 4) {
+				/* Link clock: TMDS clock ratio 1/40. */
+				if ((LineRate / 1000000) >= 3400) {
+					MmcmPtr->ClkOut0Div = MultDiv;
+				}
+				/* Link clock: TMDS clock ratio 1/10. */
+				else {
+					MmcmPtr->ClkOut0Div = MultDiv * 4;
 				}
 			}
-			/* Single pixel. */
-			else {
-				/* The clock ratio is 1.25 */
-				/* The PLL only supports integer values */
-				/* The mult must be dividable by four (4 * 1.25 = 5)
-					to get an integer number */
-				if ((Mult % 4) == 0) {
-					MmcmPtr->ClkOut2Div = (Mult * 5 / 4 *
+			else {//2 Byte Mode
+				/* Link clock: TMDS clock ratio 1/40. */
+				if ((LineRate / 1000000) >= 3400) {
+					MmcmPtr->ClkOut0Div = MultDiv / 2;
+				}
+				/* Link clock: TMDS clock ratio 1/10. */
+				else {
+					MmcmPtr->ClkOut0Div = MultDiv * 2;
+				}
+			}
+
+			/* TMDS Clock */
+			MmcmPtr->ClkOut1Div = MultDiv * ((Dir == XVPHY_DIR_TX) ?
+					(InstancePtr->HdmiTxSampleRate) : 1);
+
+			/* Video clock. */
+			MmcmPtr->ClkOut2Div = 0;
+
+			switch (Bpc) {
+			case XVIDC_BPC_10:
+				/* Quad pixel. */
+				if (Ppc == (XVIDC_PPC_4)) {
+					MmcmPtr->ClkOut2Div = (MultDiv * 5 *
 						((Dir == XVPHY_DIR_TX) ?
 						(InstancePtr->HdmiTxSampleRate) : 1));
 				}
-			}
-			break;
-		case XVIDC_BPC_12:
-			/* Quad pixel. */
-			if (Ppc == (XVIDC_PPC_4)) {
-				MmcmPtr->ClkOut2Div = (Mult * 6 *
-					((Dir == XVPHY_DIR_TX) ?
-					(InstancePtr->HdmiTxSampleRate) : 1));
-			}
-			/* Dual pixel. */
-			else if (Ppc == (XVIDC_PPC_2)) {
-				MmcmPtr->ClkOut2Div = (Mult * 3 *
-					((Dir == XVPHY_DIR_TX) ?
-					(InstancePtr->HdmiTxSampleRate) : 1));
-			}
-			/* Single pixel. */
-			else {
-				/* The clock ratio is 1.5 */
-				/* The PLL only supports integer values */
-				/* The mult must be dividable by two (2 * 1.5 = 3)
-					to get an integer number */
-				if ((Mult % 2) == 0) {
-					MmcmPtr->ClkOut2Div = (Mult * 3 / 2 *
+				/* Dual pixel. */
+				else if (Ppc == (XVIDC_PPC_2)) {
+					/* The clock ratio is 2.5 */
+					/* The PLL only supports integer values */
+					/* The MultDiv must be dividable by two (2 * 2.5 = 5)
+						to get an integer number */
+					if ((MultDiv % 2) == 0) {
+						MmcmPtr->ClkOut2Div = (MultDiv * 5 / 2 *
+							((Dir == XVPHY_DIR_TX)?
+							(InstancePtr->HdmiTxSampleRate) : 1));
+					}
+				}
+				/* Single pixel. */
+				else {
+					/* The clock ratio is 1.25 */
+					/* The PLL only supports integer values */
+					/* The MultDiv must be dividable by four (4 * 1.25 = 5)
+						to get an integer number */
+					if ((MultDiv % 4) == 0) {
+						MmcmPtr->ClkOut2Div = (MultDiv * 5 / 4 *
+							((Dir == XVPHY_DIR_TX) ?
+							(InstancePtr->HdmiTxSampleRate) : 1));
+					}
+				}
+				break;
+			case XVIDC_BPC_12:
+				/* Quad pixel. */
+				if (Ppc == (XVIDC_PPC_4)) {
+					MmcmPtr->ClkOut2Div = (MultDiv * 6 *
 						((Dir == XVPHY_DIR_TX) ?
 						(InstancePtr->HdmiTxSampleRate) : 1));
 				}
+				/* Dual pixel. */
+				else if (Ppc == (XVIDC_PPC_2)) {
+					MmcmPtr->ClkOut2Div = (MultDiv * 3 *
+						((Dir == XVPHY_DIR_TX) ?
+						(InstancePtr->HdmiTxSampleRate) : 1));
+				}
+				/* Single pixel. */
+				else {
+					/* The clock ratio is 1.5 */
+					/* The PLL only supports integer values */
+					/* The MultDiv must be dividable by two (2 * 1.5 = 3)
+						to get an integer number */
+					if ((MultDiv % 2) == 0) {
+						MmcmPtr->ClkOut2Div = (MultDiv * 3 / 2 *
+							((Dir == XVPHY_DIR_TX) ?
+							(InstancePtr->HdmiTxSampleRate) : 1));
+					}
+				}
+				break;
+			case XVIDC_BPC_16 :
+				/* Quad pixel. */
+				if (Ppc == (XVIDC_PPC_4)) {
+					MmcmPtr->ClkOut2Div = (MultDiv * 8 *
+						((Dir == XVPHY_DIR_TX) ?
+						(InstancePtr->HdmiTxSampleRate) : 1));
+				}
+				/* Dual pixel. */
+				else if (Ppc == (XVIDC_PPC_2)) {
+					MmcmPtr->ClkOut2Div = (MultDiv * 4 *
+						((Dir == XVPHY_DIR_TX) ?
+						(InstancePtr->HdmiTxSampleRate) : 1));
+				}
+				/* Single pixel. */
+				else {
+					MmcmPtr->ClkOut2Div = (MultDiv * 2 *
+						((Dir == XVPHY_DIR_TX) ?
+						(InstancePtr->HdmiTxSampleRate) : 1));
+				}
+				break;
+			case XVIDC_BPC_8:
+			default:
+				/* Quad pixel. */
+				if (Ppc == (XVIDC_PPC_4)) {
+					MmcmPtr->ClkOut2Div = (MultDiv * 4 *
+						((Dir == XVPHY_DIR_TX) ?
+						(InstancePtr->HdmiTxSampleRate) : 1));
+				}
+				/* Dual pixel. */
+				else if (Ppc == (XVIDC_PPC_2)) {
+					MmcmPtr->ClkOut2Div = (MultDiv * 2 *
+						((Dir == XVPHY_DIR_TX) ?
+						(InstancePtr->HdmiTxSampleRate) : 1));
+				}
+				/* Single pixel. */
+				else {
+					MmcmPtr->ClkOut2Div = (MultDiv *
+						((Dir == XVPHY_DIR_TX) ?
+						(InstancePtr->HdmiTxSampleRate) : 1));
+				}
+				break;
 			}
-			break;
-		case XVIDC_BPC_16 :
-			/* Quad pixel. */
-			if (Ppc == (XVIDC_PPC_4)) {
-				MmcmPtr->ClkOut2Div = (Mult * 8 *
-					((Dir == XVPHY_DIR_TX) ?
-					(InstancePtr->HdmiTxSampleRate) : 1));
-			}
-			/* Dual pixel. */
-			else if (Ppc == (XVIDC_PPC_2)) {
-				MmcmPtr->ClkOut2Div = (Mult * 4 *
-					((Dir == XVPHY_DIR_TX) ?
-					(InstancePtr->HdmiTxSampleRate) : 1));
-			}
-			/* Single pixel. */
-			else {
-				MmcmPtr->ClkOut2Div = (Mult * 2 *
-					((Dir == XVPHY_DIR_TX) ?
-					(InstancePtr->HdmiTxSampleRate) : 1));
-			}
-			break;
-		case XVIDC_BPC_8:
-		default:
-			/* Quad pixel. */
-			if (Ppc == (XVIDC_PPC_4)) {
-				MmcmPtr->ClkOut2Div = (Mult * 4 *
-					((Dir == XVPHY_DIR_TX) ?
-					(InstancePtr->HdmiTxSampleRate) : 1));
-			}
-			/* Dual pixel. */
-			else if (Ppc == (XVIDC_PPC_2)) {
-				MmcmPtr->ClkOut2Div = (Mult * 2 *
-					((Dir == XVPHY_DIR_TX) ?
-					(InstancePtr->HdmiTxSampleRate) : 1));
-			}
-			/* Single pixel. */
-			else {
-				MmcmPtr->ClkOut2Div = (Mult *
-					((Dir == XVPHY_DIR_TX) ?
-					(InstancePtr->HdmiTxSampleRate) : 1));
-			}
-			break;
-		}
 
-		/* Only do this when the ClkOut2Div has been set */
-		if (MmcmPtr->ClkOut2Div) {
-			if (Dir == XVPHY_DIR_RX) {
-				/* Correct divider value if TMDS clock ratio is 1/40. */
-				if (InstancePtr->HdmiRxTmdsClockRatio) {
+			/* Only do this when the ClkOut2Div has been set */
+			if (MmcmPtr->ClkOut2Div) {
+				if (Dir == XVPHY_DIR_RX) {
+					/* Correct divider value if TMDS clock ratio is 1/40. */
+					if (InstancePtr->HdmiRxTmdsClockRatio) {
+						if ((MmcmPtr->ClkOut2Div % 4) == 0) {
+							MmcmPtr->ClkOut2Div =
+								MmcmPtr->ClkOut2Div / 4;
+						}
+						/* Not divisible by 4: repeat loop with a lower
+						 * multiply value. */
+						else {
+							MmcmPtr->ClkOut2Div = 255;
+						}
+					}
+				}
+				/* TX. */
+				else if ((LineRate / 1000000) >= 3400) {
 					if ((MmcmPtr->ClkOut2Div % 4) == 0) {
 						MmcmPtr->ClkOut2Div =
 							MmcmPtr->ClkOut2Div / 4;
@@ -1255,56 +1346,50 @@ u32 XVphy_HdmiCfgCalcMmcmParam(XVphy *InstancePtr, u8 QuadId,
 					}
 				}
 			}
-			/* TX. */
-			else if ((LineRate / 1000000) >= 3400) {
-				if ((MmcmPtr->ClkOut2Div % 4) == 0) {
-					MmcmPtr->ClkOut2Div =
-						MmcmPtr->ClkOut2Div / 4;
-				}
-				/* Not divisible by 4: repeat loop with a lower
-				 * multiply value. */
-				else {
-					MmcmPtr->ClkOut2Div = 255;
-				}
-			}
-		}
 
-		/* Check values. */
-		if ((MmcmPtr->ClkOut0Div <= 128) &&
-				(MmcmPtr->ClkOut1Div <= 128) &&
-				(MmcmPtr->ClkOut2Div <= 128) &&
-				(MmcmPtr->ClkOut2Div > 0)) {
-			Valid = (TRUE);
-		}
-		else {
-			/* 4 pixels per clock. */
-			if (Ppc == (XVIDC_PPC_4)) {
-				/* Decrease Mult value. */
-				Mult -= 4;
+			/* Check values. */
+			if ((MmcmPtr->ClkOut0Div > 0) && (MmcmPtr->ClkOut0Div <= 128) &&
+				(MmcmPtr->ClkOut1Div > 0) && (MmcmPtr->ClkOut1Div <= 128) &&
+				(MmcmPtr->ClkOut2Div > 0) && (MmcmPtr->ClkOut2Div <= 128)) {
+				Valid = (TRUE);
 			}
-			/* 2 pixels per clock. */
-			else if (Ppc == (XVIDC_PPC_2)) {
-				/* Decrease M value. */
-				Mult -= 2;
-			}
-			/* 1 pixel per clock */
 			else {
-				/* Decrease M value */
-				Mult -= 1;
+				/* 4 pixels per clock. */
+				if (Ppc == (XVIDC_PPC_4)) {
+					/* Decrease Mult value. */
+					Mult -= 4;
+				}
+				/* 2 pixels per clock. */
+				else if (Ppc == (XVIDC_PPC_2)) {
+					/* Decrease M value. */
+					Mult -= 2;
+				}
+				/* 1 pixel per clock */
+				else {
+					/* Decrease M value */
+					Mult -= 1;
+				}
 			}
-		}
-	} while (!Valid);
+		} while (!Valid && (Mult > 0) && (Mult < 65));
+
+		/* Increment divider */
+		Div++;
+	} while (!Valid && (Div > 0) && (Div < 20));
 
 	if ((InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTPE2) &&
 			(((RefClk/1000)*(Mult/MmcmPtr->ClkOut2Div)) > 148500)) {
 		XVphy_LogWrite(InstancePtr, XVPHY_LOG_EVT_VDCLK_HIGH_ERR, 1);
+		XVphy_CfgErrIntr(InstancePtr, XVPHY_ERRIRQ_MMCM_CFG, 1);
 		return (XST_FAILURE);
 	}
 
 	if (Valid) {
+		XVphy_CfgErrIntr(InstancePtr, XVPHY_ERRIRQ_MMCM_CFG, 0);
 		return (XST_SUCCESS);
 	}
 	else {
+		XVphy_LogWrite(InstancePtr, XVPHY_LOG_EVT_MMCM_ERR, 1);
+		XVphy_CfgErrIntr(InstancePtr, XVPHY_ERRIRQ_MMCM_CFG, 1);
 		return (XST_FAILURE);
 	}
 }
@@ -1342,8 +1427,13 @@ u32 XVphy_HdmiQpllParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 	/* Suppress Warning Messages */
 	ChId = ChId;
 
+<<<<<<< HEAD
 	XVphy_SysClkDataSelType SysClkDataSel = 0;
 	XVphy_SysClkOutSelType SysClkOutSel = 0;
+=======
+	XVphy_SysClkDataSelType SysClkDataSel = (XVphy_SysClkDataSelType) 0;
+	XVphy_SysClkOutSelType SysClkOutSel = (XVphy_SysClkOutSelType) 0;
+>>>>>>> upstream/master
 	XVphy_ChannelId ActiveCmnId = XVPHY_CHANNEL_ID_CMN0;
 
 	u32 QpllRefClk;
@@ -1358,54 +1448,52 @@ u32 XVphy_HdmiQpllParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 		QpllRefClk = InstancePtr->HdmiTxRefClkHz;
 		RefClkPtr = &InstancePtr->HdmiTxRefClkHz;
 	}
-	if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTHE3) {
-		/* Determine which QPLL to use. */
-		if (((101875000 <= QpllRefClk) && (QpllRefClk <= 122500000)) ||
-			((203750000 <= QpllRefClk) &&
-				(QpllRefClk <= 245000000)) ||
-			((407000000 <= QpllRefClk) &&
-				(QpllRefClk <= 490000000))) {
-			SysClkDataSel = XVPHY_SYSCLKSELDATA_TYPE_QPLL1_OUTCLK;
-			SysClkOutSel = XVPHY_SYSCLKSELOUT_TYPE_QPLL1_REFCLK;
-			ActiveCmnId = XVPHY_CHANNEL_ID_CMN1;
-			QpllClkMin = (u32) XVPHY_HDMI_GTHE3_QPLL1_REFCLK_MIN;
-		}
-		else {
-			SysClkDataSel = XVPHY_SYSCLKSELDATA_TYPE_QPLL0_OUTCLK;
-			SysClkOutSel = XVPHY_SYSCLKSELOUT_TYPE_QPLL0_REFCLK;
-			ActiveCmnId = XVPHY_CHANNEL_ID_CMN0;
-			QpllClkMin = (u32) XVPHY_HDMI_GTHE3_QPLL0_REFCLK_MIN;
-		}
+
+#if (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE3)
+	/* Determine which QPLL to use. */
+	if (((101875000 <= QpllRefClk) && (QpllRefClk <= 122500000)) ||
+		((203750000 <= QpllRefClk) &&
+			(QpllRefClk <= 245000000)) ||
+		((407000000 <= QpllRefClk) &&
+			(QpllRefClk <= 490000000))) {
+		SysClkDataSel = XVPHY_SYSCLKSELDATA_TYPE_QPLL1_OUTCLK;
+		SysClkOutSel = XVPHY_SYSCLKSELOUT_TYPE_QPLL1_REFCLK;
+		ActiveCmnId = XVPHY_CHANNEL_ID_CMN1;
+		QpllClkMin = (u32) XVPHY_HDMI_GTHE3_QPLL1_REFCLK_MIN;
 	}
-	else if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTHE4) {
-		/* Determine which QPLL to use. */
-		if (((101875000 <= QpllRefClk) && (QpllRefClk <= 122500000)) ||
-		    ((203750000 <= QpllRefClk) && (QpllRefClk <= 245000000)) ||
-		    ((407000000 <= QpllRefClk) && (QpllRefClk <= 490000000))) {
-			SysClkDataSel = XVPHY_SYSCLKSELDATA_TYPE_QPLL1_OUTCLK;
-			SysClkOutSel = XVPHY_SYSCLKSELOUT_TYPE_QPLL1_REFCLK;
-			ActiveCmnId = XVPHY_CHANNEL_ID_CMN1;
-			QpllClkMin = (u32) XVPHY_HDMI_GTHE4_QPLL1_REFCLK_MIN;
-		}
-		else {
-			SysClkDataSel = XVPHY_SYSCLKSELDATA_TYPE_QPLL0_OUTCLK;
-			SysClkOutSel = XVPHY_SYSCLKSELOUT_TYPE_QPLL0_REFCLK;
-			ActiveCmnId = XVPHY_CHANNEL_ID_CMN0;
-			QpllClkMin = (u32) XVPHY_HDMI_GTHE4_QPLL0_REFCLK_MIN;
-		}
+	else {
+		SysClkDataSel = XVPHY_SYSCLKSELDATA_TYPE_QPLL0_OUTCLK;
+		SysClkOutSel = XVPHY_SYSCLKSELOUT_TYPE_QPLL0_REFCLK;
+		ActiveCmnId = XVPHY_CHANNEL_ID_CMN0;
+		QpllClkMin = (u32) XVPHY_HDMI_GTHE3_QPLL0_REFCLK_MIN;
 	}
-	else if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTHE2) {
-		SysClkDataSel = XVPHY_SYSCLKSELDATA_TYPE_QPLL_OUTCLK;
-		SysClkOutSel = XVPHY_SYSCLKSELOUT_TYPE_QPLL_REFCLK;
-		ActiveCmnId = XVPHY_CHANNEL_ID_CMN;
-		QpllClkMin = (GetGtHdmiPtr(InstancePtr))->Qpll0RefClkMin;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE4)
+	/* Determine which QPLL to use. */
+	if (((101875000 <= QpllRefClk) && (QpllRefClk <= 122500000)) ||
+		((203750000 <= QpllRefClk) && (QpllRefClk <= 245000000)) ||
+		((407000000 <= QpllRefClk) && (QpllRefClk <= 490000000))) {
+		SysClkDataSel = XVPHY_SYSCLKSELDATA_TYPE_QPLL1_OUTCLK;
+		SysClkOutSel = XVPHY_SYSCLKSELOUT_TYPE_QPLL1_REFCLK;
+		ActiveCmnId = XVPHY_CHANNEL_ID_CMN1;
+		QpllClkMin = (u32) XVPHY_HDMI_GTHE4_QPLL1_REFCLK_MIN;
 	}
-	else if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTXE2) {
-		SysClkDataSel = XVPHY_SYSCLKSELDATA_TYPE_QPLL_OUTCLK;
-		SysClkOutSel = XVPHY_SYSCLKSELOUT_TYPE_QPLL_REFCLK;
-		ActiveCmnId = XVPHY_CHANNEL_ID_CMN;
-		QpllClkMin = (GetGtHdmiPtr(InstancePtr))->Qpll0RefClkMin;
+	else {
+		SysClkDataSel = XVPHY_SYSCLKSELDATA_TYPE_QPLL0_OUTCLK;
+		SysClkOutSel = XVPHY_SYSCLKSELOUT_TYPE_QPLL0_REFCLK;
+		ActiveCmnId = XVPHY_CHANNEL_ID_CMN0;
+		QpllClkMin = (u32) XVPHY_HDMI_GTHE4_QPLL0_REFCLK_MIN;
 	}
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE2)
+	SysClkDataSel = XVPHY_SYSCLKSELDATA_TYPE_QPLL_OUTCLK;
+	SysClkOutSel = XVPHY_SYSCLKSELOUT_TYPE_QPLL_REFCLK;
+	ActiveCmnId = XVPHY_CHANNEL_ID_CMN;
+	QpllClkMin = (GetGtHdmiPtr(InstancePtr))->Qpll0RefClkMin;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTXE2)
+	SysClkDataSel = XVPHY_SYSCLKSELDATA_TYPE_QPLL_OUTCLK;
+	SysClkOutSel = XVPHY_SYSCLKSELOUT_TYPE_QPLL_REFCLK;
+	ActiveCmnId = XVPHY_CHANNEL_ID_CMN;
+	QpllClkMin = (GetGtHdmiPtr(InstancePtr))->Qpll0RefClkMin;
+#endif
 
 	/* Update QPLL clock selections. */
 	XVphy_CfgSysClkDataSel(InstancePtr, QuadId, Dir, SysClkDataSel);
@@ -1431,14 +1519,22 @@ u32 XVphy_HdmiQpllParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 			/* Clear DRU is enabled flag. */
 			InstancePtr->HdmiRxDruIsEnabled = 0;
 
-			/* Set RX data width to 40 and 4 bytes. */
+			/* Set RX data width. */
 			XVphy_Ch2Ids(InstancePtr, XVPHY_CHANNEL_ID_CHA,
 					&Id0, &Id1);
 			for (Id = Id0; Id <= Id1; Id++) {
-				InstancePtr->Quads[QuadId].Plls[
-					XVPHY_CH2IDX(Id)].RxDataWidth = 40;
-				InstancePtr->Quads[QuadId].Plls[
-					XVPHY_CH2IDX(Id)].RxIntDataWidth = 4;
+				if (InstancePtr->Config.TransceiverWidth == 2) {
+					InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+						RxDataWidth = 20;
+					InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+						RxIntDataWidth = 2;
+				}
+				else {
+					InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+						RxDataWidth = 40;
+					InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+						RxIntDataWidth = 4;
+				}
 			}
 
 		}
@@ -1471,6 +1567,7 @@ u32 XVphy_HdmiQpllParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 		}
 		else {
 			XVphy_LogWrite(InstancePtr, XVPHY_LOG_EVT_NO_DRU, 1);
+			XVphy_CfgErrIntr(InstancePtr, XVPHY_ERRIRQ_NO_DRU, 1);
 			return (XST_FAILURE);
 		}
 	}
@@ -1556,13 +1653,22 @@ u32 XVphy_HdmiQpllParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 				else if (SRValue > 1) {
 					XVphy_LogWrite(InstancePtr,
 							XVPHY_LOG_EVT_GT_PLL_LAYOUT, 1);
+					XVphy_CfgErrIntr(InstancePtr,
+							XVPHY_ERRIRQ_QPLL_CFG, 1);
 					return (XST_FAILURE);
 				}
 			}
+			if (Dir == XVPHY_DIR_RX) {
+			XVphy_CfgErrIntr(InstancePtr,
+					XVPHY_ERRIRQ_NO_DRU, 0);
+			}
+			XVphy_CfgErrIntr(InstancePtr,
+					XVPHY_ERRIRQ_QPLL_CFG, 0);
 			return (XST_SUCCESS);
 		}
 	}
 	XVphy_LogWrite(InstancePtr, XVPHY_LOG_EVT_GT_QPLL_CFG_ERR, 1);
+	XVphy_CfgErrIntr(InstancePtr, XVPHY_ERRIRQ_QPLL_CFG, 1);
 	return (XST_FAILURE);
 }
 
@@ -1655,22 +1761,22 @@ u32 XVphy_HdmiCpllParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 			/* Clear DRU is enabled flag. */
 			InstancePtr->HdmiRxDruIsEnabled = 0;
 
-			/* Set RX data width to 40 and 4 bytes. */
+			/* Set RX data width. */
 			XVphy_Ch2Ids(InstancePtr, XVPHY_CHANNEL_ID_CHA,
 					&Id0, &Id1);
 			for (Id = Id0; Id <= Id1; Id++) {
-				if (InstancePtr->Config.XcvrType !=
-						XVPHY_GT_TYPE_GTPE2) {
-					InstancePtr->Quads[QuadId].Plls[
-					XVPHY_CH2IDX(Id)].RxDataWidth = 40;
-					InstancePtr->Quads[QuadId].Plls[
-					XVPHY_CH2IDX(Id)].RxIntDataWidth = 4;
+				if ((InstancePtr->Config.TransceiverWidth == 2) ||
+					(InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTPE2)) {
+					InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+						RxDataWidth = 20;
+					InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+						RxIntDataWidth = 2;
 				}
 				else {
-					InstancePtr->Quads[QuadId].Plls[
-					XVPHY_CH2IDX(Id)].RxDataWidth = 20;
-					InstancePtr->Quads[QuadId].Plls[
-					XVPHY_CH2IDX(Id)].RxIntDataWidth = 2;
+					InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+						RxDataWidth = 40;
+					InstancePtr->Quads[QuadId].Plls[XVPHY_CH2IDX(Id)].
+						RxIntDataWidth = 4;
 				}
 			}
 
@@ -1683,7 +1789,13 @@ u32 XVphy_HdmiCpllParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
                 if (InstancePtr->HdmiRxTmdsClockRatio) {
                     XVphy_LogWrite(InstancePtr,
                         XVPHY_LOG_EVT_GT_CPLL_CFG_ERR, 1);
+<<<<<<< HEAD
                     return (XST_FAILURE);
+=======
+				XVphy_CfgErrIntr(InstancePtr,
+					XVPHY_ERRIRQ_CPLL_CFG, 1);
+				return (XST_FAILURE);
+>>>>>>> upstream/master
                 }
 
                 RefClk = XVphy_DruGetRefClkFreqHz(InstancePtr);
@@ -1702,7 +1814,7 @@ u32 XVphy_HdmiCpllParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 				/* Set DRU is enabled flag. */
 				InstancePtr->HdmiRxDruIsEnabled = 1;
 
-				/* Set RX data width to 40 and 4 bytes. */
+				/* Set RX data width. */
 				XVphy_Ch2Ids(InstancePtr, XVPHY_CHANNEL_ID_CHA,
 						&Id0, &Id1);
 				for (Id = Id0; Id <= Id1; Id++) {
@@ -1718,12 +1830,16 @@ u32 XVphy_HdmiCpllParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 						->DruLineRate) / 1000000)) {
 					XVphy_LogWrite(InstancePtr,
 							XVPHY_LOG_EVT_VD_NOT_SPRTD_ERR, 1);
-					return (XST_FAILURE);
+				XVphy_CfgErrIntr(InstancePtr,
+					XVPHY_ERRIRQ_CPLL_CFG, 1);
+				return (XST_FAILURE);
 				}
 			}
 			else {
 				XVphy_LogWrite(InstancePtr, XVPHY_LOG_EVT_NO_DRU, 1);
-				return (XST_FAILURE);
+			XVphy_CfgErrIntr(InstancePtr,
+					XVPHY_ERRIRQ_NO_DRU, 1);
+			return (XST_FAILURE);
 			}
 		}
 	}
@@ -1765,11 +1881,17 @@ u32 XVphy_HdmiCpllParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 
 				(*RefClkPtr) = (*RefClkPtr) * SRValue;
 			}
+			if (Dir == XVPHY_DIR_RX) {
+			XVphy_CfgErrIntr(InstancePtr,
+					XVPHY_ERRIRQ_NO_DRU, 0);
+			}
+			XVphy_CfgErrIntr(InstancePtr, XVPHY_ERRIRQ_CPLL_CFG, 0);
 			return (XST_SUCCESS);
 		}
 	}
 
 	XVphy_LogWrite(InstancePtr, XVPHY_LOG_EVT_GT_CPLL_CFG_ERR, 1);
+	XVphy_CfgErrIntr(InstancePtr, XVPHY_ERRIRQ_CPLL_CFG, 1);
 	return (XST_FAILURE);
 }
 
@@ -1854,10 +1976,12 @@ u32 XVphy_SetHdmiTxParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 
 	/* Is HDMITXSS PPC match with VPHY PPC? */
 	if (Ppc == InstancePtr->Config.Ppc) {
+		XVphy_CfgErrIntr(InstancePtr, XVPHY_ERRIRQ_VD_NOT_SPRTD, 0);
 		Status = (XST_SUCCESS);
 	}
 	else {
 		XVphy_LogWrite(InstancePtr, XVPHY_LOG_EVT_PPC_MSMTCH_ERR, 1);
+		XVphy_CfgErrIntr(InstancePtr, XVPHY_ERRIRQ_VD_NOT_SPRTD, 1);
 		Status = (XST_FAILURE);
 	}
 	if (Status == (XST_SUCCESS)) {
@@ -1900,6 +2024,8 @@ u32 XVphy_SetHdmiTxParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId,
 ******************************************************************************/
 u32 XVphy_SetHdmiRxParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId)
 {
+	XVphy_ChannelId ChanId = ChId;
+	XVphy_PllType PllType;
 	u32 Status;
 	u64 DruCenterFreq;
 	u8 Id, Id0, Id1;
@@ -1933,10 +2059,15 @@ u32 XVphy_SetHdmiRxParam(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId)
 		}
 	}
 
-
 	if (InstancePtr->HdmiRxDruIsEnabled) {
+		/* Determine PLL type. */
+		PllType = XVphy_GetPllType(InstancePtr, 0, XVPHY_DIR_RX,
+				XVPHY_CHANNEL_ID_CH1);
+		/* Update the ChId */
+		ChanId = XVphy_GetRcfgChId(InstancePtr, 0, XVPHY_DIR_RX, PllType);
+
 		DruCenterFreq = XVphy_DruCalcCenterFreqHz(InstancePtr, QuadId,
-						ChId);
+					ChanId);
 		XVphy_DruSetCenterFreqHz(InstancePtr, XVPHY_CHANNEL_ID_CHA,
 						DruCenterFreq);
 	}
@@ -2188,6 +2319,7 @@ void XVphy_HdmiDebugInfo(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId)
 	}
 }
 
+#if (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE3)
 static const XVphy_GtHdmiChars Gthe3HdmiChars = {
 	.DruLineRate = XVPHY_HDMI_GTHE3_DRU_LRATE,
 	.PllScale = XVPHY_HDMI_GTHE3_PLL_SCALE,
@@ -2201,6 +2333,7 @@ static const XVphy_GtHdmiChars Gthe3HdmiChars = {
 	.RxMmcmFvcoMin = XVPHY_HDMI_GTHE3_RX_MMCM_FVCO_MIN,
 	.RxMmcmFvcoMax = XVPHY_HDMI_GTHE3_RX_MMCM_FVCO_MAX,
 };
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE4)
 static const XVphy_GtHdmiChars Gthe4HdmiChars = {
 	.DruLineRate = XVPHY_HDMI_GTHE4_DRU_LRATE,
 	.PllScale = XVPHY_HDMI_GTHE4_PLL_SCALE,
@@ -2214,6 +2347,7 @@ static const XVphy_GtHdmiChars Gthe4HdmiChars = {
 	.RxMmcmFvcoMin = XVPHY_HDMI_GTHE4_RX_MMCM_FVCO_MIN,
 	.RxMmcmFvcoMax = XVPHY_HDMI_GTHE4_RX_MMCM_FVCO_MAX,
 };
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE2)
 static const XVphy_GtHdmiChars Gthe2HdmiChars = {
 	.DruLineRate = XVPHY_HDMI_GTHE2_DRU_LRATE,
 	.PllScale = XVPHY_HDMI_GTHE2_PLL_SCALE,
@@ -2227,6 +2361,7 @@ static const XVphy_GtHdmiChars Gthe2HdmiChars = {
 	.RxMmcmFvcoMin = XVPHY_HDMI_GTHE2_RX_MMCM_FVCO_MIN,
 	.RxMmcmFvcoMax = XVPHY_HDMI_GTHE2_RX_MMCM_FVCO_MAX,
 };
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTPE2)
 static const XVphy_GtHdmiChars Gtpe2HdmiChars = {
 	.DruLineRate = XVPHY_HDMI_GTPE2_DRU_LRATE,
 	.PllScale = XVPHY_HDMI_GTPE2_PLL_SCALE,
@@ -2240,6 +2375,7 @@ static const XVphy_GtHdmiChars Gtpe2HdmiChars = {
 	.RxMmcmFvcoMin = XVPHY_HDMI_GTPE2_RX_MMCM_FVCO_MIN,
 	.RxMmcmFvcoMax = XVPHY_HDMI_GTPE2_RX_MMCM_FVCO_MAX,
 };
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTXE2)
 static const XVphy_GtHdmiChars Gtxe2HdmiChars = {
 	.DruLineRate = XVPHY_HDMI_GTXE2_DRU_LRATE,
 	.PllScale = XVPHY_HDMI_GTXE2_PLL_SCALE,
@@ -2253,6 +2389,7 @@ static const XVphy_GtHdmiChars Gtxe2HdmiChars = {
 	.RxMmcmFvcoMin = XVPHY_HDMI_GTXE2_RX_MMCM_FVCO_MIN,
 	.RxMmcmFvcoMax = XVPHY_HDMI_GTXE2_RX_MMCM_FVCO_MAX,
 };
+#endif
 
 /*****************************************************************************/
 /**
@@ -2271,125 +2408,23 @@ static const XVphy_GtHdmiChars Gtxe2HdmiChars = {
 ******************************************************************************/
 static const XVphy_GtHdmiChars *GetGtHdmiPtr(XVphy *InstancePtr)
 {
-	if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTXE2) {
-		return &Gtxe2HdmiChars;
-	}
-	else if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTHE2) {
-		return &Gthe2HdmiChars;
-	}
-	else if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTPE2) {
-		return &Gtpe2HdmiChars;
-	}
-	else if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTHE3) {
-		return &Gthe3HdmiChars;
-	}
-	else if (InstancePtr->Config.XcvrType == XVPHY_GT_TYPE_GTHE4) {
-		return &Gthe4HdmiChars;
-	}
+	/* Suppress Warning Messages */
+	InstancePtr = InstancePtr;
+
+#if (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTXE2)
+	return &Gtxe2HdmiChars;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE2)
+	return &Gthe2HdmiChars;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTPE2)
+	return &Gtpe2HdmiChars;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE3)
+	return &Gthe3HdmiChars;
+#elif (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTHE4)
+	return &Gthe4HdmiChars;
+#endif
 
 	return NULL;
 }
 
-/*****************************************************************************/
-/**
-* This function will start the mixed-mode clock manager (MMCM) core.
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	QuadId is the GT quad ID to operate on.
-* @param	Dir is an indicator for TX or RX.
-*
-* @return	None.
-*
-* @note		None.
-*
-******************************************************************************/
-void XVphy_HdmiMmcmStart(XVphy *InstancePtr, u8 QuadId, XVphy_DirectionType Dir)
-{
-	/* Toggle MMCM reset. */
-	XVphy_MmcmReset(InstancePtr, QuadId, Dir, FALSE);
 
-	/* Configure MMCM. */
-	XVphy_HdmiMmcmWriteParameters(InstancePtr, QuadId, Dir);
-
-	/* Unmask the MMCM Lock */
-	XVphy_MmcmLockedMaskEnable(InstancePtr, 0, Dir, FALSE);
-
-	XVphy_LogWrite(InstancePtr, (Dir == XVPHY_DIR_TX) ?
-		XVPHY_LOG_EVT_TXPLL_RECONFIG : XVPHY_LOG_EVT_RXPLL_RECONFIG, 1);
-}
-
-/*****************************************************************************/
-/**
-* This function will write the mixed-mode clock manager (MMCM) values currently
-* stored in the driver's instance structure to hardware .
-*
-* @param	InstancePtr is a pointer to the XVphy core instance.
-* @param	QuadId is the GT quad ID to operate on.
-* @param	Dir is an indicator for TX or RX.
-*
-* @return
-*		- XST_SUCCESS if the MMCM write was successful.
-*		- XST_FAILURE otherwise, if the configuration success bit did
-*		  not go low.
-*
-* @note		None.
-*
-******************************************************************************/
-static u32 XVphy_HdmiMmcmWriteParameters(XVphy *InstancePtr, u8 QuadId,
-							XVphy_DirectionType Dir)
-{
-	u32 RegOffsetCtrl;
-	u32 RegOffsetClk;
-	u32 RegVal;
-	XVphy_Mmcm *MmcmParams;
-
-	if (Dir == XVPHY_DIR_TX) {
-		RegOffsetCtrl = XVPHY_MMCM_TXUSRCLK_CTRL_REG;
-		RegOffsetClk = XVPHY_MMCM_TXUSRCLK_REG1;
-	}
-	else {
-		RegOffsetCtrl = XVPHY_MMCM_RXUSRCLK_CTRL_REG;
-		RegOffsetClk = XVPHY_MMCM_RXUSRCLK_REG1;
-	}
-	MmcmParams = &InstancePtr->Quads[QuadId].Mmcm[Dir];
-
-	/* Check Parameters if has been Initialized */
-	if (!MmcmParams->DivClkDivide && !MmcmParams->ClkFbOutMult &&
-			!MmcmParams->ClkFbOutFrac && !MmcmParams->ClkOut0Frac &&
-			!MmcmParams->ClkOut0Div && !MmcmParams->ClkOut1Div &&
-			!MmcmParams->ClkOut2Div) {
-		return XST_FAILURE;
-	}
-
-	/* MMCM_[TX|RX]USRCLK_REG1 */
-	RegVal = MmcmParams->DivClkDivide;
-	RegVal |= (MmcmParams->ClkFbOutMult <<
-				XVPHY_MMCM_USRCLK_REG1_CLKFBOUT_MULT_SHIFT);
-	RegVal |= (MmcmParams->ClkFbOutFrac <<
-				XVPHY_MMCM_USRCLK_REG1_CLKFBOUT_FRAC_SHIFT);
-	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffsetClk, RegVal);
-
-	/* MMCM_[TX|RX]USRCLK_REG2 */
-	RegOffsetClk += 4;
-	RegVal = MmcmParams->ClkOut0Div;
-	RegVal |= (MmcmParams->ClkOut0Frac <<
-				XVPHY_MMCM_USRCLK_REG2_CLKOUT0_FRAC_SHIFT);
-	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffsetClk, RegVal);
-
-	/* MMCM_[TX|RX]USRCLK_REG3 */
-	RegOffsetClk += 4;
-	RegVal = MmcmParams->ClkOut1Div;
-	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffsetClk, RegVal);
-
-	/* MMCM_[TX|RX]USRCLK_REG4 */
-	RegOffsetClk += 4;
-	RegVal = MmcmParams->ClkOut2Div;
-	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffsetClk, RegVal);
-
-	/* Update the MMCM. */
-	RegVal = XVphy_ReadReg(InstancePtr->Config.BaseAddr, RegOffsetCtrl);
-	RegVal |= XVPHY_MMCM_USRCLK_CTRL_CFG_NEW_MASK;
-	XVphy_WriteReg(InstancePtr->Config.BaseAddr, RegOffsetCtrl, RegVal);
-
-	return XST_SUCCESS;
-}
+#endif

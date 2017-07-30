@@ -44,6 +44,7 @@
 * Ver   Who  Date     Changes
 * ----- ---- -------- -----------------------------------------------
 * 5.00  pkp  02/10/14 Initial version
+* 6.2   mus  01/27/17 Updated to support IAR compiler
 * </pre>
 *
 ******************************************************************************/
@@ -75,13 +76,11 @@ void Xpm_ResetEventCounters (void);
 /****************************************************************************/
 /**
 *
-* This function disables the Cortex R5 event counters.
+* @brief    This function disables the Cortex R5 event counters.
 *
 * @param	None.
 *
 * @return	None.
-*
-* @note		None.
 *
 *****************************************************************************/
 void Xpm_DisableEventCounters(void)
@@ -93,13 +92,11 @@ void Xpm_DisableEventCounters(void)
 /****************************************************************************/
 /**
 *
-* This function enables the Cortex R5 event counters.
+* @brief    This function enables the Cortex R5 event counters.
 *
 * @param	None.
 *
 * @return	None.
-*
-* @note		None.
 *
 *****************************************************************************/
 void Xpm_EnableEventCounters(void)
@@ -111,13 +108,11 @@ void Xpm_EnableEventCounters(void)
 /****************************************************************************/
 /**
 *
-* This function resets the Cortex R5 event counters.
+* @brief    This function resets the Cortex R5 event counters.
 *
 * @param	None.
 *
 * @return	None.
-*
-* @note		None.
 *
 *****************************************************************************/
 void Xpm_ResetEventCounters(void)
@@ -126,6 +121,8 @@ void Xpm_ResetEventCounters(void)
 
 #ifdef __GNUC__
 	Reg = mfcp(XREG_CP15_PERF_MONITOR_CTRL);
+#elif defined (__ICCARM__)
+    mfcp(XREG_CP15_PERF_MONITOR_CTRL, Reg);
 #else
 	{ register u32 C15Reg __asm(XREG_CP15_PERF_MONITOR_CTRL);
 	  Reg = C15Reg; }
@@ -137,16 +134,15 @@ void Xpm_ResetEventCounters(void)
 /****************************************************************************/
 /**
 *
-* This function configures the Cortex R5 event counters controller, with the
-* event codes, in a configuration selected by the user and enables the counters.
+* @brief    This function configures the Cortex R5 event counters controller,
+*           with the event codes, in a configuration selected by the user and
+*           enables the counters.
 *
-* @param	PmcrCfg is configuration value based on which the event counters
-*		are configured.
-*		Use XPM_CNTRCFG* values defined in xpm_counter.h.
+* @param	PmcrCfg: Configuration value based on which the event counters
+*		    are configured.XPM_CNTRCFG* values defined in xpm_counter.h can
+*		    be utilized for setting configuration
 *
 * @return	None.
-*
-* @note		None.
 *
 *****************************************************************************/
 void Xpm_SetEvents(s32 PmcrCfg)
@@ -262,15 +258,14 @@ void Xpm_SetEvents(s32 PmcrCfg)
 /****************************************************************************/
 /**
 *
-* This function disables the event counters and returns the counter values.
+* @brief    This function disables the event counters and returns the counter
+*           values.
 *
-* @param	PmCtrValue is a pointer to an array of type u32 PmCtrValue[6].
-*		It is an output parameter which is used to return the PM
-*		counter values.
+* @param	PmCtrValue: Pointer to an array of type u32 PmCtrValue[6].
+*		    It is an output parameter which is used to return the PM
+*		    counter values.
 *
 * @return	None.
-*
-* @note		None.
 *
 *****************************************************************************/
 void Xpm_GetEventCounters(u32 *PmCtrValue)
@@ -284,6 +279,8 @@ void Xpm_GetEventCounters(u32 *PmCtrValue)
 		mtcp(XREG_CP15_EVENT_CNTR_SEL, Counter);
 #ifdef __GNUC__
 		PmCtrValue[Counter] = mfcp(XREG_CP15_PERF_MONITOR_COUNT);
+#elif defined (__ICCARM__)
+        mfcp(XREG_CP15_PERF_MONITOR_COUNT, PmCtrValue[Counter]);
 #else
 		{ register u32 Cp15Reg __asm(XREG_CP15_PERF_MONITOR_COUNT);
 		  PmCtrValue[Counter] = Cp15Reg; }

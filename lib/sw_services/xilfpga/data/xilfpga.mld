@@ -34,7 +34,14 @@
 #
 # Ver   Who  Date     Changes
 # ----- ---- -------- -----------------------------------------------
-# 1.0   Nava 08/06/16 First release
+# 1.0   Nava  08/06/16 First release
+# 1.1   Nava  16/11/16 Added PL power-up sequence.
+# 2.0   Nava  10/1/17  Added Encrypted bitstream loading support.
+# 2.0   Nava  16/02/17 Added Authenticated bitstream loading support.
+# 2.1   Nava  06/05/17 Correct the check logic issues in
+# 		       XFpga_PL_BitStream_Load()
+# 		       to avoid the unwanted blocking conditions.
+#
 #
 ##############################################################################
 
@@ -43,12 +50,21 @@ OPTION psf_version = 2.1;
 BEGIN LIBRARY xilfpga
   OPTION drc = fpga_drc;
   OPTION copyfiles = all;
+<<<<<<< HEAD
   OPTION REQUIRES_OS = (standalone freertos823_xilinx);
   OPTION SUPPORTED_PERIPHERALS = (psu_cortexa53 psu_cortexr5 psu_pmu);
   OPTION APP_LINKER_FLAGS = "-Wl,--start-group,-lxilfpga,-lxil,-lgcc,-lc,--end-group";
   OPTION desc = "Xilinx fpga Library ";
+=======
+  OPTION REQUIRES_OS = (standalone freertos901_xilinx);
+  OPTION SUPPORTED_PERIPHERALS = (psu_cortexa53 psu_cortexr5 psu_pmu);
+  OPTION APP_LINKER_FLAGS = "-Wl,--start-group,-lxilfpga,-lxil,-lgcc,-lc,--end-group";
+  OPTION desc = "Xilinx fpga Library ";
+  OPTION VERSION = 2.1;
+>>>>>>> upstream/master
   OPTION NAME = xilfpga;
+PARAM name = secure_mode, desc = "Enable secure Bitstream loading support", type = bool, default = false;
 PARAM name = size, desc = "Number of Bytes", type = int, default = 100000, drc = drc_numbytes ;
+PARAM name = ocm_address, desc = "OCM Address", type = int, default = 0xfffc0000, drc = drc_ocm_address ;
 PARAM name = base_address, desc = "Base Address", type = int, default = 0x80000, drc = drc_base_address ;
-
 END LIBRARY

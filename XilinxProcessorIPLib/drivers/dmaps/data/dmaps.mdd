@@ -36,6 +36,10 @@ BEGIN driver dmaps
   OPTION supported_peripherals = (ps7_dma);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 2.3;
+>>>>>>> upstream/master
   OPTION NAME = dmaps;
   
 END driver

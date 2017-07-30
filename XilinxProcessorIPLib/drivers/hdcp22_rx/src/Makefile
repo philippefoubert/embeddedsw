@@ -1,7 +1,7 @@
 COMPILER=
 ARCHIVER=
 CP=cp
-COMPILER_FLAGS=
+COMPILER_FLAGS=-ffunction-sections -fdata-sections
 EXTRA_COMPILER_FLAGS= -Wall -Wextra
 LIB=libxil.a
 
@@ -13,7 +13,7 @@ INCLUDEFILES=*.h
 
 LIBSOURCES=*.c
 OUTS = *.o
-
+OBJECTS =	$(addsuffix .o, $(basename $(wildcard *.c)))
 
 libs:
 	echo "Compiling hdcp22_rx"
@@ -25,4 +25,4 @@ include:
 	 ${CP} ${INCLUDEFILES} ${INCLUDEDIR}
 
 clean:
-	rm -rf ${OUTS}
+	rm -rf ${OBJECTS}

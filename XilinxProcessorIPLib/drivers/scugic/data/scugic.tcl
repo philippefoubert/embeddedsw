@@ -51,6 +51,14 @@
 # 3.5	mus  14/10/16 Modified xdefine_gic_params and get_psu_interrupt_id
 #		      functions to get correct PL-PS interrupt IDs.Fix for the
 #                     CR#961257
+<<<<<<< HEAD
+=======
+# 3.6	pkp  01/22/17 Modified xdefine_zynq_canonical_xpars and
+#		      xdefine_zynq_include_file to add hypervisor guest
+#		      application support for cortex-a53 64bit mode
+# 3.7   ms   04/11/17 Modified tcl file to add U suffix for all macros
+#                     in xparameters.h
+>>>>>>> upstream/master
 ##############################################################################
 
 #uses "xillib.tcl"
@@ -107,11 +115,12 @@ proc xdefine_zynq_include_file {drv_handle file_name drv_string args} {
 
     # Handle special cases
     set arg "NUM_INSTANCES"
+	set uSuffix "U"
     set posn [lsearch -exact $args $arg]
     if {$posn > -1} {
 	puts $file_handle "/* Definitions for driver [string toupper [common::get_property NAME $drv_handle]] */"
 	# Define NUM_INSTANCES
-	puts $file_handle "#define [::hsi::utils::get_driver_param_name $drv_string $arg] [llength $periphs]"
+	puts $file_handle "#define [::hsi::utils::get_driver_param_name $drv_string $arg] [llength $periphs]$uSuffix"
 	set args [lreplace $args $posn $posn]
     }
     # Check if it is a driver parameter
@@ -122,12 +131,15 @@ proc xdefine_zynq_include_file {drv_handle file_name drv_string args} {
 	if {[llength $value] == 0} {
 	    lappend newargs $arg
 	} else {
-	    puts $file_handle "#define [::hsi::utils::get_driver_param_name $drv_string $arg] [common::get_property CONFIG.$arg $drv_handle]"
+	    puts $file_handle "#define [::hsi::utils::get_driver_param_name $drv_string $arg] [common::get_property CONFIG.$arg $drv_handle]$uSuffix"
 	}
     }
     set args $newargs
     # Print all parameters for all peripherals
     set device_id 0
+    set hypervisor_guest [common::get_property CONFIG.hypervisor_guest [get_os] ]
+    set procdrv [hsi::get_sw_processor]
+    set compiler [get_property CONFIG.compiler $procdrv]
     foreach periph $periphs {
 	puts $file_handle ""
 	puts $file_handle "/* Definitions for peripheral [string toupper [common::get_property NAME $periph]] */"
@@ -141,7 +153,11 @@ proc xdefine_zynq_include_file {drv_handle file_name drv_string args} {
 			} elseif {[string compare -nocase $proctype "ps7_cortexa9"] == 0} {
 				set value [common::get_property CONFIG.$arg $periph]
 			} else {
-				set value 0xF9020000
+				if { ($hypervisor_guest == "true") && ([string compare -nocase $compiler "arm-none-eabi-gcc"] != 0) } {
+                                     set value 0x03002000
+                                } else {
+                                     set value 0xF9020000
+                                }
 			}
 		} elseif {[string compare -nocase "C_S_AXI_HIGHADDR" $arg] == 0} {
 			if {[string compare -nocase $proctype "psu_cortexr5"] == 0} {
@@ -149,7 +165,11 @@ proc xdefine_zynq_include_file {drv_handle file_name drv_string args} {
 			} elseif {[string compare -nocase $proctype "ps7_cortexa9"] == 0} {
 				set value [common::get_property CONFIG.$arg $periph]
 			} else {
-				set value 0xF9020FFF
+                                if { ($hypervisor_guest == "true") && ([string compare -nocase $compiler "arm-none-eabi-gcc"] != 0) } {
+				   set value 0x03002FFF
+                                } else {
+                                     set value 0xF9020FFF
+                                }
 			}
 		   } elseif {[string compare -nocase "C_DIST_BASEADDR" $arg] == 0} {
 			if {[string compare -nocase $proctype "psu_cortexr5"] == 0} {
@@ -157,7 +177,11 @@ proc xdefine_zynq_include_file {drv_handle file_name drv_string args} {
 			} elseif {[string compare -nocase $proctype "ps7_cortexa9"] == 0} {
 				set value 0xf8f01000
 			} else {
-				set value 0xF9010000
+                                if { ($hypervisor_guest == "true") && ([string compare -nocase $compiler "arm-none-eabi-gcc"] != 0) } {
+				   set value 0x03001000
+                                } else {
+                                     set value 0xF9010000
+                                }
 			}
 		} else {
 			set value [common::get_property CONFIG.$arg $periph]
@@ -171,7 +195,7 @@ proc xdefine_zynq_include_file {drv_handle file_name drv_string args} {
 	    if {[string compare -nocase "HW_VER" $arg] == 0} {
                 puts $file_handle "#define $arg_name \"$value\""
 	    } else {
-                puts $file_handle "#define $arg_name $value"
+                puts $file_handle "#define $arg_name $value$uSuffix"
             }
 	}
 	puts $file_handle ""
@@ -198,6 +222,7 @@ proc xdefine_zynq_canonical_xpars {drv_handle file_name drv_string args} {
     set proctype [common::get_property IP_NAME $hw_proc_handle]
 
     set valid_periph 0
+	set uSuffix "U"
     #Get proper gic instance for periphs in case of zynqmp
     foreach periph $periphs {
 	if {([string compare -nocase $proctype "ps7_cortexa9"] == 0)||
@@ -237,6 +262,9 @@ proc xdefine_zynq_canonical_xpars {drv_handle file_name drv_string args} {
     }
 
     set i 0
+    set hypervisor_guest [common::get_property CONFIG.hypervisor_guest [get_os] ]
+    set procdrv [hsi::get_sw_processor]
+    set compiler [get_property CONFIG.compiler $procdrv]
     foreach periph $periphs {
         set periph_name [string toupper [common::get_property NAME $periph]]
 
@@ -261,7 +289,11 @@ proc xdefine_zynq_canonical_xpars {drv_handle file_name drv_string args} {
 			} elseif {[string compare -nocase $proctype "ps7_cortexa9"] == 0} {
 				set rvalue [common::get_property CONFIG.$arg $periph]
 			} else {
-				set rvalue 0xF9020000
+                                if { ($hypervisor_guest == "true") && ([string compare -nocase $compiler "arm-none-eabi-gcc"] != 0) } {
+                                     set rvalue 0x03002000
+                                } else {
+                                     set rvalue 0xF9020000
+                                }
 			}
 		} elseif {[string compare -nocase "C_S_AXI_HIGHADDR" $arg] == 0} {
 			if {[string compare -nocase $proctype "psu_cortexr5"] == 0} {
@@ -269,7 +301,11 @@ proc xdefine_zynq_canonical_xpars {drv_handle file_name drv_string args} {
 			} elseif {[string compare -nocase $proctype "ps7_cortexa9"] == 0} {
 				set rvalue [common::get_property CONFIG.$arg $periph]
 			} else {
-				set rvalue 0xF9020FFF
+                                if { ($hypervisor_guest == "true") && ([string compare -nocase $compiler "arm-none-eabi-gcc"] != 0) } {
+				   set rvalue 0x03002FFF
+                                } else {
+                                     set rvalue 0xF9020FFF
+                                }
 			}
 		} elseif {[string compare -nocase "C_DIST_BASEADDR" $arg] == 0} {
 			if {[string compare -nocase $proctype "psu_cortexr5"] == 0} {
@@ -277,7 +313,11 @@ proc xdefine_zynq_canonical_xpars {drv_handle file_name drv_string args} {
 			} elseif {[string compare -nocase $proctype "ps7_cortexa9"] == 0} {
 				set rvalue 0xf8f01000
 			} else {
-				set rvalue 0xF9010000
+                                if { ($hypervisor_guest == "true") && ([string compare -nocase $compiler "arm-none-eabi-gcc"] != 0) } {
+				   set rvalue 0x03001000
+                                } else {
+                                     set rvalue 0xF9010000
+                                }
 			}
 		} else {
 			set rvalue [common::get_property CONFIG.$arg $periph]
@@ -287,7 +327,7 @@ proc xdefine_zynq_canonical_xpars {drv_handle file_name drv_string args} {
 		}
 		set rvalue [::hsi::utils::format_addr_string $rvalue $arg]
 
-                puts $file_handle "#define $lvalue $rvalue"
+                puts $file_handle "#define $lvalue $rvalue$uSuffix"
 
             }
             puts $file_handle ""
@@ -316,7 +356,8 @@ proc xdefine_zynq_config_file {drv_handle file_name drv_string args} {
    puts $config_file "\n/*"
    puts $config_file "* The configuration table for devices"
    puts $config_file "*/\n"
-   puts $config_file [format "%s_Config %s_ConfigTable\[\] =" $drv_string $drv_string]
+   set num_insts [::hsi::utils::get_driver_param_name $drv_string "NUM_INSTANCES"]
+   puts $config_file [format "%s_Config %s_ConfigTable\[%s\] =" $drv_string $drv_string $num_insts]
    puts $config_file "\{"
    set periphs [::hsi::utils::get_common_driver_ips $drv_handle]
 
@@ -462,6 +503,7 @@ proc xdefine_gic_params {drvhandle} {
 
 
         puts $config_inc "/* Definitions for Fabric interrupts connected to $edk_periph_name */"
+		set uSuffix "U"
 		for {set i 0} {$i < $num_intr_inputs} {incr i} {
             set ip_name   $source_name($i)
             set port_name $source_port_name($i)
@@ -489,20 +531,35 @@ proc xdefine_gic_params {drvhandle} {
                 set j 0
                 foreach intr_id $port_intr_id {
                     if { [string compare -nocase $ip_name ""] } {
+<<<<<<< HEAD
                             puts $config_inc [format "#define XPAR_FABRIC_%s_%s_INTR %d" \
                             [string toupper $ip_name] [string toupper "${port_name}$j"] $intr_id ]
                     } else {
                             puts $config_inc [format "#define XPAR_FABRIC_%s_INTR %d" \
                             [string toupper "${port_name}$j"] $intr_id ]
+=======
+                            puts $config_inc [format "#define XPAR_FABRIC_%s_%s_INTR %d$uSuffix" \
+                            [string toupper $ip_name] [string toupper "${port_name}$j"] $intr_id ]
+                    } else {
+                            puts $config_inc [format "#define XPAR_FABRIC_%s_INTR %d$uSuffix" \
+                            [string toupper "${port_name}$j"] $intr_id  ]
+>>>>>>> upstream/master
                     }
                     incr j
                 }
             } else {
                 if { [string compare -nocase $ip_name ""] } {
+<<<<<<< HEAD
                          puts $config_inc [format "#define XPAR_FABRIC_%s_%s_INTR %d" \
                         [string toupper $ip_name] [string toupper $port_name] $port_intr_id]
                 } else {
                         puts $config_inc [format "#define XPAR_FABRIC_%s_INTR %d" \
+=======
+                         puts $config_inc [format "#define XPAR_FABRIC_%s_%s_INTR %d$uSuffix" \
+                        [string toupper $ip_name] [string toupper $port_name] $port_intr_id]
+                } else {
+                        puts $config_inc [format "#define XPAR_FABRIC_%s_INTR %d$uSuffix" \
+>>>>>>> upstream/master
                         [string toupper $port_name] $port_intr_id]
                 }
             }

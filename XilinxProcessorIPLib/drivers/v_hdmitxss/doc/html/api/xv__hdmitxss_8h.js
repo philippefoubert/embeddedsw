@@ -16,6 +16,7 @@ var xv__hdmitxss_8h =
       [ "XV_HDMITXSS_HANDLER_HDCP_DOWNSTREAM_TOPOLOGY_AVAILABLE", "xv__hdmitxss_8h.html#ab33aa43cac6faa5a98d29b2067fb8d0aa9f3a5f03672a15ac4c8cc34c0d8b39be", null ],
       [ "XV_HDMITXSS_HANDLER_HDCP_UNAUTHENTICATED", "xv__hdmitxss_8h.html#ab33aa43cac6faa5a98d29b2067fb8d0aa02b2e220136a6879a08ec7ccc7aefcb3", null ]
     ] ],
+<<<<<<< HEAD
     [ "XV_HdmiTxSs_HdcpContentStreamType", "xv__hdmitxss_8h.html#a2e6f081a0b990b8e7b4d3dcbb5647fca", [
       [ "XV_HDMITXSS_HDCP_STREAMTYPE_0", "xv__hdmitxss_8h.html#a2e6f081a0b990b8e7b4d3dcbb5647fcaa291b311e6be765c6ebb9f814f858bd98", null ],
       [ "XV_HDMITXSS_HDCP_STREAMTYPE_1", "xv__hdmitxss_8h.html#a2e6f081a0b990b8e7b4d3dcbb5647fcaa76b269cace803baa8424ce98d4214998", null ]
@@ -27,12 +28,17 @@ var xv__hdmitxss_8h =
       [ "XV_HDMITXSS_KEY_HDCP14_SRM", "xv__hdmitxss_8h.html#ab66a6785e3878f58015ccc0b0ce33310a9802acbe883dd0c8094b6f79f8c44c41", null ],
       [ "XV_HDMITXSS_KEY_INVALID", "xv__hdmitxss_8h.html#ab66a6785e3878f58015ccc0b0ce33310a45e9cfcccf56b980ecca2b58c6f54894", null ]
     ] ],
+=======
+>>>>>>> upstream/master
     [ "XV_HdmiTxSs_HdcpProtocol", "xv__hdmitxss_8h.html#ae5b01347d8bef95b2b6696a9df03715d", [
       [ "XV_HDMITXSS_HDCP_NONE", "xv__hdmitxss_8h.html#ae5b01347d8bef95b2b6696a9df03715daac8020e5cbc2a02efd15877b22572965", null ],
       [ "XV_HDMITXSS_HDCP_14", "xv__hdmitxss_8h.html#ae5b01347d8bef95b2b6696a9df03715da0ac9cbdc7d8cb2851d920930a376b0a3", null ],
       [ "XV_HDMITXSS_HDCP_22", "xv__hdmitxss_8h.html#ae5b01347d8bef95b2b6696a9df03715da1a1b397d94a578680e4ea043d82b82f2", null ]
     ] ],
+<<<<<<< HEAD
     [ "XV_HdmiTxSs_HdcpTopologyField", "xv__hdmitxss_8h.html#a29704976ad0ecff920d611e30e22a3d8", null ],
+=======
+>>>>>>> upstream/master
     [ "XV_HdmiTxSs_LogEvent", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923f", [
       [ "XV_HDMITXSS_LOG_EVT_NONE", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923fac813131aeec985f9950e3e043aec6dfb", null ],
       [ "XV_HDMITXSS_LOG_EVT_HDMITX_INIT", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923fa4f4316b36f2b9dd8ca8c690b85cf3d2a", null ],
@@ -46,6 +52,10 @@ var xv__hdmitxss_8h =
       [ "XV_HDMITXSS_LOG_EVT_STOP", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923faf0e0ed981aafee6c5024e790716f69ab", null ],
       [ "XV_HDMITXSS_LOG_EVT_RESET", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923faabc0081f0faac3c6a35b5f00bc333034", null ],
       [ "XV_HDMITXSS_LOG_EVT_CONNECT", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923fa21a658fbdda5fa3242ab9fce028ac989", null ],
+<<<<<<< HEAD
+=======
+      [ "XV_HDMITXSS_LOG_EVT_TOGGLE", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923fac3c88a5c3acdf6ea214db9c327be748f", null ],
+>>>>>>> upstream/master
       [ "XV_HDMITXSS_LOG_EVT_DISCONNECT", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923fa52b70a5c9223ccf7b7f010c33c369a01", null ],
       [ "XV_HDMITXSS_LOG_EVT_STREAMUP", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923fac562e56b76d0618dfc7b7c36882583cc", null ],
       [ "XV_HDMITXSS_LOG_EVT_STREAMDOWN", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923fabe81a44a5b299e84d20e2f64e48bf035", null ],
@@ -54,6 +64,11 @@ var xv__hdmitxss_8h =
       [ "XV_HDMITXSS_LOG_EVT_AUDIOMUTE", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923fa19e64376a7bc0d075b83973978edef13", null ],
       [ "XV_HDMITXSS_LOG_EVT_AUDIOUNMUTE", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923fa37b0da525fa11fcbf2c2b03f2218feab", null ],
       [ "XV_HDMITXSS_LOG_EVT_SETSTREAM", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923fa8fb637e23218a57370815d8e3bf545f4", null ],
+<<<<<<< HEAD
+=======
+      [ "XV_HDMITXSS_LOG_EVT_HDCP14_AUTHREQ", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923fae944cb76b310e5c8f7b62c75b6fd268e", null ],
+      [ "XV_HDMITXSS_LOG_EVT_HDCP22_AUTHREQ", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923fa6e7f95d49b59cb67f095b3fc4c018bdc", null ],
+>>>>>>> upstream/master
       [ "XV_HDMITXSS_LOG_EVT_DUMMY", "xv__hdmitxss_8h.html#aef570d7b5f53958b25121d5be8e6923faf3507fec8d35951f98bb567d793b2186", null ]
     ] ],
     [ "XV_HdmiTxSs_AudioMute", "xv__hdmitxss_8h.html#a7236081f867771f94ce80eb933e013be", null ],
@@ -73,6 +88,10 @@ var xv__hdmitxss_8h =
     [ "XV_HdmiTxSs_LogWrite", "xv__hdmitxss_8h.html#ad0c1b30d849344a197178cf8316fa9b3", null ],
     [ "XV_HdmiTxSs_LookupConfig", "group__v__hdmitxss.html#ga09aabd104fd037dd4f5213a9996fec91", null ],
     [ "XV_HdmiTxSs_ReadEdid", "xv__hdmitxss_8h.html#a0fba99b963ed0f3e1c54177d8813e75c", null ],
+<<<<<<< HEAD
+=======
+    [ "XV_HdmiTxSs_ReadEdidSegment", "xv__hdmitxss_8h.html#a0ef62fb92a37407f4f84a517ec57a29c", null ],
+>>>>>>> upstream/master
     [ "XV_HdmiTxSs_RefClockChangeInit", "xv__hdmitxss_8h.html#a9310ffcd6b9104fcfe7c7cb79fac75fc", null ],
     [ "XV_HdmiTxSs_ReportInfo", "xv__hdmitxss_8h.html#ada56eff6792a679e4819c2920c5a1417", null ],
     [ "XV_HdmiTxSs_Reset", "xv__hdmitxss_8h.html#abae6c5dd6d24770d6bfcf76f1208f8d7", null ],

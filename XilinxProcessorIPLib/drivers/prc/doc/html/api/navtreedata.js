@@ -13,7 +13,15 @@ var NAVTREE =
       [ "Functions", "globals_func.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xprc_selftest_example.c", "example.html#ex1", null ],
+      [ "xprc_example.c", "example.html#ex2", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

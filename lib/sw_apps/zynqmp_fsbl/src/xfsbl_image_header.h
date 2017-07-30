@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,15 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00  kc   10/21/13 Initial release
+* 2.0   bv   12/05/16 Made compliance to MISRAC 2012 guidelines
+*       vns  01/20/17 Added XIH_PH_ATTRB_VEC_LOCATION_MASK,
+*                     XIH_PH_ATTRB_DEST_CPU_PMU
+*                     XIH_PH_ATTRB_VEC_LOCATION_SHIFT masks and APIs
+*                     XFsbl_GetVectorLocation(), XFsbl_GetBlockSize()
+*                     Added Offsets of image header's Partition header,
+*                     AC, and SPKID and PPK select masks.
+*       bv   03/17/17 Modified XFsbl_ValidatePartitionHeader API to have
+*                     parameter for ResetType
 *
 * </pre>
 *
@@ -95,6 +104,7 @@ extern "C" {
 #define XIH_IHT_VERSION_OFFSET				(0x0U)
 #define XIH_IHT_NO_OF_PARTITONS_OFFSET			(0x4U)
 #define XIH_IHT_PH_ADDR_OFFSET	        		(0x8U)
+#define XIH_IHT_AC_OFFSET				(0x10U)
 #define XIH_IHT_PPD_OFFSET			        (0x14U)
 #define XIH_IHT_CHECKSUM_OFFSET				(0x3CU)
 
@@ -131,6 +141,8 @@ extern "C" {
 /**
  * Partition Attribute fields
  */
+#define XIH_PH_ATTRB_VEC_LOCATION_MASK		(0x800000U)
+#define XIH_PH_ATTR_BLOCK_SIZE_MASK		(0x700000U)
 #define XIH_PH_ATTRB_ENDIAN_MASK		(0x40000U)
 #define XIH_PH_ATTRB_PART_OWNER_MASK		(0x30000U)
 #define XIH_PH_ATTRB_RSA_SIGNATURE_MASK		(0x8000U)
@@ -153,26 +165,30 @@ extern "C" {
 #define XIH_PH_ATTRB_HASH_SHA3			(0x3000U)
 
 #define XIH_PH_ATTRB_DEST_CPU_NONE	(0x0000U)
-#define XIH_PH_ATTRB_DEST_CPU_A53_0	(0x0100U)
-#define XIH_PH_ATTRB_DEST_CPU_A53_1	(0x0200U)
-#define XIH_PH_ATTRB_DEST_CPU_A53_2	(0x0300U)
-#define XIH_PH_ATTRB_DEST_CPU_A53_3	(0x0400U)
-#define XIH_PH_ATTRB_DEST_CPU_R5_0	(0x0500U)
-#define XIH_PH_ATTRB_DEST_CPU_R5_1	(0x0600U)
-#define XIH_PH_ATTRB_DEST_CPU_R5_L	(0x0700U)
+#define XIH_PH_ATTRB_DEST_CPU_A53_0	(u32)(0x100U)
+#define XIH_PH_ATTRB_DEST_CPU_A53_1	(u32)(0x200U)
+#define XIH_PH_ATTRB_DEST_CPU_A53_2	(u32)(0x300U)
+#define XIH_PH_ATTRB_DEST_CPU_A53_3	(u32)(0x400U)
+#define XIH_PH_ATTRB_DEST_CPU_R5_0	(u32)(0x500U)
+#define XIH_PH_ATTRB_DEST_CPU_R5_1	(u32)(0x600U)
+#define XIH_PH_ATTRB_DEST_CPU_R5_L	(u32)(0x700U)
+#define XIH_PH_ATTRB_DEST_CPU_PMU	(u32)(0x800U)
 
-#define XIH_PH_ATTRB_ENCRYPTION		(0x0080U)
+#define XIH_PH_ATTRB_ENCRYPTION		(u32)(0x80U)
 
 
-#define XIH_PH_ATTRB_DEST_DEVICE_NONE	(0x0000U)
-#define XIH_PH_ATTRB_DEST_DEVICE_PS	(0x0010U)
-#define XIH_PH_ATTRB_DEST_DEVICE_PL	(0x0020U)
-#define XIH_PH_ATTRB_DEST_DEVICE_PMU	(0x0030U)
+#define XIH_PH_ATTRB_DEST_DEVICE_NONE	(u32)(0x0000U)
+#define XIH_PH_ATTRB_DEST_DEVICE_PS	(u32)(0x0010U)
+#define XIH_PH_ATTRB_DEST_DEVICE_PL	(u32)(0x0020U)
+#define XIH_PH_ATTRB_DEST_DEVICE_PMU	(u32)(0x0030U)
 
-#define XIH_PH_ATTRB_A53_EXEC_ST_AA32	(0x0008U)
-#define XIH_PH_ATTRB_A53_EXEC_ST_AA64	(0x0000U)
+#define XIH_PH_ATTRB_A53_EXEC_ST_AA32	(u32)(0x0008U)
+#define XIH_PH_ATTRB_A53_EXEC_ST_AA64	(u32)(0x0000U)
 
-#define XIH_INVALID_EXEC_ST	(0xFFFFU)
+#define XIH_AC_ATTRB_PPK_SELECT_MASK	(u32)(0x30000U)
+#define XIH_AC_SPKID_OFFSET		(u32)(0x04U)
+
+#define XIH_INVALID_EXEC_ST	(u32)(0xFFFFU)
 /**
  * Below is the bit mapping of fields in the ATF Handoff parameters
  * with that of Partition header. The number of bits shifted is
@@ -187,6 +203,8 @@ extern "C" {
  *	EL                    3:4                1:2                2 left
  *	CPU_A53               5:6                8:10
  */
+#define XIH_ATTRB_VECTOR_LOCATION_SHIFT		(23U)
+#define XIH_ATTRB_BLOCK_SIZE_SHIFT			(20U)
 #define XIH_ATTRB_A53_EXEC_ST_SHIFT_DIFF    (3U)
 #define XIH_ATTRB_ENDIAN_SHIFT_DIFF         (17U)
 #define XIH_ATTRB_TR_SECURE_SHIFT_DIFF      (2U)
@@ -194,13 +212,19 @@ extern "C" {
 
 
 #define XIH_PART_FLAGS_DEST_CPU_A53_MASK   	(0x60U)
-#define XIH_PART_FLAGS_DEST_CPU_A53_0   	(0x00U)
-#define XIH_PART_FLAGS_DEST_CPU_A53_1   	(0x20U)
-#define XIH_PART_FLAGS_DEST_CPU_A53_2   	(0x40U)
-#define XIH_PART_FLAGS_DEST_CPU_A53_3   	(0x60U)
+#define XIH_PART_FLAGS_DEST_CPU_A53_0   	(u32)(0x00U)
+#define XIH_PART_FLAGS_DEST_CPU_A53_1   	(u32)(0x20U)
+#define XIH_PART_FLAGS_DEST_CPU_A53_2   	(u32)(0x40U)
+#define XIH_PART_FLAGS_DEST_CPU_A53_3   	(u32)(0x60U)
 
 /* Number of entries possible in ATF: 4 cores * 2 (secure, nonsecure) */
-#define XFSBL_MAX_ENTRIES_FOR_ATF	8
+#define XFSBL_MAX_ENTRIES_FOR_ATF	8U
+
+/* BLOCK SIZE multiplier */
+#define XFSBL_MUL_MEGABYTES			(1024U * 1024U)
+
+/* Size of Image Header */
+#define XFSBL_SIZE_IMAGE_HDR		(0x1080)
 
 /**************************** Type Definitions *******************************/
 
@@ -213,7 +237,7 @@ typedef struct {
 	u32 NoOfPartitions; /**< No of partition present  */
 	u32 PartitionHeaderAddress; /**< Address to start of partition header*/
 	u32 Reserved_0xC; /**< Reserved */
-	u32 Reserved_0x10; /**< Reserved */
+	u32 AuthCertificateOffset; /** Authentication certificate address */
 	u32 PartitionPresentDevice;
 		/**< Partition present device for secondary boot modes*/
 	u32 Reserved[9]; /**< Reserved */
@@ -277,21 +301,23 @@ typedef struct {
 /***************** Macros (Inline Functions) Definitions *********************/
 
 /************************** Function Prototypes ******************************/
-u32 XFsbl_GetPartitionOwner(XFsblPs_PartitionHeader * PartitionHeader);
-u32 XFsbl_IsRsaSignaturePresent(XFsblPs_PartitionHeader * PartitionHeader);
+u32 XFsbl_GetPartitionOwner(const XFsblPs_PartitionHeader * PartitionHeader);
+u32 XFsbl_IsRsaSignaturePresent(const XFsblPs_PartitionHeader * PartitionHeader);
 u32 XFsbl_GetChecksumType(XFsblPs_PartitionHeader * PartitionHeader);
-u32 XFsbl_GetDestinationCpu(XFsblPs_PartitionHeader * PartitionHeader);
-u32 XFsbl_IsEncrypted(XFsblPs_PartitionHeader * PartitionHeader);
-u32 XFsbl_GetDestinationDevice(XFsblPs_PartitionHeader * PartitionHeader);
-u32 XFsbl_GetA53ExecState(XFsblPs_PartitionHeader * PartitionHeader);
+u32 XFsbl_GetDestinationCpu(const XFsblPs_PartitionHeader * PartitionHeader);
+u32 XFsbl_IsEncrypted(const XFsblPs_PartitionHeader * PartitionHeader);
+u32 XFsbl_GetDestinationDevice(const XFsblPs_PartitionHeader * PartitionHeader);
+u32 XFsbl_GetA53ExecState(const XFsblPs_PartitionHeader * PartitionHeader);
+u32 XFsbl_GetVectorLocation(const XFsblPs_PartitionHeader * PartitionHeader);
+u32 XFsbl_GetBlockSize(const XFsblPs_PartitionHeader * PartitionHeader);
 
 u32 XFsbl_ValidateChecksum(u32 Buffer[], u32 Length);
 u32 XFsbl_ReadImageHeader(XFsblPs_ImageHeader * ImageHeader,
-                  XFsblPs_DeviceOps * DeviceOps, u32 FlashImageOffsetAddress,
-                  u32 RunningCpu);
-u32 XFsbl_ValidateImageHeader(XFsblPs_ImageHeaderTable * ImageHeaderTable);
+                  const XFsblPs_DeviceOps * DeviceOps, u32 FlashImageOffsetAddress,
+				u32 RunningCpu, u32 ImageHeaderAddress);
+u32 XFsbl_ValidateImageHeader(const XFsblPs_ImageHeaderTable * ImageHeaderTable);
 u32 XFsbl_ValidatePartitionHeader(XFsblPs_PartitionHeader * PartitionHeader,
-			u32 RunningCpu);
+			u32 RunningCpu, u32 ResetType);
 
 #ifdef __cplusplus
 }

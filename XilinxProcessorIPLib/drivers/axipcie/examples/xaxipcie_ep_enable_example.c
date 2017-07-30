@@ -57,6 +57,12 @@
 * 1.00a rkv  03/07/11 Initial version based on PLB PCIE example
 * 2.00a rkv  10/19/11 Renamed function call XAxiPcie_GetRequestId to
 *		      XAxiPcie_GetRequesterId
+* 3.1   ms   01/23/17 Added xil_printf statement in main function to
+*                     ensure that "Successfully ran" and "Failed" strings
+*                     are available in all examples. This is a fix for
+*                     CR-965028.
+*       ms   04/05/17 Added tabspace for return statements in functions
+*                     for proper documentation while generating doxygen.
 *
 *</pre>
 *****************************************************************************/
@@ -66,6 +72,7 @@
 #include "xparameters.h"	/* Defines for XPAR constants */
 #include "xaxipcie.h"		/* XAxiPcie interface */
 #include "stdio.h"
+#include "xil_printf.h"
 
 /************************** Constant Definitions ****************************/
 
@@ -114,7 +121,8 @@ XAxiPcie XlnxEndPoint_0;
 *
 * @param	None
 *
-* @return 	- XST_SUCCESS if successful
+* @return
+*		- XST_SUCCESS if successful
 *		- XST_FAILURE if unsuccessful
 *
 * @note 	None.
@@ -129,9 +137,11 @@ int main(void)
 						XPAR_AXIPCIE_0_DEVICE_ID);
 
 	if (Status != XST_SUCCESS) {
+		xil_printf("Axipcie ep enable Example Failed\r\n");
 		return (XST_FAILURE);
 	}
 
+	xil_printf("Successfully ran Axipcie ep enable Example\r\n");
 	return(XST_SUCCESS);
 }
 
@@ -143,7 +153,8 @@ int main(void)
 *		structure represents an end point IP.
 * @param	DeviceId is AXI PCIe IP unique Device Id
 *
-* @return	- XST_SUCCESS if successful
+* @return
+*		- XST_SUCCESS if successful
 *		- XST_FAILURE if unsuccessful
 *
 * @note 	None.

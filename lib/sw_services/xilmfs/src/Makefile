@@ -52,7 +52,11 @@ INCLUDES=-I./. -I${INCLUDEDIR}
 
 MFS_DIR = .
 OUTS = *.o
+<<<<<<< HEAD
 
+=======
+OBJECTS =	$(addsuffix .o, $(basename $(wildcard *.c)))
+>>>>>>> upstream/master
 MFS_SRCS := $(wildcard *.c)
 MFS_OBJS = $(addprefix $(MFS_DIR)/, $(MFS_SRCS:%.c=%.o))
 
@@ -73,7 +77,11 @@ libxilmfs_includes:
 	${CP} ${INCLUDEFILES} ${INCLUDEDIR}
 
 clean:
+<<<<<<< HEAD
 	rm -rf $(MFS_DIR)/${OUTS}
+=======
+	rm -rf $(MFS_DIR)/${OBJECTS}
+>>>>>>> upstream/master
 	rm -rf ${RELEASEDIR}/${LIB}
 
 $(MFS_DIR)/%.o: $(MFS_DIR)/%.c $(INCLUDEFILES)

@@ -474,6 +474,25 @@
 * 		     interrupts are not connected.
 * 5.3  adk 05/10/16  Fixed CR#961152 PMU template firmware fails to compile on
 * 		     ZynqMP AXI-Ethernet designs.
+<<<<<<< HEAD
+=======
+* 5.4  adk 07/12/16  Added Support for TI PHY DP83867 changes are made in the
+* 		     examples xaxiethernet_example_util.c file.
+*       ms 01/23/17 Modified xil_printf statement in main function for all
+*            examples to ensure that "Successfully ran" and "Failed" strings
+*            are available in all examples. This is a fix for CR-965028.
+*	adk 03/09/17 Fixed CR#971367 fix race condition in the tcl
+*		     for a multi mac design(AXI_CONNECTED_TYPE defined for
+*		     only one instance)
+*       ms 03/17/17 Modified text file in examples folder for doxygen
+*                   generation.
+*       ms 04/05/17 Added tabspace for return statements in functions
+*                   of axiethernet examples for proper documentation while
+*                   generating doxygen.
+* 5.5	adk 19/05/17 Increase Timeout value in the driver as per new h/w update
+* 		     i.e. Increase of transceiver initialization times in
+* 		     ultrascale+ devices (CR#976244).
+>>>>>>> upstream/master
 * </pre>
 *
 ******************************************************************************/

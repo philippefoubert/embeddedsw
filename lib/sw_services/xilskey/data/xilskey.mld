@@ -54,8 +54,15 @@ OPTION psf_version = 2.1;
 
 BEGIN LIBRARY xilskey
   OPTION copyfiles = all;
+<<<<<<< HEAD
   OPTION REQUIRES_OS = (standalone freertos823_xilinx);
   OPTION APP_LINKER_FLAGS = "-Wl,--start-group,-lxilskey,-lxil,-lgcc,-lc,--end-group";
   OPTION desc = "Xilinx Secure Key Library ";
+=======
+  OPTION REQUIRES_OS = (standalone freertos901_xilinx);
+  OPTION APP_LINKER_FLAGS = "-Wl,--start-group,-lxilskey,-lxil,-lgcc,-lc,--end-group";
+  OPTION desc = "Xilinx Secure Key Library ";
+  OPTION VERSION = 6.2;
+>>>>>>> upstream/master
   OPTION NAME = xilskey;
 END LIBRARY

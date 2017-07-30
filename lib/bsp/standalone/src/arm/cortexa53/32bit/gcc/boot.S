@@ -33,8 +33,24 @@
 /**
 * @file boot.S
 *
-* This file contains the initial startup code for the Cortex A53 processor
-* in 32-bit mode
+* @addtogroup a53_32_boot_code Cortex A53 32bit Processor Boot Code
+* @{
+* <h2> boot.S </h2>
+* The boot code performs minimum configuration which is required for an
+* application to run starting from processor's reset state. Below is a
+* sequence illustrating what all configuration is performed before control
+* reaches to main function.
+*
+* 1. Program vector table base for exception handling
+* 2. Invalidate instruction cache, data cache and TLBs
+* 3. Program stack pointer for various modes (IRQ, FIQ, supervisor, undefine,
+*    abort, system)
+* 4. Program counter frequency
+* 5. Configure MMU with short descriptor translation table format and program
+*    base address of translation table
+* 6. Enable data cache, instruction cache and MMU
+* 7. Transfer control to _start which clears BSS sections and runs global
+*    constructor before jumping to main application
 *
 * <pre>
 * MODIFICATION HISTORY:
@@ -46,9 +62,6 @@
 * 6.0	pkp	07/25/16 Program the counter frequency
 * </pre>
 *
-* @note
-*
-* None.
 *
 ******************************************************************************/
 
@@ -167,6 +180,17 @@ OKToRun:
 	mov	r0,#0
 	mcr 	15,0,r0,c2,c0,2			/* N = 0 to use ttbr0 */
 
+        /* Write to ACTLR */
+	mrc p15, 0, r0, c1, c0, 1 /* Read ACTLR */
+	orr r0, r0, #(1 << 0)     /* Enable access to CPUECTLR */
+	orr r0, r0, #(1 << 1)
+	mcr p15, 0, r0, c1, c0, 1 /* Write ACTLR */
+
+       /* Write to CPUECTLR */
+	mrrc p15, 1, r0, r1, c15  /* Read CPUECTLR */
+	orr r0, r0, #(0x01 << 6)  /* Set SMPEN bit */
+	mcrr p15, 1, r0, r1, c15  /* Write CPUECTLR */
+
 	/* enable MMU and cache */
 	ldr	r0,=TblBase			/* Load MMU translation table base */
 	orr	r0, r0, #0x5B			/* Outer-cacheable, WB */
@@ -185,12 +209,6 @@ OKToRun:
 	dsb					/* dsb	allow the MMU to start up */
 	mcr	p15,0,r0,c1,c0,0		/* Enable cache and MMU */
 	isb					/* isb	flush prefetch buffer */
-
-	/* Write to ACTLR */
-	mrc	p15, 0, r0, c1, c0, 1		/* Read ACTLR*/
-	orr	r0, r0, #(0x01 << 6)		/* set SMP bit */
-	orr	r0, r0, #(0x01 )		/* */
-	mcr	p15, 0, r0, c1, c0, 1		/* Write ACTLR*/
 
 	mov	r0, r0
 	mrc	p15, 0, r1, c1, c0, 2		/* read cp access control register (CACR) into r1 */
@@ -273,3 +291,6 @@ finished:
 	bx	lr
 
 .end
+/**
+* @} End of "addtogroup a53_32_boot_code".
+*/

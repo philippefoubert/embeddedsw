@@ -27,6 +27,8 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*********************************************************************
  * This file contains implementation of the PM API functions, which
@@ -47,6 +49,12 @@
 #include "pm_system.h"
 #include "xilfpga_pcap.h"
 #include "pm_clock.h"
+#include "pm_requirement.h"
+#include "pm_config.h"
+#include "xpfw_platform.h"
+#include "xpfw_resets.h"
+#include "rpu.h"
+#include "xsecure.h"
 
 /**
  * PmProcessAckRequest() -Returns appropriate acknowledge if required
@@ -62,11 +70,14 @@ static void PmProcessAckRequest(const u32 ack,
 				const u32 status,
 				const u32 oppoint)
 {
+<<<<<<< HEAD
 #ifdef DEBUG_PM
 	if (status != XST_SUCCESS) {
 		PmDbg("ERROR PM operation failed - code %lu\r\n", status);
 	}
 #endif
+=======
+>>>>>>> upstream/master
 	if (REQUEST_ACK_BLOCKING == ack) {
 		/* Return status immediately */
 		IPI_RESPONSE1(master->ipiMask, status);
@@ -100,7 +111,12 @@ static void PmSelfSuspend(const PmMaster *const master,
 	/* the node ID must refer to a processor belonging to this master */
 	PmProc* proc = PmGetProcOfThisMaster(master, node);
 
+<<<<<<< HEAD
 	PmDbg("(%s, %lu, %lu)\r\n", PmStrNode(node), latency, state);
+=======
+	PmDbg("(%s, %lu, %lu, 0x%llx)\r\n", PmStrNode(node), latency, state,
+					   address);
+>>>>>>> upstream/master
 
 	if (NULL == proc) {
 		PmDbg("ERROR node ID %s(=%lu) does not refer to a processor of "
@@ -191,6 +207,12 @@ static void PmRequestSuspend(const PmMaster *const master,
 		goto done;
 	}
 
+	/* If target master cannot receive callback return failure */
+	if (false == PmMasterCanReceiveCb(target)) {
+		status = XST_FAILURE;
+		goto done;
+	}
+
 	/* Remember request info and init suspend */
 	target->suspendRequest.initiator = master;
 	target->suspendRequest.acknowledge = ack;
@@ -205,30 +227,29 @@ done:
 
 int PmForcePowerDownInt(u32 node, u32 *oppoint)
 {
+<<<<<<< HEAD
 	int status;
 	PmNode* nodePtr = PmGetNodeById(node);
 
 	PmDbg("(%s)\r\n", PmStrNode(node));
 
+=======
+	u32 oppoint = 0U;
+	int status;
+	PmNode* nodePtr = PmGetNodeById(node);
+
+>>>>>>> upstream/master
 	if (NULL == nodePtr) {
 		status = XST_INVALID_PARAM;
 		goto done;
 	}
 
-	switch (nodePtr->typeId) {
-	case PM_TYPE_PROC:
-		status = PmProcFsm((PmProc*)nodePtr->derived,
-				   PM_PROC_EVENT_FORCE_PWRDN);
-		break;
-	case PM_TYPE_PWR_ISLAND:
-	case PM_TYPE_PWR_DOMAIN:
-		status = PmForceDownTree((PmPower*)nodePtr->derived);
-		break;
-	default:
+	if (NODE_IS_SLAVE(nodePtr)) {
 		status = XST_INVALID_PARAM;
-		break;
+		goto done;
 	}
 
+<<<<<<< HEAD
 	*oppoint = nodePtr->currState;
 
 	/*
@@ -238,6 +259,19 @@ int PmForcePowerDownInt(u32 node, u32 *oppoint)
 	if ((XST_SUCCESS == status) && (NULL != nodePtr->parent)) {
 		PmOpportunisticSuspend(nodePtr->parent);
 	}
+=======
+	if (NODE_IS_POWER(nodePtr)) {
+		PmPower* power = (PmPower*)nodePtr->derived;
+		if (false == PmMasterCanForceDown(master, power)) {
+			status = XST_PM_NO_ACCESS;
+			goto done;
+		}
+	}
+
+	status = PmNodeForceDown(nodePtr);
+	oppoint = nodePtr->currState;
+
+>>>>>>> upstream/master
 done:
 	return status;
 }
@@ -307,20 +341,39 @@ static void PmRequestWakeup(const PmMaster *const master, const u32 node,
 {
 	int status;
 	u32 oppoint = 0U;
-	PmProc* proc = PmGetProcByNodeId(node);
+	PmProc* proc = PmNodeGetProc(node);
 
+<<<<<<< HEAD
 	PmDbg("(%s, %s)\r\n", PmStrNode(node), PmStrAck(ack));
+=======
+	PmDbg("(%s, %s, %lu, %llu, %lu)\r\n", PmStrNode(node), PmStrAck(ack),
+			setAddress, address, ack);
 
-	if (NULL == proc) {
+	if ((NULL == proc) || (NULL == proc->master)) {
+		PmDbg("ERROR: Invalid node argument %s\r\n", PmStrNode(node));
 		status = XST_PM_INVALID_NODE;
+		goto done;
+	}
+>>>>>>> upstream/master
+
+	if ((false == PmMasterCanRequestWake(master, proc->master)) &&
+	    (master != proc->master)) {
+		PmDbg("ERROR: No permission to wake-up %s\r\n", PmStrNode(node));
+		status = XST_PM_NO_ACCESS;
 		goto done;
 	}
 
 	if (1U == setAddress) {
 		proc->saveResumeAddr(proc, address);
+	} else {
+		if (false == PmProcHasResumeAddr(proc)) {
+			PmDbg("ERROR: missing address argument\r\n");
+			status = XST_INVALID_PARAM;
+			goto done;
+		}
 	}
 
-	status = PmProcFsm(proc, PM_PROC_EVENT_WAKE);
+	status = PmMasterWakeProc(proc);
 	oppoint = proc->node.currState;
 
 done:
@@ -340,21 +393,17 @@ static void PmReleaseNode(const PmMaster *master,
 	int status;
 	u32 usage;
 	PmRequirement* masterReq;
-	PmNode* nodePtr;
+	PmSlave* slave;
 
-	nodePtr = PmGetNodeById(node);
-	if (NULL == nodePtr) {
+	/* Check if node is slave. If it is, handle request via requirements */
+	slave = PmNodeGetSlave(node);
+	if (NULL == slave) {
 		status = XST_INVALID_PARAM;
 		goto done;
 	}
 
-	if (true == NODE_IS_POWER(nodePtr->typeId)) {
-		status = PmPowerRelease(master, (PmPower*)nodePtr->derived);
-		goto done;
-	}
-
 	/* Get static requirements structure for this master/slave pair */
-	masterReq = PmGetRequirementForSlave(master, node);
+	masterReq = PmRequirementGet(master, slave);
 
 	if (NULL == masterReq) {
 		status = XST_PM_NO_ACCESS;
@@ -363,7 +412,7 @@ static void PmReleaseNode(const PmMaster *master,
 		goto done;
 	}
 
-	if (0U == (masterReq->info & PM_MASTER_USING_SLAVE_MASK)) {
+	if (!MASTER_REQUESTED_SLAVE(masterReq)) {
 		status = XST_FAILURE;
 		PmDbg("WARNING %s attempt to release %s without previous "
 		      "request\r\n", PmStrNode(master->nid), PmStrNode(node));
@@ -371,8 +420,7 @@ static void PmReleaseNode(const PmMaster *master,
 	}
 
 	/* Release requirements */
-	status = PmRequirementUpdate(masterReq, 0U);
-	masterReq->info &= ~PM_MASTER_USING_SLAVE_MASK;
+	status = PmRequirementRelease(masterReq, RELEASE_ONE);
 
 	usage = PmSlaveGetUsersMask(masterReq->slave);
 	if (0U == usage) {
@@ -406,19 +454,15 @@ static void PmRequestNode(const PmMaster *master,
 	int status;
 	u32 oppoint = 0U;
 	PmRequirement* masterReq;
-	PmNode* nodePtr;
+	PmSlave* slave;
 
 	PmDbg("(%s, %lu, %lu, %s)\r\n", PmStrNode(node), capabilities,
 	      qos, PmStrAck(ack));
 
-	nodePtr = PmGetNodeById(node);
-	if (NULL == nodePtr) {
+	/* Check if node is slave. If it is, handle request via requirements */
+	slave = PmNodeGetSlave(node);
+	if (NULL == slave) {
 		status = XST_INVALID_PARAM;
-		goto done;
-	}
-
-	if (true == NODE_IS_POWER(nodePtr->typeId)) {
-		status = PmPowerRequest(master, (PmPower*)nodePtr->derived);
 		goto done;
 	}
 
@@ -427,7 +471,7 @@ static void PmRequestNode(const PmMaster *master,
 	 * structure. Retrieve the pointer to the structure in order to set the
 	 * requested capabilities and mark slave as used by this master.
 	 */
-	masterReq = PmGetRequirementForSlave(master, node);
+	masterReq = PmRequirementGet(master, slave);
 
 	if (NULL == masterReq) {
 		/* Master is not allowed to use the slave with given node */
@@ -436,8 +480,13 @@ static void PmRequestNode(const PmMaster *master,
 		goto done;
 	}
 
+<<<<<<< HEAD
 	if (0U != (PM_MASTER_USING_SLAVE_MASK & masterReq->info)) {
+=======
+	if (MASTER_REQUESTED_SLAVE(masterReq)) {
+>>>>>>> upstream/master
 		status = XST_PM_DOUBLE_REQ;
+		PmDbg("Warning %d: slave already requested\r\n", status);
 		goto done;
 	}
 
@@ -447,8 +496,7 @@ static void PmRequestNode(const PmMaster *master,
 	}
 
 	/* Set requested capabilities if they are valid */
-	masterReq->info |= PM_MASTER_USING_SLAVE_MASK;
-	status = PmRequirementUpdate(masterReq, capabilities);
+	status = PmRequirementRequest(masterReq, capabilities);
 
 done:
 	PmProcessAckRequest(ack, master, node, status, oppoint);
@@ -476,19 +524,27 @@ static void PmSetRequirement(const PmMaster *master,
 	int status;
 	u32 oppoint = 0U;
 	u32 caps = capabilities;
-	PmRequirement* masterReq = PmGetRequirementForSlave(master, node);
+	PmRequirement* masterReq;
+	PmSlave* slave = PmNodeGetSlave(node);
 
 	PmDbg("(%s, %lu, %lu, %s)\r\n", PmStrNode(node), capabilities,
 	      qos, PmStrAck(ack));
 
+	/* Set requirement call applies only to slaves */
+	if (NULL == slave) {
+		status = XST_INVALID_PARAM;
+		goto done;
+	}
+
 	/* Is there a provision for the master to use the given slave node */
+	masterReq = PmRequirementGet(master, slave);
 	if (NULL == masterReq) {
 		status = XST_PM_NO_ACCESS;
 		goto done;
 	}
 
 	/* Check if master has previously requested the node */
-	if (0U == (PM_MASTER_USING_SLAVE_MASK & masterReq->info)) {
+	if (!MASTER_REQUESTED_SLAVE(masterReq)) {
 		status = XST_PM_NO_ACCESS;
 		goto done;
 	}
@@ -633,6 +689,33 @@ static void PmFpgaLoad(const PmMaster *const master,
 }
 
 /**
+ * PmSecureRsaAes() - Load secure image.
+ * This function loads the secure images back to memory, it supports
+ * loading of authenticated, encrypted or both encrypted and
+ * authenticated images back to memory.
+ *
+ * AddrHigh: Higher 32-bit Linear memory space from where CSUDMA
+ *         will read the data
+ *
+ * AddrLow: Lower 32-bit Linear memory space from where CSUDMA
+ *         will read the data
+ *
+ * WrSize: Number of 32bit words that the DMA should write
+ *
+ * @return  error status based on implemented functionality(SUCCESS by default)
+ */
+static void PmSecureRsaAes(const PmMaster *const master,
+			const u32 AddrHigh, const u32 AddrLow,
+			const u32 size, const u32 flags)
+{
+	u32 Status;
+
+	Status = XSecure_RsaAes(AddrHigh, AddrLow, size, flags);
+
+	IPI_RESPONSE1(master->ipiMask, Status);
+}
+
+/**
  * PmFpgaGetStatus() - Get status of the PL-block
  * @master  Initiator of the request
  */
@@ -672,7 +755,8 @@ static void PmSetWakeupSource(const PmMaster *const master,
 			      const u32 enable)
 {
 	int status = XST_SUCCESS;
-	PmRequirement* req = PmGetRequirementForSlave(master, sourceNode);
+	PmRequirement* req;
+	PmSlave* slave = PmNodeGetSlave(sourceNode);
 
 	/* Check if given target node is valid */
 	if ((targetNode != master->nid) &&
@@ -681,6 +765,13 @@ static void PmSetWakeupSource(const PmMaster *const master,
 		goto done;
 	}
 
+	/* The call applies only to slave nodes */
+	if (NULL == slave) {
+		status = XST_INVALID_PARAM;
+		goto done;
+	}
+
+	req = PmRequirementGet(master, slave);
 	/* Is master allowed to use resource (slave)? */
 	if (NULL == req) {
 		status = XST_PM_NO_ACCESS;
@@ -700,9 +791,8 @@ static void PmSetWakeupSource(const PmMaster *const master,
 		req->info |= PM_MASTER_WAKEUP_REQ_MASK;
 	}
 
-	/* If master has its own GIC, call its setWake function */
-	if (NULL != req->master->gic) {
-		req->master->gic->setWake(req->slave, enable);
+	if (NULL != slave->wake) {
+		slave->wake->class->set(slave->wake, master->ipiMask, enable);
 	}
 
 done:
@@ -718,13 +808,18 @@ done:
  * @type    Shutdown type
  * @subtype Shutdown subtype
  */
+<<<<<<< HEAD
 static void PmSystemShutdown(const PmMaster *const master, const u32 type,
+=======
+static void PmSystemShutdown(PmMaster* const master, const u32 type,
+>>>>>>> upstream/master
 			     const u32 subtype)
 {
-	int status;
+	int status = XST_SUCCESS;
 
 	PmDbg("(%lu, %lu)\r\n", type, subtype);
 
+<<<<<<< HEAD
 	switch (subtype) {
 	case PMF_SHUTDOWN_SUBTYPE_SUBSYSTEM:
 		status = XST_NO_FEATURE;
@@ -752,6 +847,44 @@ static void PmSystemShutdown(const PmMaster *const master, const u32 type,
 		break;
 	}
 
+=======
+	/* For shutdown type the subtype is irrelevant: shut the caller down */
+	if (PMF_SHUTDOWN_TYPE_SHUTDOWN == type) {
+		status = PmMasterFsm(master, PM_MASTER_EVENT_FORCE_DOWN);
+		goto done;
+	}
+
+	if (PMF_SHUTDOWN_TYPE_RESET != type) {
+		status = XST_INVALID_PARAM;
+		goto done;
+	}
+
+	/* Now distinguish the restart scope depending on the subtype */
+	switch (subtype) {
+	case PMF_SHUTDOWN_SUBTYPE_SUBSYSTEM:
+		status = PmMasterRestart(master);
+		break;
+	case PMF_SHUTDOWN_SUBTYPE_PS_ONLY:
+		XPfw_ResetPsOnly();
+		break;
+	case PMF_SHUTDOWN_SUBTYPE_SYSTEM:
+		/* Bypass RPLL before SRST : Workaround for a bug in 1.0 Silicon */
+		if (XPfw_PlatformGetPsVersion() == XPFW_PLATFORM_PS_V1) {
+			XPfw_UtilRMW(CRL_APB_RPLL_CTRL, CRL_APB_RPLL_CTRL_BYPASS_MASK,
+					 CRL_APB_RPLL_CTRL_BYPASS_MASK);
+		}
+
+		XPfw_RMW32(CRL_APB_RESET_CTRL,
+			   CRL_APB_RESET_CTRL_SOFT_RESET_MASK,
+			   CRL_APB_RESET_CTRL_SOFT_RESET_MASK);
+		break;
+	default:
+		PmDbg("invalid subtype (%lx)\n", subtype);
+		status = XST_INVALID_PARAM;
+		break;
+	}
+
+>>>>>>> upstream/master
 done:
 	IPI_RESPONSE1(master->ipiMask, status);
 }
@@ -767,10 +900,17 @@ static void PmSetMaxLatency(const PmMaster *const master, const u32 node,
 			    const u32 latency)
 {
 	int status = XST_SUCCESS;
-	PmRequirement* masterReq = PmGetRequirementForSlave(master, node);
+	PmRequirement* masterReq;
+	PmSlave* slave = PmNodeGetSlave(node);
 
 	PmDbg("(%s, %lu)\r\n", PmStrNode(node), latency);
 
+	if (NULL == slave) {
+		status = XST_INVALID_PARAM;
+		goto done;
+	}
+
+	masterReq = PmRequirementGet(master, slave);
 	/* Check if the master can use given slave node */
 	if (NULL == masterReq) {
 		status = XST_PM_NO_ACCESS;
@@ -778,12 +918,13 @@ static void PmSetMaxLatency(const PmMaster *const master, const u32 node,
 	}
 
 	/* Check if master has previously requested the node */
-	if (0U == (PM_MASTER_USING_SLAVE_MASK & masterReq->info)) {
+	if (!MASTER_REQUESTED_SLAVE(masterReq)) {
 		status = XST_PM_NO_ACCESS;
 		goto done;
 	}
 
 	masterReq->latencyReq = latency;
+	masterReq->info |= PM_MASTER_SET_LATENCY_REQ;
 	status = PmUpdateSlave(masterReq->slave);
 
 done:
@@ -797,7 +938,96 @@ done:
  */
 static void PmSetConfiguration(const PmMaster *const master, const u32 address)
 {
+<<<<<<< HEAD
 	PmDbg("(0x%lx) %s: not implemented\r\n", address, PmStrNode(master->nid));
+=======
+	int status;
+	u32 configAddr = address;
+	u32 callerIpiMask = master->ipiMask;
+
+	PmDbg("(0x%lx) %s\r\n", address, PmStrNode(master->nid));
+
+	if (NULL != master->remapAddr) {
+		configAddr = master->remapAddr(address);
+	}
+
+	status = PmConfigLoadObject(configAddr, callerIpiMask);
+	/*
+	 * Respond using the saved IPI mask of the caller (master's IPI mask
+	 * may change after setting the configuration)
+	 */
+	IPI_RESPONSE1(callerIpiMask, status);
+}
+
+/**
+ * PmProcRpuForceDownFix() - Fix the state of RPU processor to be forced down
+ * @proc	RPU processor
+ */
+static void PmProcRpuForceDownFix(PmProc* const proc)
+{
+	if (NULL != proc->node.parent) {
+		if (0U != (NODE_LOCKED_POWER_FLAG & proc->node.flags)) {
+			PmPowerReleaseParent(&proc->node);
+		}
+	}
+	if (NULL != proc->node.clocks) {
+		if (0U != (NODE_LOCKED_CLOCK_FLAG & proc->node.flags)) {
+			PmClockRelease(&proc->node);
+		}
+	}
+	proc->node.currState = PM_PROC_STATE_FORCEDOFF;
+	proc->master->state = PM_MASTER_STATE_KILLED;
+}
+
+/**
+ * PmProbeRpuState() - Probe and update the state of RPU
+ *
+ * @note	The probe is performed only once
+ */
+static void PmProbeRpuState(void)
+{
+	static bool probed = false;
+	u32 halt0 = XPfw_Read32(RPU_RPU_0_CFG);
+	u32 reset = XPfw_Read32(CRL_APB_RST_LPD_TOP);
+	u32 mode = XPfw_Read32(RPU_RPU_GLBL_CNTL);
+
+	if (true == probed) {
+		goto done;
+	}
+
+	/* If reset is asserted or (deasserted and RPU_0 is halted) */
+	if ((0U != (reset & CRL_APB_RST_LPD_TOP_RPU_R50_RESET_MASK)) ||
+	   ((0U == (reset & CRL_APB_RST_LPD_TOP_RPU_R50_RESET_MASK)) &&
+	    (0U == (halt0 & RPU_RPU_0_CFG_NCPUHALT_MASK)))) {
+		PmProcRpuForceDownFix(&pmProcRpu0_g);
+	}
+
+	/* If RPU lockstep mode is configured in hardware */
+	if (0U == (mode & RPU_RPU_GLBL_CNTL_SLSPLIT_MASK)) {
+		if (NULL != pmProcRpu1_g.master) {
+			PmDbg("ERROR: expected split mode, found lockstep\r\n");
+			goto done;
+		}
+		pmProcRpu1_g.node.currState = PM_PROC_STATE_FORCEDOFF;
+	} else {
+		u32 halt1 = XPfw_Read32(RPU_RPU_1_CFG);
+
+		/* If reset is asserted or (deasserted and RPU_1 is halted) */
+		if ((0U != (reset & CRL_APB_RST_LPD_TOP_RPU_R51_RESET_MASK)) ||
+		   ((0U == (reset & CRL_APB_RST_LPD_TOP_RPU_R51_RESET_MASK)) &&
+		    (0U == (halt1 & RPU_RPU_1_CFG_NCPUHALT_MASK)))) {
+			if (NULL == pmProcRpu1_g.master) {
+				PmDbg("ERROR: expected lockstep, found split mode\r\n");
+				goto done;
+			}
+			PmProcRpuForceDownFix(&pmProcRpu1_g);
+		}
+	}
+	probed = true;
+
+done:
+	return;
+>>>>>>> upstream/master
 }
 
 /**
@@ -820,10 +1050,16 @@ static void PmGetNodeStatus(const PmMaster *const master, const u32 node)
 		goto done;
 	}
 
+	if ((NODE_RPU == node) || (NODE_RPU_0 == node) || (NODE_RPU_1 == node)) {
+		PmProbeRpuState();
+	}
+
 	oppoint = nodePtr->currState;
-	if (nodePtr->typeId >= PM_TYPE_SLAVE) {
-		currReq = PmSlaveGetRequirements(node, master);
-		usage = PmSlaveGetUsageStatus(node, master);
+	if (NODE_IS_SLAVE(nodePtr)) {
+		PmSlave* const slave = (PmSlave*)nodePtr->derived;
+
+		currReq = PmSlaveGetRequirements(slave, master);
+		usage = PmSlaveGetUsageStatus(slave, master);
 	}
 
 done:
@@ -851,13 +1087,21 @@ static void PmGetOpCharacteristics(const PmMaster *const master, const u32 node,
 
 	switch(type) {
 	case PM_OPCHAR_TYPE_POWER:
-		result = PmNodeGetPowerConsumption(nodePtr, nodePtr->currState);
+		if (NULL == nodePtr->class->getPowerData) {
+			status = XST_NO_FEATURE;
+			goto done;
+		}
+		status = nodePtr->class->getPowerData(nodePtr, &result);
 		break;
 	case PM_OPCHAR_TYPE_TEMP:
 		PmDbg("(%s) WARNING: Temperature unsupported\r\n", PmStrNode(node));
 		break;
 	case PM_OPCHAR_TYPE_LATENCY:
-		result = PmNodeGetWakeLatency(nodePtr);
+		if (NULL == nodePtr->class->getWakeUpLatency) {
+			status = XST_NO_FEATURE;
+			goto done;
+		}
+		status = nodePtr->class->getWakeUpLatency(nodePtr, &result);
 		break;
 	default:
 		PmDbg("(%s) ERROR: Invalid type: %lu\r\n", PmStrNode(node), type);
@@ -904,18 +1148,49 @@ done:
 }
 
 /**
- * PmInit() - Initialization of the power management data
+ * PmInitFinalize() - Notification from a master that it has initialized PM
  * @master  Initiator of the request
  */
-void PmInit(const PmMaster* const master)
+void PmInitFinalize(PmMaster* const master)
 {
+	int status;
+
+	PmDbg("(%s)\r\n", PmStrNode(master->nid));
+	status = PmMasterInitFinalize(master);
+	IPI_RESPONSE1(master->ipiMask, status);
+}
+
+/**
+ * PmApiApprovalCheck() - Check if the API ID can be processed at the moment
+ * @apiId	PM API ID
+ *
+ * @return	True if API can be processed, false otherwise
+ */
+static bool PmApiApprovalCheck(const u32 apiId)
+{
+<<<<<<< HEAD
 	PmDbg("\r\n");
+=======
+	bool approved = PmConfigObjectIsLoaded();
+>>>>>>> upstream/master
 
-	PmClockInitData();
-
-	if (NULL != master) {
-		IPI_RESPONSE1(master->ipiMask, XST_SUCCESS);
+	if (true == approved) {
+		goto done;
 	}
+
+	/* If the object is not loaded only APIs below can be processed */
+	switch (apiId) {
+	case PM_GET_API_VERSION:
+	case PM_GET_CHIPID:
+	case PM_SET_CONFIGURATION:
+		approved = true;
+		break;
+	default:
+		approved = false;
+	}
+
+done:
+	return approved;
 }
 
 /**
@@ -926,11 +1201,16 @@ void PmInit(const PmMaster* const master)
  *
  * @note    Payload arguments are checked and validated before calling this.
  */
-static void PmProcessApiCall(const PmMaster *const master, const u32 *pload)
+static void PmProcessApiCall(PmMaster *const master, const u32 *pload)
 {
 	u32 setAddress;
 	u64 address;
+	bool approved = PmApiApprovalCheck(pload[0]);
 
+	if (false == approved) {
+		IPI_RESPONSE1(master->ipiMask, XST_PM_NO_ACCESS);
+		goto done;
+	}
 	switch (pload[0]) {
 	case PM_SELF_SUSPEND:
 		address = ((u64) pload[5]) << 32ULL;
@@ -999,8 +1279,8 @@ static void PmProcessApiCall(const PmMaster *const master, const u32 *pload)
 	case PM_MMIO_READ:
 		PmMmioRead(master, pload[1]);
 		break;
-	case PM_INIT:
-		PmInit(master);
+	case PM_INIT_FINALIZE:
+		PmInitFinalize(master);
 		break;
 	case PM_FPGA_LOAD:
 		PmFpgaLoad(master, pload[1], pload[2], pload[3], pload[4]);
@@ -1011,12 +1291,20 @@ static void PmProcessApiCall(const PmMaster *const master, const u32 *pload)
 	case PM_GET_CHIPID:
 		PmGetChipid(master);
 		break;
+<<<<<<< HEAD
+=======
+	case PM_SECURE_RSA_AES:
+		PmSecureRsaAes(master, pload[1], pload[2], pload[3], pload[4]);
+		break;
+>>>>>>> upstream/master
 	default:
 		PmDbg("ERROR unsupported PM API #%lu\r\n", pload[0]);
 		PmProcessAckRequest(PmRequestAcknowledge(pload), master,
 				    NODE_UNKNOWN, XST_INVALID_VERSION, 0);
 		break;
 	}
+done:
+	return;
 }
 
 /**
@@ -1028,7 +1316,7 @@ static void PmProcessApiCall(const PmMaster *const master, const u32 *pload)
  * @note    Called to process PM API call. If specific PM API receives less
  *          than 4 arguments, extra arguments are ignored.
  */
-void PmProcessRequest(const PmMaster *const master, const u32 *pload)
+void PmProcessRequest(PmMaster *const master, const u32 *pload)
 {
 	PmPayloadStatus status = PmCheckPayload(pload);
 
@@ -1045,3 +1333,5 @@ void PmProcessRequest(const PmMaster *const master, const u32 *pload)
 		}
 	}
 }
+
+#endif

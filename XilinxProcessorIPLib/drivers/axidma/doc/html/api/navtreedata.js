@@ -14,7 +14,20 @@ var NAVTREE =
       [ "Typedefs", "globals_type.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xaxidma_example_selftest.c", "example.html#ex1", null ],
+      [ "xaxidma_example_sg_intr.c", "example.html#ex2", null ],
+      [ "xaxidma_example_sg_poll.c", "example.html#ex3", null ],
+      [ "xaxidma_example_simple_intr.c", "example.html#ex4", null ],
+      [ "xaxidma_example_simple_poll.c", "example.html#ex5", null ],
+      [ "xaxidma_multichan_sg_intr.c", "example.html#ex6", null ],
+      [ "xaxidma_poll_multi_pkts.c", "example.html#ex7", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

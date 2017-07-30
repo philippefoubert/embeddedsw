@@ -49,6 +49,7 @@
  *       rc
  * 2.0   als  08/14/15 Added new video timings.
  * 2.1   als  11/04/15 Fixed video timings for some resolutions.
+ *       rco  02/09/17 Fix c++ compilation warnings
  * </pre>
  *
 *******************************************************************************/
@@ -83,6 +84,9 @@
  *    15) Frame 1: Vertical total (lines)
  *    16) Vertical sync polarity (0=negative|1=positive)
  */
+#ifdef __cplusplus
+extern "C"
+#endif
 const XVidC_VideoTimingMode XVidC_VideoTimingModes[XVIDC_VM_NUM_SUPPORTED] =
 {
 	/* Interlaced modes. */
@@ -417,7 +421,7 @@ const XVidC_VideoTimingMode XVidC_VideoTimingModes[XVIDC_VM_NUM_SUPPORTED] =
 		2160, 8, 10, 72, 2250, 0, 0, 0, 0, 1} },
 	{ XVIDC_VM_3840x2160_30_P, "3840x2160@30Hz", XVIDC_FR_30HZ,
 		{3840, 176, 88, 296, 4400, 1,
-		2160, 20, 10, 60, 2250, 0, 0, 0, 0, 1} },
+		2160, 8, 10, 72, 2250, 0, 0, 0, 0, 1} },
 	{ XVIDC_VM_3840x2160_50_P, "3840x2160@50Hz", XVIDC_FR_50HZ,
 		{3840, 1056, 88, 296, 5280, 1,
 		2160, 8, 10, 72, 2250, 0, 0, 0, 0, 1} },
@@ -443,4 +447,5 @@ const XVidC_VideoTimingMode XVidC_VideoTimingModes[XVIDC_VM_NUM_SUPPORTED] =
 		{4096, 8, 32, 40, 4176, 1,
 		2160, 48, 8, 6, 2222, 0, 0, 0, 0, 0} },
 };
+
 /** @} */

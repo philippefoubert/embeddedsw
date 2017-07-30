@@ -27,13 +27,14 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*********************************************************************
  * Power nodes (power islands and power domains) related structures,
  * transition actions, and FSM definition.
  *********************************************************************/
 
-#include <sleep.h>
 #include "pm_power.h"
 #include "pm_common.h"
 #include "pm_proc.h"
@@ -50,6 +51,145 @@
 #include "apu.h"
 #include "pm_clock.h"
 #include "rpu.h"
+<<<<<<< HEAD
+=======
+#include "xpfw_util.h"
+#include "pm_gpp.h"
+#include "xpfw_aib.h"
+
+#define DEFINE_PM_POWER_CHILDREN(c)	.children = (c), \
+					.childCnt = ARRAY_SIZE(c)
+
+#define PM_POWER_SUPPLYCHECK_TIMEOUT	100000U
+
+/**
+ * PmPowerStack() - Used to construct stack for implementing non-recursive
+ *		depth-first search in power graph
+ * @power	Power node pushed/popped from stack
+ * @index	Index of the child to be visited when the power node gets popped
+ */
+typedef struct PmPowerStack {
+	PmPower* power;
+	u8 index;
+} PmPowerStack;
+
+/**
+ * PmPowerDfs() - Captures current state of depth-first search in power graph
+ * @power	Currently visited power node
+ * @it		Iterator/index of the power's child that is currently visited
+ * @sp		Power stack pointer
+ */
+typedef struct PmPowerDfs {
+	PmPower* power;
+	u8 it;
+	u8 sp;
+} PmPowerDfs;
+
+/*
+ * Stack size is equal to the number of levels in power hierarchy. Power
+ * hierarchy has only 2 levels: power islands and domains, therefore the stack
+ * size is 2. If this changes in future the stack size should be incremented.
+ */
+static PmPowerStack pmPowerStack[2];
+static PmPowerDfs pmDfs;
+
+/**
+ * PmPowerStackPush() - Push power/index on stack
+ * @power	Power node pushed on stack
+ * @index	Index of a child which should be visited upon pop
+ */
+void PmPowerStackPush(PmPower* const power, const u8 index)
+{
+	/* Stack overflow should never happen */
+	if (ARRAY_SIZE(pmPowerStack) == pmDfs.sp) {
+		PmDbg("ERROR: stack overflow!\r\n");
+		goto done;
+	}
+	pmPowerStack[pmDfs.sp].power = power;
+	pmPowerStack[pmDfs.sp].index = index;
+	pmDfs.sp++;
+done:
+	return;
+}
+
+/**
+ * PmPowerStackPop() - Pop power/index from stack
+ * @power	Pointer to the location where to store popped power node pointer
+ * @index	Pointer to the location where to store popped index
+ */
+void PmPowerStackPop(PmPower** const power, u8* const index)
+{
+	if (0U == pmDfs.sp) {
+		/* This should never happen */
+		PmDbg("ERROR: empty stack!\r\n");
+		goto done;
+	}
+	pmDfs.sp--;
+	*power = pmPowerStack[pmDfs.sp].power;
+	*index = pmPowerStack[pmDfs.sp].index;
+
+	/* Clearing is not needed, but it's nice for debugging */
+	(void)memset(&pmPowerStack[pmDfs.sp], 0U, sizeof(PmPowerStack));
+
+done:
+	return;
+}
+
+/**
+ * PmPowerStackIsEmpty() - Check if power stack is empty
+ * @return	True if empty, false otherwise
+ */
+static inline bool PmPowerStackIsEmpty(void)
+{
+	return 0U == pmDfs.sp;
+}
+
+/**
+ * PmPowerDfsBegin() - Prepare for the power graph search
+ * @power	Power node which is the root of the searched graph
+ */
+static void PmPowerDfsBegin(PmPower* const power)
+{
+	/* Clearing stack is not needed, but it's nice for debugging */
+	(void)memset(pmPowerStack, 0U, sizeof(pmPowerStack));
+	pmDfs.sp = 0U;
+	pmDfs.it = 0U;
+	pmDfs.power = NULL;
+	PmPowerStackPush(power, 0U);
+}
+
+/**
+ * PmPowerDfsGetNext() - Get next node (DFS)
+ * @return	Pointer to the next node or NULL if all nodes are visited
+ */
+static PmNode* PmPowerDfsGetNext(void)
+{
+	PmNode* node = NULL;
+
+	while ((NULL != pmDfs.power) || (false == PmPowerStackIsEmpty())) {
+		if (NULL == pmDfs.power) {
+			PmPowerStackPop(&pmDfs.power, &pmDfs.it);
+		}
+		if (pmDfs.power->childCnt == pmDfs.it) {
+			node = &pmDfs.power->node;
+			pmDfs.power = NULL;
+			goto done;
+		}
+		if (NODE_IS_POWER(pmDfs.power->children[pmDfs.it])) {
+			PmPowerStackPush(pmDfs.power, pmDfs.it + 1U);
+			PmPowerStackPush(pmDfs.power->children[pmDfs.it]->derived, 0U);
+			pmDfs.power = NULL;
+		} else {
+			node = pmDfs.power->children[pmDfs.it];
+			pmDfs.it++;
+			goto done;
+		}
+	}
+
+done:
+	return node;
+}
+>>>>>>> upstream/master
 
 #define DEFINE_PM_POWER_CHILDREN(c)	.children = (c), \
 					.childCnt = ARRAY_SIZE(c)
@@ -58,7 +198,8 @@
 				.powerInfoCnt = ARRAY_SIZE(i)
 /*
  * Note: PLL registers will never be saved/restored as part of CRF_APB module
- * context. PLLs have separate logic, which is part of PmSlavePll (pm_pll.h/c)
+ * context. PLLs have separate logic, which is part of the PLL management
+ * (see pm_pll.h/c)
  */
 static PmRegisterContext pmFpdContext[] = {
 	{ .addr = CRF_APB_ERR_CTRL },
@@ -82,6 +223,47 @@ static PmRegisterContext pmFpdContext[] = {
 	{ .addr = CRF_APB_RST_FPD_TOP },
 	{ .addr = CRF_APB_RST_FPD_APU },
 	{ .addr = APU_PWRCTL },
+};
+
+/**
+ * PmPowerSupplyCheck() - Wrapper for PMU-ROM power supply check handler
+ * @RomHandler  Default PMU-ROM handler for power supply check
+ *
+ * @return      The PMU-ROM handler's return value
+ *
+ * @note        The wrapper just introduces a timeout based on counting.
+ *              This function should be replaced by either Sysmon-based check
+ *              or custom/board specific implementation.
+ */
+static u32 PmPowerSupplyCheck(XpbrServHndlr_t RomHandler)
+{
+	int status;
+	u32 var = 0U;
+
+	/* Cheat compiler to not optimize timeout based on counting */
+	XPfw_UtilPollForMask((u32)&var, ~var, PM_POWER_SUPPLYCHECK_TIMEOUT);
+
+	status = RomHandler();
+
+	return status;
+}
+
+ /*
+ * PmPowerDomainConstruct() - Constructor method to call for power domain node
+ * @power	Power node of a domain
+ */
+static void PmPowerDomainConstruct(PmPower* const power)
+{
+	PmPowerDomain* pd = (PmPowerDomain*)power->node.derived;
+
+	if (NULL != pd->supplyCheckHook) {
+		XpbrServExtTbl[pd->supplyCheckHookId] = pd->supplyCheckHook;
+	}
+}
+
+static PmPowerClass pmPowerClassDomain_g = {
+	.construct = PmPowerDomainConstruct,
+	.forceDown = NULL,
 };
 
 /**
@@ -110,47 +292,6 @@ static void PmFpdRestoreContext(void)
 }
 
 /**
- * PmUserHookPowerGood - Check power supply
- * @node	Node associated with supply rail
- * @power	Indicating transition to on (!=0) or off (==0)
- *
- * This function can check/wait for @supply to be stable at @power.
- *
- * @return	XST_SUCCESS or an error code.
- */
-#pragma weak PmUserHookPowerGood
-int PmUserHookPowerGood(unsigned int node, bool power)
-{
-	/* give time for supplies to settle on power up */
-	if (power) {
-		sleep(1);
-	}
-
-	return XST_SUCCESS;
-}
-
-/**
- * PmUserHookPowerDownFpd - Power down FPD
- *
- * This function powers down the FP supply.
- *
- * @return	XST_SUCCESS or an error code.
- */
-#pragma weak PmUserHookPowerDownFpd
-int PmUserHookPowerDownFpd(void)
-{
-	int status = XpbrPwrDnFpdHandler();
-	if (XST_SUCCESS != status) {
-		goto err;
-	}
-
-	status = PmUserHookPowerGood(NODE_FPD, 0);
-
-err:
-	return status;
-}
-
-/**
  * PmPowerDownFpd() - Power down FPD domain
  *
  * @return      Status of the pmu-rom operations
@@ -159,13 +300,20 @@ static int PmPowerDownFpd(void)
 {
 	int status;
 
+/* Block FPD power down if any of the LPD peripherals uses CCI path which is in FPD */
+#ifdef XPAR_LPD_IS_CACHE_COHERENT
+	PmDbg("Blocking FPD power down since CCI is used by LPD\r\n");
+	status = XST_FAILURE;
+	goto err;
+#endif /* XPAR_LPD_IS_CACHE_COHERENT */
+
 	PmFpdSaveContext();
 
 	ddr_io_retention_set(true);
 
 	PmResetAssertInt(PM_RESET_FPD, PM_RESET_ACTION_ASSERT);
 
-	status = PmUserHookPowerDownFpd();
+	status = XpbrPwrDnFpdHandler();
 	if (XST_SUCCESS != status) {
 		goto err;
 	}
@@ -182,6 +330,7 @@ err:
 }
 
 /**
+<<<<<<< HEAD
  * PmUserHookPowerDownLpd - Power down LPD
  *
  * This function powers down the LP supply.
@@ -207,17 +356,27 @@ static int PmPowerDownLpd(void)
 /**
  * PmPwrDnHandler() - Power down island/domain
  * @nodePtr Pointer to node-structure of power island/dom to be powered off
+=======
+ * PmPowerDownLpd() - Power down LPD domain
+>>>>>>> upstream/master
  *
- * @return  Operation status of power down procedure (done by pmu-rom)
+ * @return      XST_SUCCESS always (not implemented)
  */
-static int PmPwrDnHandler(PmNode* const nodePtr)
+static int PmPowerDownLpd(void)
 {
-	int status = XST_PM_INTERNAL;
+	return XST_SUCCESS;
+}
 
-	if (NULL == nodePtr) {
-		goto done;
-	}
+/**
+ * PmPowerUpRpu() - Power up RPU island and disable AIBs
+ *
+ * @return      Status returned by the PMU-ROM handler
+ */
+static int PmPowerUpRpu(void)
+{
+	int status;
 
+<<<<<<< HEAD
 	/* Call proper PMU-ROM handler as needed */
 	switch (nodePtr->nodeId) {
 	case NODE_FPD:
@@ -240,40 +399,24 @@ static int PmPwrDnHandler(PmNode* const nodePtr)
 		      PmStrNode(nodePtr->nodeId), nodePtr->nodeId);
 		break;
 	}
+=======
+	status = XpbrPwrUpRpuHandler();
+>>>>>>> upstream/master
 
 	if (XST_SUCCESS != status) {
 		goto done;
 	}
 
-	PmNodeUpdateCurrState(nodePtr, PM_PWR_STATE_OFF);
-	if (NULL != nodePtr->clocks) {
-		PmClockRelease(nodePtr);
-	}
+	XPfw_AibDisable(XPFW_AIB_RPU0_TO_LPD);
+	XPfw_AibDisable(XPFW_AIB_RPU1_TO_LPD);
+	XPfw_AibDisable(XPFW_AIB_LPD_TO_RPU0);
+	XPfw_AibDisable(XPFW_AIB_LPD_TO_RPU1);
 
 done:
+<<<<<<< HEAD
 	PmDbg("%s\r\n", PmStrNode(nodePtr->nodeId));
-	return status;
-}
-
-/**
- * PmUserHookPowerUpFpd - Power up FPD
- *
- * This function powers up the FP supply.
- *
- * @return	XST_SUCCESS or an error code.
- */
-#pragma weak PmUserHookPowerUpFpd
-int PmUserHookPowerUpFpd(void)
-{
-	int status = XpbrPwrUpFpdHandler();
-
-	if (XST_SUCCESS != status) {
-		goto err;
-	}
-
-	status = PmUserHookPowerGood(NODE_FPD, 1);
-
-err:
+=======
+>>>>>>> upstream/master
 	return status;
 }
 
@@ -284,7 +427,7 @@ err:
  */
 static int PmPowerUpFpd(void)
 {
-	int status = PmUserHookPowerUpFpd();
+	int status = XpbrPwrUpFpdHandler();
 	if (XST_SUCCESS != status) {
 		goto err;
 	}
@@ -301,21 +444,108 @@ err:
 }
 
 /**
- * PmPwrUpHandler() - Power up island/domain
- * @nodePtr Pointer to node-structure of power island/dom to be powered on
- *
- * @return  Operation status of power up procedure (done by pmu-rom)
+ * PmPowerDownRpu() - Wrapper for powering down RPU (due to the return cast)
+ *                    Enables AIBs at RPU interfaces to gracefully respond to
+ *                    AXI transactions when RPU is powered down
+ * @return      Return value of PMU-ROM handler
  */
-static int PmPwrUpHandler(PmNode* const nodePtr)
+static int PmPowerDownRpu(void)
 {
-	int status = XST_PM_INTERNAL;
+	XPfw_AibEnable(XPFW_AIB_RPU0_TO_LPD);
+	XPfw_AibEnable(XPFW_AIB_RPU1_TO_LPD);
+	XPfw_AibEnable(XPFW_AIB_LPD_TO_RPU0);
+	XPfw_AibEnable(XPFW_AIB_LPD_TO_RPU1);
+	PmDbg("Enabled AIB\r\n");
 
-	PmDbg("%s\r\n", PmStrNode(nodePtr->nodeId));
+	return XpbrPwrDnRpuHandler();
+}
 
-	if (NULL == nodePtr) {
+/**
+ * PmPowerForceDownRpu() - Force down RPU island
+ * @power	RPU power island
+ */
+static void PmPowerForceDownRpu(PmPower* const power)
+{
+	PmPowerIslandRpu* const rpu = (PmPowerIslandRpu*)power->node.derived;
+
+	/* Clear the dependency flags */
+	rpu->deps = 0U;
+}
+
+/**
+ * PmPowerDownPld() - Wrapper for powering down PLD (due to the return cast)
+ * @return      Return value of PMU-ROM handler
+ */
+static int PmPowerDownPld(void)
+{
+	return XpbrPwrDnPldHandler();
+}
+
+/**
+ * PmPowerUpPld() - Wrapper for powering up PLD (due to the return cast)
+ * @return      Return value of PMU-ROM handler
+ */
+static int PmPowerUpPld(void)
+{
+	return XpbrPwrUpPldHandler();
+}
+
+/**
+ * PmPowerDown() - Power down the power node
+ * @power       Power node in question
+ *
+ * @return      Status of powering down (what powerDown handler returns or
+ *              XST_SUCCESS)
+ */
+static int PmPowerDown(PmPower* const power)
+{
+	int status = XST_SUCCESS;
+
+	if (PM_PWR_STATE_OFF == power->node.currState) {
 		goto done;
 	}
 
+	if (NULL != power->powerDown) {
+		status = power->powerDown();
+	}
+
+	if (XST_SUCCESS != status) {
+		goto done;
+	}
+
+	PmNodeUpdateCurrState(&power->node, PM_PWR_STATE_OFF);
+
+	if (NULL != power->node.clocks) {
+		PmClockRelease(&power->node);
+	}
+	PmDbg("%s\r\n", PmStrNode(power->node.nodeId));
+
+done:
+	return status;
+}
+
+/**
+ * PmPowerUp() - Power up island/domain
+ * @power      Power node to be powered up
+ *
+ * @return  Operation status of power up procedure (node specific) or
+ *          XST_SUCCESS
+ */
+static int PmPowerUp(PmPower* const power)
+{
+	int status = XST_SUCCESS;
+
+<<<<<<< HEAD
+	PmDbg("%s\r\n", PmStrNode(nodePtr->nodeId));
+=======
+	PmDbg("%s\r\n", PmStrNode(power->node.nodeId));
+>>>>>>> upstream/master
+
+	if (PM_PWR_STATE_ON == power->node.currState) {
+		goto done;
+	}
+
+<<<<<<< HEAD
 	/* Call proper PMU-ROM handler as needed */
 	switch (nodePtr->nodeId) {
 	case NODE_FPD:
@@ -356,16 +586,29 @@ static int PmPwrUpHandler(PmNode* const nodePtr)
 		PmDbg("ERROR - unsupported node %s(%d)\r\n",
 		      PmStrNode(nodePtr->nodeId), nodePtr->nodeId);
 		break;
+=======
+	if (NULL != power->powerUp) {
+		status = power->powerUp();
+>>>>>>> upstream/master
 	}
+
 	if (XST_SUCCESS != status) {
 		goto done;
 	}
 
+<<<<<<< HEAD
 	if (NULL != nodePtr->clocks) {
 		status = PmClockRequest(nodePtr);
 	}
 
 	PmNodeUpdateCurrState(nodePtr, PM_PWR_STATE_ON);
+=======
+	if (NULL != power->node.clocks) {
+		status = PmClockRequest(&power->node);
+	}
+
+	PmNodeUpdateCurrState(&power->node, PM_PWR_STATE_ON);
+>>>>>>> upstream/master
 
 done:
 	return status;
@@ -373,28 +616,24 @@ done:
 
 /* Children array definitions */
 static PmNode* pmApuChildren[] = {
-	&pmApuProcs_g[PM_PROC_APU_0].node,
-	&pmApuProcs_g[PM_PROC_APU_1].node,
-	&pmApuProcs_g[PM_PROC_APU_2].node,
-	&pmApuProcs_g[PM_PROC_APU_3].node,
+	&pmProcApu0_g.node,
+	&pmProcApu1_g.node,
+	&pmProcApu2_g.node,
+	&pmProcApu3_g.node,
 };
 
 static PmNode* pmRpuChildren[] = {
-	&pmRpuProcs_g[PM_PROC_RPU_0].node,
-	&pmRpuProcs_g[PM_PROC_RPU_1].node,
-	&pmSlaveTcm0A_g.slv.node,
-	&pmSlaveTcm0B_g.slv.node,
-	&pmSlaveTcm1A_g.slv.node,
-	&pmSlaveTcm1B_g.slv.node,
+	&pmProcRpu0_g.node,
+	&pmProcRpu1_g.node,
 };
 
 static PmNode* pmFpdChildren[] = {
 	&pmPowerIslandApu_g.node,
+	&pmApll_g.node,
+	&pmVpll_g.node,
+	&pmDpll_g.node,
 	&pmSlaveL2_g.slv.node,
-	&pmSlaveSata_g.slv.node,
-	&pmSlaveApll_g.slv.node,
-	&pmSlaveVpll_g.slv.node,
-	&pmSlaveDpll_g.slv.node,
+	&pmSlaveSata_g.node,
 	&pmSlaveGpu_g.node,
 	&pmSlaveGpuPP0_g.slv.node,
 	&pmSlaveGpuPP1_g.slv.node,
@@ -405,11 +644,18 @@ static PmNode* pmFpdChildren[] = {
 };
 
 static PmNode* pmLpdChildren[] = {
+<<<<<<< HEAD
 	&pmPowerIslandRpu_g.node,
+=======
+	&pmPowerIslandRpu_g.power.node,
+	&pmRpll_g.node,
+	&pmIOpll_g.node,
+>>>>>>> upstream/master
 	&pmSlaveOcm0_g.slv.node,
 	&pmSlaveOcm1_g.slv.node,
 	&pmSlaveOcm2_g.slv.node,
 	&pmSlaveOcm3_g.slv.node,
+<<<<<<< HEAD
 	&pmSlaveUsb0_g.slv.node,
 	&pmSlaveUsb1_g.slv.node,
 	&pmSlaveTtc0_g.slv.node,
@@ -419,6 +665,19 @@ static PmNode* pmLpdChildren[] = {
 	&pmSlaveSata_g.slv.node,
 	&pmSlaveRpll_g.slv.node,
 	&pmSlaveIOpll_g.slv.node,
+=======
+	&pmSlaveTcm0A_g.sram.slv.node,
+	&pmSlaveTcm0B_g.sram.slv.node,
+	&pmSlaveTcm1A_g.sram.slv.node,
+	&pmSlaveTcm1B_g.sram.slv.node,
+	&pmSlaveUsb0_g.slv.node,
+	&pmSlaveUsb1_g.slv.node,
+	&pmSlaveTtc0_g.node,
+	&pmSlaveTtc1_g.node,
+	&pmSlaveTtc2_g.node,
+	&pmSlaveTtc3_g.node,
+	&pmSlaveSata_g.node,
+>>>>>>> upstream/master
 	&pmSlaveUart0_g.node,
 	&pmSlaveUart1_g.node,
 	&pmSlaveSpi0_g.node,
@@ -437,6 +696,7 @@ static PmNode* pmLpdChildren[] = {
 	&pmSlaveNand_g.node,
 	&pmSlaveQSpi_g.node,
 	&pmSlaveGpio_g.node,
+<<<<<<< HEAD
 	&pmSlaveAFI_g.node,
 	&pmSlaveIpiApu_g.node,
 	&pmSlaveIpiRpu0_g.node,
@@ -453,12 +713,21 @@ static const PmNodeOps pmRpuNodeOps = {
 static const PmNodeOps pmApuNodeOps = {
 	.sleep = PmPwrDnHandler,
 	.wake = PmPwrUpHandler,
+=======
+	&pmSlaveIpiApu_g.node,
+	&pmSlaveIpiRpu0_g.node,
+	&pmSlaveIpiRpu1_g.node,
+	&pmSlaveIpiPl0_g.node,
+	&pmSlaveIpiPl1_g.node,
+	&pmSlaveIpiPl2_g.node,
+	&pmSlaveIpiPl3_g.node,
+	&pmSlavePcap_g.node,
+>>>>>>> upstream/master
 };
 
-/* Operations for the Fpd power domain */
-static const PmNodeOps pmFpdNodeOps = {
-	.sleep = PmPwrDnHandler,
-	.wake = PmPwrUpHandler,
+static PmNode* pmPldChildren[] = {
+	&pmSlaveVcu_g.slv.node,
+	&pmSlavePl_g.node,
 };
 
 /* Operations for the Lpd power domain */
@@ -470,7 +739,17 @@ static const PmNodeOps pmLpdNodeOps = {
 /* Dummy consumption for the power domains/islands */
 static u32 PmDomainPowers[] = {
 	DEFAULT_POWER_OFF,
+	DEFAULT_POWER_ON,
+};
+
+static u32 PmApuDomainPowers[] = {
 	DEFAULT_POWER_OFF,
+	DEFAULT_POWER_OFF,
+};
+
+static PmPowerClass pmPowerClassRpuIsland_g = {
+	.construct = NULL,
+	.forceDown = PmPowerForceDownRpu,
 };
 
 /*
@@ -481,6 +760,7 @@ static u32 PmDomainPowers[] = {
  * USB0-island are modeled as a feature of the node itself and are therefore
  * not described here.
  */
+<<<<<<< HEAD
 PmPower pmPowerIslandRpu_g = {
 	.node = {
 		.derived = &pmPowerIslandRpu_g,
@@ -498,6 +778,30 @@ PmPower pmPowerIslandRpu_g = {
 	.pwrUpLatency = PM_POWER_ISLAND_LATENCY,
 	.permissions = IPI_PMU_0_IER_APU_MASK,
 	.requests = 0U,
+=======
+PmPowerIslandRpu pmPowerIslandRpu_g = {
+	.power = {
+		.node = {
+			.derived = &pmPowerIslandRpu_g,
+			.nodeId = NODE_RPU,
+			.class = &pmNodeClassPower_g,
+			.parent = &pmPowerDomainLpd_g.power,
+			.clocks = NULL,
+			.currState = PM_PWR_STATE_ON,
+			.latencyMarg = MAX_LATENCY,
+			.flags = 0U,
+			DEFINE_PM_POWER_INFO(PmDomainPowers),
+		},
+		DEFINE_PM_POWER_CHILDREN(pmRpuChildren),
+		.class = &pmPowerClassRpuIsland_g,
+		.powerUp = PmPowerUpRpu,
+		.powerDown = PmPowerDownRpu,
+		.pwrDnLatency = PM_POWER_ISLAND_LATENCY,
+		.pwrUpLatency = PM_POWER_ISLAND_LATENCY,
+		.forcePerms = 0U,
+	},
+	.deps = 0U,
+>>>>>>> upstream/master
 };
 
 /*
@@ -510,21 +814,31 @@ PmPower pmPowerIslandApu_g = {
 	.node = {
 		.derived = &pmPowerIslandApu_g,
 		.nodeId = NODE_APU,
-		.typeId = PM_TYPE_PWR_ISLAND,
-		.parent = &pmPowerDomainFpd_g,
+		.class = &pmNodeClassPower_g,
+		.parent = &pmPowerDomainFpd_g.power,
 		.clocks = NULL,
 		.currState = PM_PWR_STATE_ON,
 		.latencyMarg = MAX_LATENCY,
+<<<<<<< HEAD
 		.ops = &pmApuNodeOps,
 		DEFINE_PM_POWER_INFO(PmDomainPowers),
 	},
 	DEFINE_PM_POWER_CHILDREN(pmApuChildren),
+=======
+		.flags = 0U,
+		DEFINE_PM_POWER_INFO(PmApuDomainPowers),
+	},
+	DEFINE_PM_POWER_CHILDREN(pmApuChildren),
+	.class = NULL,
+	.powerUp = NULL,
+	.powerDown = NULL,
+>>>>>>> upstream/master
 	.pwrDnLatency = 0,
 	.pwrUpLatency = 0,
-	.permissions = 0U,
-	.requests = 0U,
+	.forcePerms = 0U,
 };
 
+<<<<<<< HEAD
 PmPower pmPowerDomainFpd_g = {
 	.node = {
 		.derived = &pmPowerDomainFpd_g,
@@ -574,94 +888,185 @@ PmPower pmPowerDomainPld_g = {
 		.latencyMarg = MAX_LATENCY,
 		.ops = &pmFpdNodeOps,	/* these are power domain shared ops */
 		DEFINE_PM_POWER_INFO(PmDomainPowers),
+=======
+PmPowerDomain pmPowerDomainFpd_g = {
+	.power = {
+		.node = {
+			.derived = &pmPowerDomainFpd_g,
+			.nodeId = NODE_FPD,
+			.class = &pmNodeClassPower_g,
+			.parent = NULL,
+			.clocks = NULL,
+			.currState = PM_PWR_STATE_ON,
+			.latencyMarg = MAX_LATENCY,
+			.flags = 0U,
+			DEFINE_PM_POWER_INFO(PmDomainPowers),
+		},
+		DEFINE_PM_POWER_CHILDREN(pmFpdChildren),
+		.class = &pmPowerClassDomain_g,
+		.powerUp = PmPowerUpFpd,
+		.powerDown = PmPowerDownFpd,
+		.pwrDnLatency = PM_POWER_DOMAIN_LATENCY,
+		.pwrUpLatency = PM_POWER_DOMAIN_LATENCY,
+		.forcePerms = 0U,
+		.useCount = 0U,
 	},
-	.children = NULL,
-	.childCnt = 0U,
-	.pwrDnLatency = PM_POWER_DOMAIN_LATENCY,
-	.pwrUpLatency = PM_POWER_DOMAIN_LATENCY,
-	.permissions = IPI_PMU_0_IER_APU_MASK | IPI_PMU_0_IER_RPU_0_MASK |
-		       IPI_PMU_0_IER_RPU_1_MASK,
-	.requests = 0U,
+	.supplyCheckHook = PmPowerSupplyCheck,
+	.supplyCheckHookId = XPBR_SERV_EXT_FPD_SUPPLYCHECK,
+};
+
+PmPowerDomain pmPowerDomainLpd_g = {
+	.power = {
+		.node = {
+			.derived = &pmPowerDomainLpd_g,
+			.nodeId = NODE_LPD,
+			.class = &pmNodeClassPower_g,
+			.parent = NULL,
+			.clocks = NULL,
+			.currState = PM_PWR_STATE_ON,
+			.latencyMarg = MAX_LATENCY,
+			.flags = 0U,
+			DEFINE_PM_POWER_INFO(PmDomainPowers),
+		},
+		DEFINE_PM_POWER_CHILDREN(pmLpdChildren),
+		.class = &pmPowerClassDomain_g,
+		.powerUp = NULL,
+		.powerDown = PmPowerDownLpd,
+		.pwrDnLatency = PM_POWER_DOMAIN_LATENCY,
+		.pwrUpLatency = PM_POWER_DOMAIN_LATENCY,
+		.forcePerms = 0U,
+		.useCount = 0U,
+	},
+	.supplyCheckHook = NULL,
+	.supplyCheckHookId = 0U,
+};
+
+PmPowerDomain pmPowerDomainPld_g = {
+	.power = {
+		.node = {
+			.derived = &pmPowerDomainPld_g,
+			.nodeId = NODE_PLD,
+			.class = &pmNodeClassPower_g,
+			.parent = NULL,
+			.clocks = NULL,
+			.currState = PM_PWR_STATE_ON,
+			.latencyMarg = MAX_LATENCY,
+			.flags = 0U,
+			DEFINE_PM_POWER_INFO(PmDomainPowers),
+		},
+		DEFINE_PM_POWER_CHILDREN(pmPldChildren),
+		.class = &pmPowerClassDomain_g,
+		.powerUp = PmPowerUpPld,
+		.powerDown = PmPowerDownPld,
+		.pwrDnLatency = PM_POWER_DOMAIN_LATENCY,
+		.pwrUpLatency = PM_POWER_DOMAIN_LATENCY,
+		.forcePerms = 0U,
+		.useCount = 0U,
+>>>>>>> upstream/master
+	},
+	.supplyCheckHook = PmPowerSupplyCheck,
+	.supplyCheckHookId = XPBR_SERV_EXT_PLD_SUPPLYCHECK,
 };
 
 /**
- * PmChildIsInLowestPowerState() - Checked whether the child node is in lowest
- *                                 power state
- * @nodePtr     Pointer to a node whose state should be checked
+ * PmPowerUpdateLatencyMargin() - Update latency margin for the power node
+ * @power	Power node to update
  */
-static bool PmChildIsInLowestPowerState(const PmNode* const nodePtr)
+static void PmPowerUpdateLatencyMargin(PmPower* const power)
 {
-	bool status = false;
+	u32 i;
 
-	if ((true == NODE_IS_PROC(nodePtr->typeId)) ||
-	    (true == NODE_IS_POWER(nodePtr->typeId))) {
-		if (true == NODE_IS_OFF(nodePtr)) {
-			status = true;
-		}
-	} else {
-		/* Node is a slave */
-		if (false == PmSlaveRequiresPower((PmSlave*)nodePtr->derived)) {
-			status = true;
+	/* Find minimum latency margin of all children */
+	power->node.latencyMarg = MAX_LATENCY;
+	for (i = 0U; i < power->childCnt; i++) {
+		if (power->children[i]->latencyMarg < power->node.latencyMarg) {
+			power->node.latencyMarg = power->children[i]->latencyMarg;
 		}
 	}
-
-	return status;
+	if ((power->pwrDnLatency + power->pwrUpLatency) < power->node.latencyMarg) {
+		power->node.latencyMarg -= power->pwrDnLatency + power->pwrUpLatency;
+	} else {
+		power->node.latencyMarg = 0U;
+	}
 }
 
 /**
- * PmHasAwakeChild() - Check whether power node has awake children
- * @power       Pointer to PmPower object to be checked
+ * PmPowerDownCond() - Power the node down if conditions are satisfied
+ * @power	Power node to conditionally power down
  *
- * Used during opportunistic suspend:
- * Function checks whether any child of the power provided as argument stops
- * power from being turned off. In the case of processor or power child, that
- * can be checked by inspecting currState value. For slaves, that is not the
- * case, as slave can be in non-off state just because the off state is entered
- * when power is turned off. This is the case when power parent is common for
- * multiple nodes. Therefore, slave does not block power from turning off if
- * it is unused and not in lowest power state.
- *
- * Latency accounting: determine the lowest latency requirement of any child
- * and pass it up to the power island/domain node.
- *
- * @return      True if it has a child that is not off
+ * @note	Conditions for powering down the node
+ *		1) Use count is zero (power node is unused)
+ *		2) Latency requirements of the children allow the power down
  */
-static bool PmHasAwakeChild(PmPower* const power)
+static void PmPowerDownCond(PmPower* const power)
 {
-	u32 i;
-	u32 minLatencyMargin = MAX_LATENCY;
-	bool hasAwakeChild = false;
-
-	for (i = 0U; i < power->childCnt; i++) {
-		/* Determine the lowest latency requirement of any child */
-		if (power->children[i]->latencyMarg < minLatencyMargin) {
-			minLatencyMargin = power->children[i]->latencyMarg;
+	if (0U == power->useCount) {
+		PmPowerUpdateLatencyMargin(power);
+		if (power->node.latencyMarg > 0U) {
+			(void)PmPowerDown(power);
 		}
+	}
+}
 
+<<<<<<< HEAD
 		if (false == PmChildIsInLowestPowerState(power->children[i])) {
 			hasAwakeChild = true;
 			PmDbg("%s\r\n", PmStrNode(power->children[i]->nodeId));
 			break;
+=======
+/**
+ * PmPowerUpdateLatencyReq() - Child updates its power parent about latency req
+ * @node	Child node whose latency requirement have changed
+ *
+ * @return	If the change of the latency requirement caused the power up of
+ *		the power parent, the status of performing power up operation
+ *		is returned. Otherwise, XST_SUCCESS.
+ */
+int PmPowerUpdateLatencyReq(const PmNode* const node)
+{
+	int status = XST_SUCCESS;
+	PmPower* power = node->parent;
+
+	if (PM_PWR_STATE_ON == power->node.currState) {
+		/* Try to power down the node if all conditions are ok */
+		PmPowerDownCond(power);
+		if (PM_PWR_STATE_OFF == power->node.currState) {
+			if (NULL != power->node.parent) {
+				PmPowerReleaseParent(&power->node);
+			}
+>>>>>>> upstream/master
 		}
+		goto done;
 	}
 
-	/* Pass the lowest latency margin to the power island/domain node */
-	power->node.latencyMarg = minLatencyMargin;
+	/* Power is down, check if latency requirements trigger the power up */
+	if (node->latencyMarg < (power->pwrDnLatency + power->pwrUpLatency)) {
+		power->node.latencyMarg = 0U;
+		if (NULL != power->node.parent) {
+			status = PmPowerRequestParent(&power->node);
+			if (XST_SUCCESS != status) {
+				goto done;
+			}
+		}
+		status = PmPowerUp(power);
+	}
 
-	return hasAwakeChild;
+done:
+	return status;
 }
 
 /**
- * PmOpportunisticSuspend() - After a node goes to sleep, try to power off
- *                            parents
- * @powerParent Pointer to the power node which should try to suspend, as well
- *              its parents.
+ * PmPowerRequestInt() - Used internally to request a power node
+ * @power	Requested power node
+ *
+ * @return	XST_SUCCESS if power is already powered up, otherwise status
+ *		of powering up.
  */
-void PmOpportunisticSuspend(PmPower* const powerParent)
+static int PmPowerRequestInt(PmPower* const power)
 {
-	u32 worstCaseLatency;
-	PmPower* power = powerParent;
+	int status = XST_SUCCESS;
 
+<<<<<<< HEAD
 	if ((NULL == power) || NODE_IS_OFF(&power->node)) {
 		goto done;
 	}
@@ -669,161 +1074,253 @@ void PmOpportunisticSuspend(PmPower* const powerParent)
 	do {
 		PmDbg("Opportunistic suspend attempt for %s\r\n",
 		      PmStrNode(power->node.nodeId));
+=======
+	if (PM_PWR_STATE_OFF == power->node.currState) {
+		status = PmPowerUp(power);
+	}
 
-		worstCaseLatency = power->pwrUpLatency + power->pwrDnLatency;
+	if (XST_SUCCESS == status) {
+		power->useCount++;
+	}
 
-		if ((false == PmHasAwakeChild(power)) &&
-		    (true == NODE_HAS_SLEEP(power->node.ops)) &&
-		    (0U == power->requests)) {
-			/* Note: latencyMarg field updated by PmHasAwakeChild */
-			if (worstCaseLatency < power->node.latencyMarg) {
-				/* Call sleep function of this power node */
-				power->node.ops->sleep(&power->node);
-				power = power->node.parent;
-				continue;
+	return status;
+}
+>>>>>>> upstream/master
+
+/**
+ * PmPowerRequest() - Request for power to be powered up
+ * @power	Requested power
+ *
+ * @return	XST_SUCCESS if power is already powered up, otherwise status
+ *		of powering up.
+ */
+static int PmPowerRequest(PmPower* const power)
+{
+	int status = XST_SUCCESS;
+
+	if (NULL != power->node.parent) {
+		if (0U == (power->node.flags & NODE_LOCKED_POWER_FLAG)) {
+			status = PmPowerRequestInt(power->node.parent);
+			if (XST_SUCCESS != status) {
+				goto done;
 			}
+			power->node.flags |= NODE_LOCKED_POWER_FLAG;
 		}
-		power = NULL;
-
-	} while (NULL != power);
-
-done:
-	return;
-}
-
-/**
- * PmPowerUpTopParent() - Power up top parent in hierarchy that's currently off
- * @powerChild  Power child whose power parent has to be powered up
- *
- * @return      Status of the power up operation (XST_SUCCESS if all power
- *              parents are already powered on)
- *
- * This function turns on exactly one power parent, starting with the highest
- * level parent that's currently off. If all power parents are on, it will
- * turn on "powerChild", which was passed as an argument.
- *
- * Since MISRA-C doesn't allow recursion, there's an iterative algorithm in
- * PmTriggerPowerUp that calls this function iteratively until all power
- * nodes in the hierarchy are powered up.
- */
-static int PmPowerUpTopParent(PmPower* const powerChild)
-{
-	int status = XST_SUCCESS;
-	PmPower* powerParent = powerChild;
-
-	if (NULL == powerParent) {
-		status = XST_PM_INTERNAL;
-		goto done;
 	}
-
-	/*
-	 * Powering up needs to happen from the top down, so find the highest
-	 * level parent that's currently still off and turn it on.
-	 */
-	while ((NULL != powerParent->node.parent) &&
-	       (true == NODE_IS_OFF(&powerParent->node.parent->node))) {
-		powerParent = powerChild->node.parent;
-	}
-
-	status = powerParent->node.ops->wake(&powerParent->node);
+	status = PmPowerRequestInt(power);
 
 done:
 	return status;
 }
 
 /**
- * PmTriggerPowerUp() - Triggered by child node (processor or slave) when it
- *                      needs its power islands/domains to be powered up
- * @power       Power node that needs to be powered up
- *
- * @return      Status of the power up operation.
+ * PmPowerReleaseInt() - Used internally to release the power node
+ * @power	Power node
  */
-int PmTriggerPowerUp(PmPower* const power)
+static void PmPowerReleaseInt(PmPower* const power)
+{
+	if (power->useCount > 0U) {
+		power->useCount--;
+		PmPowerDownCond(power);
+	}
+}
+
+/**
+ * PmPowerRelease() - Release the power
+ * @power	Released power
+ */
+static void PmPowerRelease(PmPower* const power)
+{
+	PmPowerReleaseInt(power);
+	if (NULL != power->node.parent) {
+		if (0U != (power->node.flags & NODE_LOCKED_POWER_FLAG)) {
+			PmPowerReleaseInt(power->node.parent);
+			power->node.flags &= ~NODE_LOCKED_POWER_FLAG;
+		}
+	}
+}
+
+/**
+ * PmPowerRequestParent() - Request power parent to be powered up
+ * @node	Node which requests its power parent
+ *
+ * @return	XST_SUCCESS if power parent is already up, status of powering up
+ *		otherwise.
+ */
+int PmPowerRequestParent(PmNode* const node)
 {
 	int status = XST_SUCCESS;
 
-	if (NULL == power) {
+	if (0U == (NODE_LOCKED_POWER_FLAG & node->flags)) {
+		PmDbg("%s->%s\r\n", PmStrNode(node->nodeId),
+			PmStrNode(node->parent->node.nodeId));
+		status = PmPowerRequest(node->parent);
+		if (XST_SUCCESS == status) {
+			node->flags |= NODE_LOCKED_POWER_FLAG;
+		}
+	}
+
+	return status;
+}
+
+/**
+ * PmPowerReleaseParent() - Release power parent
+ * @node	Node which releases its power parent
+ */
+void PmPowerReleaseParent(PmNode* const node)
+{
+	if (0U != (NODE_LOCKED_POWER_FLAG & node->flags)) {
+		PmDbg("%s->%s\r\n", PmStrNode(node->nodeId),
+			PmStrNode(node->parent->node.nodeId));
+		node->flags &= ~NODE_LOCKED_POWER_FLAG;
+		PmPowerRelease(node->parent);
+	}
+}
+
+/**
+ * PmPowerReleaseRpu() - Release RPU (TCM doesn't depend on RPU anymore)
+ * @tcm		TCM which releases RPU
+ */
+void PmPowerReleaseRpu(PmSlaveTcm* const tcm)
+{
+	pmPowerIslandRpu_g.deps &= ~tcm->id;
+
+	/* If no other TCM depends on RPU release it */
+	if (0U == pmPowerIslandRpu_g.deps) {
+		PmPowerRelease(&pmPowerIslandRpu_g.power);
+	}
+}
+
+/**
+ * PmPowerRequestRpu() - Request RPU (TCM now depends on RPU)
+ * @tcm		TCM which requests RPU
+ *
+ * @return	XST_SUCCESS or error code if powering up of RPU failed
+ */
+int PmPowerRequestRpu(PmSlaveTcm* const tcm)
+{
+	int status = XST_SUCCESS;
+	u32 resetMask = CRL_APB_RST_LPD_TOP_RPU_PGE_RESET_MASK |
+			CRL_APB_RST_LPD_TOP_RPU_AMBA_RESET_MASK;
+	u32 reset;
+
+	if (0U != pmPowerIslandRpu_g.deps) {
 		goto done;
 	}
 
-	/*
-	 * Multiple hierarchy levels of power islands/domains may need to be
-	 * turned on (always top-down).
-	 * Use iterative approach for MISRA-C compliance
-	 */
-	while ((true == NODE_IS_OFF(&power->node)) && (XST_SUCCESS == status)) {
-		status = PmPowerUpTopParent(power);
-	}
-
-done:
-#ifdef DEBUG_PM
+	/* Ensure that the RPU island is ON */
+	status = PmPowerRequest(&pmPowerIslandRpu_g.power);
 	if (XST_SUCCESS != status) {
+<<<<<<< HEAD
 		PmDbg("ERROR #%d failed to power up\r\n", status);
+=======
+		goto ret;
+>>>>>>> upstream/master
 	}
-#endif
 
+	reset = XPfw_Read32(CRL_APB_RST_LPD_TOP);
+	/* If PGE and AMBA resets are asserted, deassert them now */
+	if (0U != (reset & resetMask)) {
+		XPfw_Write32(CRL_APB_RST_LPD_TOP, reset & ~resetMask);
+	}
+	/* If RPU0 reset is asserted, halt the core and deassert its reset */
+	if (0U != (reset & CRL_APB_RST_LPD_TOP_RPU_R50_RESET_MASK)) {
+		XPfw_RMW32(RPU_RPU_0_CFG,
+			   RPU_RPU_0_CFG_NCPUHALT_MASK,
+			  ~RPU_RPU_0_CFG_NCPUHALT_MASK);
+		XPfw_RMW32(CRL_APB_RST_LPD_TOP,
+			   CRL_APB_RST_LPD_TOP_RPU_R50_RESET_MASK,
+			  ~CRL_APB_RST_LPD_TOP_RPU_R50_RESET_MASK);
+	}
+	/* If RPU1 reset is asserted, halt the core and deassert its reset */
+	if (0U != (reset & CRL_APB_RST_LPD_TOP_RPU_R51_RESET_MASK)) {
+		XPfw_RMW32(RPU_RPU_1_CFG,
+			   RPU_RPU_1_CFG_NCPUHALT_MASK,
+			  ~RPU_RPU_1_CFG_NCPUHALT_MASK);
+		XPfw_RMW32(CRL_APB_RST_LPD_TOP,
+			   CRL_APB_RST_LPD_TOP_RPU_R51_RESET_MASK,
+			  ~CRL_APB_RST_LPD_TOP_RPU_R51_RESET_MASK);
+	}
+done:
+	pmPowerIslandRpu_g.deps |= tcm->id;
+ret:
 	return status;
 }
 
 /**
- * PmGetLowestParent() - Returns the first leaf parent with active children
- * @root    Pointer to a power object of which the leafs should be found
- *
- * In a parent-child tree, a leaf parent is a parent that has one or more
- * children, where none of the children are parents.
- * (Any state != 0 is considered an active state)
- *
- * Iterative algorithm for MISRA-C compliance
- *
- * @return  Pointer to an active leaf or root itself if no leafs exist
+ * PmPowerClearConfig() - Clear configuration of the power node
+ * @powerNode	Pointer to the power node
  */
-static PmPower* PmGetLowestParent(PmPower* const root)
+static void PmPowerClearConfig(PmNode* const powerNode)
 {
-	PmPower* prevParent;
-	PmPower* currParent = root;
+	PmPower* const power = (PmPower*)powerNode->derived;
 
-	if (NULL == currParent) {
+	power->forcePerms = 0U;
+	power->useCount = 0U;
+}
+
+/**
+ * PmPowerConstruct() - Constructor method for the power node
+ * @powerNode	Power node to construct
+ */
+static void PmPowerConstruct(PmNode* const powerNode)
+{
+	PmPower* const power = (PmPower*)powerNode->derived;
+
+	if ((NULL != power->class) && (NULL != power->class->construct)) {
+		power->class->construct(power);
+	}
+}
+
+/**
+ * PmPowerGetWakeUpLatency() - Get wake-up latency of the power node
+ * @node	Power node whose wake-up latency should be get
+ * @lat		Pointer to the location where the latency value should be stored
+ *
+ * @return	XST_SUCCESS always
+ */
+static int PmPowerGetWakeUpLatency(const PmNode* const node, u32* const lat)
+{
+	PmPower* const power = (PmPower*)node->derived;
+	PmPower* parent = power->node.parent;
+
+	*lat = 0U;
+	if (PM_PWR_STATE_ON == node->currState) {
 		goto done;
 	}
 
-	do {
-		u32 i;
-		prevParent = currParent;
+	*lat = power->pwrUpLatency;
 
-		for (i = 0U; i < currParent->childCnt; i++) {
-			if ((true != NODE_IS_POWER(currParent->children[i]->typeId)) ||
-				(false != NODE_IS_OFF(currParent->children[i]))) {
-				continue;
-			}
-
-			/* Active power child found */
-			currParent = (PmPower*)currParent->children[i]->derived;
+	/* Account latencies of powered down parents (if a parent is down) */
+	while (NULL != parent) {
+		if (PM_PWR_STATE_ON == parent->node.currState) {
 			break;
 		}
-	} while (currParent != prevParent);
+		*lat += parent->pwrUpLatency;
+		parent = parent->node.parent;
+	}
 
 done:
-	return currParent;
+	return XST_SUCCESS;
 }
 
 /**
- * PmForcePowerDownChildren() - Forces power down for child nodes
- * @parent      pointer to power object whose children are to be turned off
+ * PmPowerGetPowerData() - Get power consumption of the node
+ * @powerNode	Power node whose power consumption should be get
+ * @data	Pointer to the location where the power data should be stored
+ *
+ * @return	XST_SUCCESS if power consumption data is stored in *data
+ *		XST_NO_FEATURE otherwise
+ * @note	Power consumption of power node is a sum of consumptions of the
+ *		children.
  */
-static void PmForcePowerDownChildren(const PmPower* const parent)
+static int PmPowerGetPowerData(const PmNode* const powerNode, u32* const data)
 {
-	u32 i;
-	PmNode* child;
-	PmProc* proc;
+	PmNode* node;
+	u32 val;
+	int status = XST_NO_FEATURE;
 
-	for (i = 0U; i < parent->childCnt; i++) {
-		child = parent->children[i];
-
-		if ((false != PmChildIsInLowestPowerState(child)) ||
-		    (true != NODE_HAS_SLEEP(child->ops))) {
-			continue;
-		}
-
+<<<<<<< HEAD
 		PmDbg("Powering OFF child node %s\r\n", PmStrNode(child->nodeId));
 
 		/* Force the child's state to 0, which is its lowest power state */
@@ -833,83 +1330,31 @@ static void PmForcePowerDownChildren(const PmPower* const parent)
 		/* Special case: node is a processor, release slave-requirements */
 		if (PM_TYPE_PROC == child->typeId) {
 			proc = (PmProc*)child->derived;
+=======
+	*data = 0U;
+	if (PM_PWR_STATE_OFF == powerNode->currState) {
+		status = XST_SUCCESS;
+		goto done;
+	}
+>>>>>>> upstream/master
 
-			if (NULL != proc) {
-				/* Notify master so it can release all requirements */
-				PmMasterNotify(proc->master, PM_PROC_EVENT_FORCE_PWRDN);
+	PmPowerDfsBegin((PmPower*)powerNode->derived);
+	node = PmPowerDfsGetNext();
+	while (NULL != node) {
+		if (NODE_IS_POWER(node)) {
+			status = PmNodeGetPowerInfo(node, &val);
+		} else {
+			if (NULL != node->class->getPowerData) {
+				status = node->class->getPowerData(node, &val);
+			} else {
+				status = XST_NO_FEATURE;
 			}
 		}
-	}
-
-	return;
-}
-
-/**
- * PmForceDownTree() - Force power down node and all its children
- * @root        power node (island/domain) to turn off
- *
- * @return      Operation status of power down procedure
- *
- * This is a power island or power domain, power it off from the bottom up:
- * find out if this parent has children which themselves have children.
- * Note: using iterative algorithm for MISRA-C compliance
- * (instead of recursion)
- *
- */
-int PmForceDownTree(PmPower* const root)
-{
-	int status = XST_SUCCESS;
-	PmPower* lowestParent;
-
-	if (NULL == root) {
-		goto done;
-	}
-
-	do {
-		lowestParent = PmGetLowestParent(root);
-		PmForcePowerDownChildren(lowestParent);
-		if ((true == NODE_HAS_SLEEP(lowestParent->node.ops)) &&
-		    (false == NODE_IS_OFF(&lowestParent->node))) {
-			status = lowestParent->node.ops->sleep(&lowestParent->node);
+		if (XST_SUCCESS != status) {
+			goto done;
 		}
-	} while ((lowestParent != root) && (XST_SUCCESS == status));
-
-done:
-	return status;
-}
-
-/**
- * PmPowerRequest() - Explicit request for power node (power up)
- * @master	Master which has requested power node
- * @power	The requested node
- * @return	Status of processing request
- * @note	If the request is processed successfully the power node ON
- *		state is granted to the caller
- */
-int PmPowerRequest(const PmMaster* const master, PmPower* const power)
-{
-	int status = XST_SUCCESS;
-
-	/* Check whether the master is allowed to request the power node */
-	if (0U == (master->ipiMask & power->permissions)) {
-		status = XST_PM_NO_ACCESS;
-		goto done;
-	}
-
-	/* Check whether the master has already requested the power node */
-	if (0U != (master->ipiMask & power->requests)) {
-		status = XST_PM_DOUBLE_REQ;
-		goto done;
-	}
-
-	/* Power up the whole power parent hierarchy if needed */
-	if (true == NODE_IS_OFF(&power->node)) {
-		status = PmTriggerPowerUp(power);
-	}
-
-	/* Remember master's mask if request is processed successfully */
-	if (XST_SUCCESS == status) {
-		power->requests |= master->ipiMask;
+		*data += val;
+		node = PmPowerDfsGetNext();
 	}
 
 done:
@@ -917,44 +1362,113 @@ done:
 }
 
 /**
- * PmPowerRelease() - Explicit release for power node
- * @master	Master which has requested power node
- * @power	The requested node
- * @return	Status of processing request
- * @note	If the master has previously had the grant for the power node
- *		state, after this call is performed the power node may be
- *		turned off. Whether it will be turned off depends on other
- *		requests (related to slaves, latencies, etc.)
+ * PmPowerForceDown() - Force down the power node and all of its children
+ * @powerNode	Power node to force down
+ *
+ * @return	Status of performing force power down
  */
-int PmPowerRelease(const PmMaster* const master, PmPower* const power)
+static int PmPowerForceDown(PmNode* const powerNode)
 {
-	int status = XST_SUCCESS;
+	PmNode* node;
+	PmPower* const power = (PmPower*)powerNode->derived;
+	int status = XST_FAILURE;
 
-	/* Check whether the master has permissions for the power node ops */
-	if (0U == (master->ipiMask & power->permissions)) {
-		status = XST_PM_NO_ACCESS;
-		goto done;
+	PmPowerDfsBegin(power);
+	node = PmPowerDfsGetNext();
+	while (NULL != node) {
+		if (NODE_IS_POWER(node)) {
+			status = PmPowerDown((PmPower*)node->derived);
+		} else {
+			status = PmNodeForceDown(node);
+		}
+		if (XST_SUCCESS != status) {
+			goto done;
+		}
+		node = PmPowerDfsGetNext();
 	}
-
-	/* Check whether the master has previously requested the power node */
-	if (0U == (master->ipiMask & power->requests)) {
-		status = XST_FAILURE;
-		goto done;
-	}
-
-	/* Clear the request flag */
-	power->requests &= ~master->ipiMask;
-
-	/*
-	 * If no other master has explicitely requested power node we call
-	 * opportunistic suspend. It will take care of all dependencies that
-	 * might exist with respect to the slaves or latencies. If there are
-	 * no dependencies the power node will be powered down.
-	 */
-	if (0U == power->requests) {
-		PmOpportunisticSuspend(power);
+	if ((NULL != power->class) && (NULL != power->class->forceDown)) {
+		power->class->forceDown(power);
 	}
 
 done:
 	return status;
 }
+
+/**
+ * PmPowerInit() - Initialize power node
+ * @powerNode	Power node to initialize
+ *
+ * @return	Status of initializing the node
+ */
+static int PmPowerInit(PmNode* const powerNode)
+{
+	int status = XST_SUCCESS;
+
+	if (PM_PWR_STATE_OFF == powerNode->currState) {
+		goto done;
+	}
+	if (NULL != powerNode->parent) {
+		status = PmPowerRequestParent(powerNode);
+		if (XST_SUCCESS != status) {
+			goto done;
+		}
+	}
+	if (NULL != powerNode->clocks) {
+		status = PmClockRequest(powerNode);
+	}
+
+done:
+	return status;
+}
+
+/**
+ * PmPowerIsUsable() - Check if power node could be used by current config
+ * @powerNode	Power node to check
+ *
+ * @return	True if power node is usable, false otherwise
+ */
+static bool PmPowerIsUsable(PmNode* const powerNode)
+{
+	PmNode* node;
+	bool usable = false;
+
+	PmPowerDfsBegin((PmPower*)powerNode->derived);
+	node = PmPowerDfsGetNext();
+	while (NULL != node) {
+		if (!NODE_IS_POWER(node)) {
+			if (NULL != node->class->isUsable) {
+				usable = node->class->isUsable(node);
+				if (true == usable) {
+					goto done;
+				}
+			}
+		}
+		node = PmPowerDfsGetNext();
+	}
+
+done:
+	return usable;
+}
+
+/* Collection of power nodes */
+static PmNode* pmNodePowerBucket[] = {
+	&pmPowerIslandApu_g.node,
+	&pmPowerIslandRpu_g.power.node,
+	&pmPowerDomainFpd_g.power.node,
+	&pmPowerDomainPld_g.power.node,
+	&pmPowerDomainLpd_g.power.node,
+};
+
+PmNodeClass pmNodeClassPower_g = {
+	DEFINE_NODE_BUCKET(pmNodePowerBucket),
+	.id = NODE_CLASS_POWER,
+	.clearConfig = PmPowerClearConfig,
+	.construct = PmPowerConstruct,
+	.getWakeUpLatency = PmPowerGetWakeUpLatency,
+	.getPowerData = PmPowerGetPowerData,
+	.forceDown = PmPowerForceDown,
+	.init = PmPowerInit,
+	.isUsable = PmPowerIsUsable,
+};
+
+#endif

@@ -76,7 +76,23 @@
  * @note	XIpiPsu_Reset can be used at startup to clear the status and
  * disable all sources
  *
- */
+ * <pre>
+ * MODIFICATION HISTORY:
+ *
+ * Ver  Who Date     Changes
+ * ---- --- -------- --------------------------------------------------
+ * 2.2  ms  01/23/17 Modified xil_printf statement in main function for all
+ *                    examples to ensure that "Successfully ran" and "Failed"
+ *                    strings are available in all examples. This is a fix
+ *                    for CR-965028.
+ *      kvn 02/17/17  Add support for updating ConfigTable at run time
+ *      ms  03/17/17  Added readme.txt file in examples folder for doxygen
+ *                    generation.
+ * 2.3  ms  04/11/17  Modified tcl file to add suffix U for all macro
+ *                    definitions of ipipsu in xparameters.h
+ * </pre>
+ *
+ *****************************************************************************/
 /*****************************************************************************/
 #ifndef XIPIPSU_H_
 #define XIPIPSU_H_
@@ -276,6 +292,7 @@ XStatus XIpiPsu_ReadMessage(XIpiPsu *InstancePtr, u32 SrcCpuMask, u32 *MsgPtr,
 
 XStatus XIpiPsu_WriteMessage(XIpiPsu *InstancePtr, u32 DestCpuMask, u32 *MsgPtr,
 		u32 MsgLength, u8 BufferType);
+void XIpiPsu_SetConfigTable(u32 DeviceId, XIpiPsu_Config *ConfigTblPtr);
 
 #endif /* XIPIPSU_H_ */
 /** @} */

@@ -1,6 +1,10 @@
 var xvidc_8h =
 [
+<<<<<<< HEAD
     [ "XVidC_IsStream3D", "group__video__common__v4__0.html#ga440a1deea4748adfa2c45c5f1614d43f", null ],
+=======
+    [ "XVidC_IsStream3D", "group__video__common__v4__0.html#ga6dfce65c055846fe2904670184ae631f", null ],
+>>>>>>> upstream/master
     [ "XVidC_DelayHandler", "group__video__common__v4__0.html#gac49e0e96949ca1e48ed04b47cf3fd512", null ],
     [ "XVidC_3DFormat", "group__video__common__v4__0.html#ga3f5c78f83e56747ade72ebb51cafffc5", [
       [ "XVIDC_3D_FRAME_PACKING", "group__video__common__v4__0.html#gga3f5c78f83e56747ade72ebb51cafffc5afe8a8bd6b0c39671dca3f265464ff380", null ],
@@ -28,10 +32,17 @@ var xvidc_8h =
     [ "XVidC_PixelsPerClock", "group__video__common__v4__0.html#ga37beb8afba8203e270e2df7e67f720ec", null ],
     [ "XVidC_VideoFormat", "group__video__common__v4__0.html#gae8750e69caf5a7f747fbf410b14f447e", null ],
     [ "XVidC_VideoMode", "group__video__common__v4__0.html#ga562f08faf2fc329b1cd7147b3d66ef53", null ],
+<<<<<<< HEAD
     [ "XVidC_Get3DFormatStr", "group__video__common__v4__0.html#ga8f0dac42d6acff605c88aacfc65afcac", null ],
     [ "XVidC_GetColorFormatStr", "group__video__common__v4__0.html#gae007912178af04fc00cfc74cf777aa61", null ],
     [ "XVidC_GetFrameRate", "group__video__common__v4__0.html#ga5359c410dfcc1bb7a851f77f0b92b287", null ],
     [ "XVidC_GetFrameRateStr", "group__video__common__v4__0.html#gadf68cda7566e0aed3358f3fd2ad7d174", null ],
+=======
+    [ "XVidC_Get3DFormatStr", "group__video__common__v4__0.html#ga1d00a23344bac2c8f31661ed59e8c573", null ],
+    [ "XVidC_GetColorFormatStr", "group__video__common__v4__0.html#ga8b0d0986815d88136d4ffae6118325e5", null ],
+    [ "XVidC_GetFrameRate", "group__video__common__v4__0.html#ga5359c410dfcc1bb7a851f77f0b92b287", null ],
+    [ "XVidC_GetFrameRateStr", "group__video__common__v4__0.html#ga3a1ddd84b3b0115149c1b0820c6ba6f4", null ],
+>>>>>>> upstream/master
     [ "XVidC_GetPixelClockHzByHVFr", "group__video__common__v4__0.html#ga6642b79ef465ddcbe095e81119a85ea3", null ],
     [ "XVidC_GetPixelClockHzByVmId", "group__video__common__v4__0.html#gac3baac1cdfcdc084ceb228662c72a7a1", null ],
     [ "XVidC_GetTimingInfo", "group__video__common__v4__0.html#ga88a549f52e28fcf7b3e249f42e847bc1", null ],
@@ -39,6 +50,10 @@ var xvidc_8h =
     [ "XVidC_GetVideoModeData", "group__video__common__v4__0.html#ga3be40034baa818fc42e861f7f033afe8", null ],
     [ "XVidC_GetVideoModeId", "group__video__common__v4__0.html#ga0a1cda75da460feccd4ab2c2ee712fa5", null ],
     [ "XVidC_GetVideoModeIdRb", "group__video__common__v4__0.html#ga4377fff1a8e427e5f7bb642c5b115046", null ],
+<<<<<<< HEAD
+=======
+    [ "XVidC_GetVideoModeIdWBlanking", "group__video__common__v4__0.html#ga562322a65704c3d6a2617b9f5e5d1717", null ],
+>>>>>>> upstream/master
     [ "XVidC_GetVideoModeStr", "group__video__common__v4__0.html#ga536ee41269fe7c0519dc8c3838af2d93", null ],
     [ "XVidC_IsInterlaced", "group__video__common__v4__0.html#ga0bea011c3bea29cbae6263599ca9ff06", null ],
     [ "XVidC_RegisterCustomTimingModes", "group__video__common__v4__0.html#ga687eb5fbcb487fa34c66099941b7a8f0", null ],

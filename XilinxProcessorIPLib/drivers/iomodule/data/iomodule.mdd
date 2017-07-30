@@ -39,6 +39,10 @@ BEGIN driver iomodule
     OPTION supported_peripherals = (iomodule);
     OPTION driver_state = ACTIVE;
     OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+    OPTION VERSION = 2.4;
+>>>>>>> upstream/master
     OPTION NAME = iomodule;
     OPTION INTC_TYPE = XIOModule; 
 

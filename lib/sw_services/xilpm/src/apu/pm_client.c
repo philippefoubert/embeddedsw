@@ -43,26 +43,33 @@
 #include <xreg_cortexa53.h>
 #include <xpseudo_asm.h>
 
+/* Mask to get affinity level 0 */
+#define PM_AFL0_MASK   0xFF
+
 static struct XPm_Master pm_apu_0_master = {
 	.node_id = NODE_APU_0,
+	.pwrctl = APU_PWRCTL,
 	.pwrdn_mask = APU_0_PWRCTL_CPUPWRDWNREQ_MASK,
 	.ipi = NULL,
 };
 
 static struct XPm_Master pm_apu_1_master = {
 	.node_id = NODE_APU_1,
+	.pwrctl = APU_PWRCTL,
 	.pwrdn_mask = APU_1_PWRCTL_CPUPWRDWNREQ_MASK,
 	.ipi = NULL,
 };
 
 static struct XPm_Master pm_apu_2_master = {
 	.node_id = NODE_APU_2,
+	.pwrctl = APU_PWRCTL,
 	.pwrdn_mask = APU_2_PWRCTL_CPUPWRDWNREQ_MASK,
 	.ipi = NULL,
 };
 
 static struct XPm_Master pm_apu_3_master = {
 	.node_id = NODE_APU_3,
+	.pwrctl = APU_PWRCTL,
 	.pwrdn_mask = APU_3_PWRCTL_CPUPWRDWNREQ_MASK,
 	.ipi = NULL,
 };
@@ -127,16 +134,23 @@ struct XPm_Master *primary_master = &pm_apu_0_master;
 
 void XPm_ClientSuspend(const struct XPm_Master *const master)
 {
+	u32 pwrdn_req;
+
 	/* Disable interrupts at processor level */
 	pm_disable_int();
 	/* Set powerdown request */
-	pm_write(MASTER_PWRCTL, pm_read(MASTER_PWRCTL) | master->pwrdn_mask);
+	pwrdn_req = pm_read(master->pwrctl);
+	pwrdn_req |= master->pwrdn_mask;
+	pm_write(master->pwrctl, pwrdn_req);
 }
 
 void XPm_ClientAbortSuspend(void)
 {
+	u32 pwrdn_req = pm_read(primary_master->pwrctl);
+
 	/* Clear powerdown request */
-	pm_write(MASTER_PWRCTL, pm_read(MASTER_PWRCTL) & ~primary_master->pwrdn_mask);
+	pwrdn_req &= ~primary_master->pwrdn_mask;
+	pm_write(primary_master->pwrctl, pwrdn_req);
 	/* Enable interrupts at processor level */
 	pm_enable_int();
 }
@@ -146,9 +160,9 @@ void XPm_ClientWakeup(const struct XPm_Master *const master)
 	u32 cpuid = pm_get_cpuid(master->node_id);
 
 	if (UNDEFINED_CPUID != cpuid) {
-		u32 val = pm_read(MASTER_PWRCTL);
+		u32 val = pm_read(master->pwrctl);
 		val &= ~(master->pwrdn_mask);
-		pm_write(MASTER_PWRCTL, val);
+		pm_write(master->pwrctl, val);
 	}
 }
 
@@ -161,11 +175,33 @@ void XPm_ClientSuspendFinalize(void)
 	u32 ctrlReg;
 
 	/* Flush the data cache only if it is enabled */
+#ifdef __aarch64__
 	ctrlReg = mfcp(SCTLR_EL3);
 	if (XREG_CONTROL_DCACHE_BIT & ctrlReg)
 		Xil_DCacheFlush();
+#else
+	ctrlReg = mfcp(XREG_CP15_SYS_CONTROL);
+	if (XREG_CP15_CONTROL_C_BIT & ctrlReg)
+		Xil_DCacheFlush();
+#endif
 
 	pm_dbg("Going to WFI...\n");
 	__asm__("wfi");
 	pm_dbg("WFI exit...\n");
+}
+
+/**
+ *  XPm_ClientSetPrimaryMaster() - Set primary master based on master ID
+ */
+void XPm_ClientSetPrimaryMaster(void)
+{
+	u32 master_id;
+#ifdef __aarch64__
+	master_id = mfcp(MPIDR_EL1);
+#else
+	master_id = mfcp(XREG_CP15_MULTI_PROC_AFFINITY);
+#endif
+
+	master_id &= PM_AFL0_MASK;
+	primary_master = pm_masters_all[master_id];
 }

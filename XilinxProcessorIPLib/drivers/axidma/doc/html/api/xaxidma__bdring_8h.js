@@ -2,9 +2,15 @@ var xaxidma__bdring_8h =
 [
     [ "XAxiDma_BdRingAckIrq", "group__axidma__v9__0.html#ga9e782e3715c1d2dd03e5d03434f47319", null ],
     [ "XAxiDma_BdRingBusy", "group__axidma__v9__0.html#gaf7c291190c92ce93d72f95c5b04ef1d4", null ],
+<<<<<<< HEAD
     [ "XAxiDma_BdRingCntCalc", "group__axidma__v9__0.html#ga98555b607a9ec831dc6473e77515bb4b", null ],
     [ "XAxiDma_BdRingGetCnt", "group__axidma__v9__0.html#gac62389e25e6775026cf1be6c383e665b", null ],
     [ "XAxiDma_BdRingGetCurrBd", "group__axidma__v9__0.html#ga21aa8dbf6eabf9146097d9b3cc91c574", null ],
+=======
+    [ "XAxiDma_BdRingCntCalc", "group__axidma__v9__0.html#ga5c87fcb74fe669b5998e53d0a4b35127", null ],
+    [ "XAxiDma_BdRingGetCnt", "group__axidma__v9__0.html#gac62389e25e6775026cf1be6c383e665b", null ],
+    [ "XAxiDma_BdRingGetCurrBd", "group__axidma__v9__0.html#gadd32e45591597a4bfa84b66dffc98913", null ],
+>>>>>>> upstream/master
     [ "XAxiDma_BdRingGetError", "group__axidma__v9__0.html#ga24cd47cdbfac0813e0d9caf966a1a3d2", null ],
     [ "XAxiDma_BdRingGetFreeCnt", "group__axidma__v9__0.html#ga415cf0c379fef0104f9f52881ead13a7", null ],
     [ "XAxiDma_BdRingGetIrq", "group__axidma__v9__0.html#ga7a9d2103e6d09fc3850b34a6386dc803", null ],

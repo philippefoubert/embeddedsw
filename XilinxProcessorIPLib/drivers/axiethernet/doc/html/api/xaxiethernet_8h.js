@@ -22,7 +22,11 @@ var xaxiethernet_8h =
     [ "XAE_VLAN_OPTION", "group__axiethernet__v5__0.html#gaaacd508700a0767d156cf47e71e1ea76", null ],
     [ "XAxiEthernet_AxiDevBaseAddress", "group__axiethernet__v5__0.html#gace643555d4c75d40b1ddee9dbd814a74", null ],
     [ "XAxiEthernet_GetIntStatus", "group__axiethernet__v5__0.html#ga56664c785ad43b4458a1109d3a5b3bc5", null ],
+<<<<<<< HEAD
     [ "XAxiEthernet_GetPhysicalInterface", "group__axiethernet__v5__0.html#gac94a4ec88dd7b33f7c2e1366c6313d53", null ],
+=======
+    [ "XAxiEthernet_GetPhysicalInterface", "group__axiethernet__v5__0.html#gadc2cf9ec186f1dffaece1552f96fcdd9", null ],
+>>>>>>> upstream/master
     [ "XAxiEthernet_GetTemacType", "group__axiethernet__v5__0.html#ga6ee4e2b95cc8d84e227f51e28ff07901", null ],
     [ "XAxiEthernet_IntClear", "group__axiethernet__v5__0.html#gaaaef83a7f1fe4d8ca117cf6bc80500a8", null ],
     [ "XAxiEthernet_IntDisable", "group__axiethernet__v5__0.html#ga6357e97582bc0e064c5b169d212e41df", null ],
@@ -35,8 +39,13 @@ var xaxiethernet_8h =
     [ "XAxiEthernet_IsExtMcastEnable", "group__axiethernet__v5__0.html#gab62015adb15bebd496a5346e3877af55", null ],
     [ "XAxiEthernet_IsFifo", "group__axiethernet__v5__0.html#gaaedd2fe4a2b3d24152c3f32160e8f994", null ],
     [ "XAxiEthernet_IsRecvFrameDropped", "group__axiethernet__v5__0.html#gae5c91a283a8b79c5e0735588ed8064ec", null ],
+<<<<<<< HEAD
     [ "XAxiEthernet_IsRxFullCsum", "group__axiethernet__v5__0.html#gafada00dabb696100996b896e83d6c2bd", null ],
     [ "XAxiEthernet_IsRxPartialCsum", "group__axiethernet__v5__0.html#ga310edb175e98c8e42fd2ad7d0c89318f", null ],
+=======
+    [ "XAxiEthernet_IsRxFullCsum", "group__axiethernet__v5__0.html#ga70ae7bc7e8d22aa1c7be7076c83d4015", null ],
+    [ "XAxiEthernet_IsRxPartialCsum", "group__axiethernet__v5__0.html#gae21c088294f79359ed1ee74468100e9a", null ],
+>>>>>>> upstream/master
     [ "XAxiEthernet_IsRxVlanStrp", "group__axiethernet__v5__0.html#ga4764b3156c37e0b505c4df69b105b770", null ],
     [ "XAxiEthernet_IsRxVlanTag", "group__axiethernet__v5__0.html#ga16debcb3a008c09bc8c4e29764310cae", null ],
     [ "XAxiEthernet_IsRxVlanTran", "group__axiethernet__v5__0.html#ga04ad5f292476ee8d62a2cacc66bf8767", null ],

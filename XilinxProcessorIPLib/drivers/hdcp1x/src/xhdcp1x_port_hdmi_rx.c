@@ -106,22 +106,12 @@ static void XHdcp1x_ProcessAKsvWrite(void *CallbackRef);
 ******************************************************************************/
 static int XHdcp1x_PortHdmiRxEnable(XHdcp1x *InstancePtr)
 {
-	XV_HdmiRx *HdmiRx = NULL;
 	u8 Buf[4];
 	int Status = XST_SUCCESS;
 
 	/* Verify arguments. */
 	Xil_AssertNonvoid(InstancePtr != NULL);
 	Xil_AssertNonvoid(InstancePtr->Port.PhyIfPtr != NULL);
-
-	/* Determine HdmiRx */
-	HdmiRx = InstancePtr->Port.PhyIfPtr;
-
-	/* Initialize the Bstatus register */
-	memset(Buf, 0, 4);
-	Buf[1] |= (XHDCP1X_PORT_BIT_BSTATUS_HDMI_MODE >> 8);
-	XHdcp1x_PortHdmiRxWrite(InstancePtr, XHDCP1X_PORT_OFFSET_BSTATUS,
-			Buf, 2);
 
 	/* Initialize the Bcaps register */
 	memset(Buf, 0, 4);
@@ -159,7 +149,6 @@ static int XHdcp1x_PortHdmiRxDisable(XHdcp1x *InstancePtr)
 {
 	u8 Offset = 0;
 	u8 Value = 0;
-	u32 RegValue;
 	int NumLeft = 0;
 	int Status = XST_SUCCESS;
 
@@ -178,6 +167,15 @@ static int XHdcp1x_PortHdmiRxDisable(XHdcp1x *InstancePtr)
 	/* Clear the HDCP RSVD (0x16) register */
 	Offset = 22;
 	NumLeft = 2;
+<<<<<<< HEAD
+	while (NumLeft-- > 0) {
+		XHdcp1x_PortHdmiRxWrite(InstancePtr, Offset++, &Value, 1);
+	}
+	/* Clear HDCP register space from VH0 (0x20) to RSVD (0x34) */
+	Offset = 32;
+	NumLeft = 20;
+=======
+>>>>>>> upstream/master
 	while (NumLeft-- > 0) {
 		XHdcp1x_PortHdmiRxWrite(InstancePtr, Offset++, &Value, 1);
 	}
@@ -187,12 +185,24 @@ static int XHdcp1x_PortHdmiRxDisable(XHdcp1x *InstancePtr)
 	while (NumLeft-- > 0) {
 		XHdcp1x_PortHdmiRxWrite(InstancePtr, Offset++, &Value, 1);
 	}
-	/* Clear HDCP register space from BCaps (0x40) to KSV FIFO (0x43) */
-	Offset = 64;
-	NumLeft = 68;
-	while (NumLeft-- > 64) {
-		XHdcp1x_PortHdmiRxWrite(InstancePtr, Offset++, &Value, 1);
-	}
+	/* Clear HDCP register space for Bcaps (0x40) */
+	XHdcp1x_PortHdmiRxWrite(InstancePtr, XHDCP1X_PORT_OFFSET_BCAPS,
+					&Value, 1);
+
+	/* Clear HDCP register space for Bstatus (0x41 and 0x42).
+	 * Do not clear HDMI_MODE field. */
+	XHdcp1x_PortHdmiRxWrite(InstancePtr, XHDCP1X_PORT_OFFSET_BSTATUS,
+					&Value, 1);
+	XHdcp1x_PortHdmiRxRead(InstancePtr, (XHDCP1X_PORT_OFFSET_BSTATUS + 1),
+					&Value, 1);
+	Value &= (XHDCP1X_PORT_BIT_BSTATUS_HDMI_MODE >> 8);
+	XHdcp1x_PortHdmiRxWrite(InstancePtr, (XHDCP1X_PORT_OFFSET_BSTATUS + 1),
+					&Value, 1);
+
+	/* Clear HDCP register space for KSV FIFO (0x43) */
+	Value = 0;
+	XHdcp1x_PortHdmiRxWrite(InstancePtr, XHDCP1X_PORT_OFFSET_BCAPS,
+					&Value, 1);
 
 	return (Status);
 }
@@ -243,7 +253,6 @@ static int XHdcp1x_PortHdmiRxInit(XHdcp1x *InstancePtr)
 static int XHdcp1x_PortHdmiRxRead(const XHdcp1x *InstancePtr, u8 Offset,
 		void *Buf, u32 BufSize)
 {
-	XV_HdmiRx *HdmiRx = InstancePtr->Port.PhyIfPtr;
 	u32 NumLeft = BufSize;
 	u8 *ReadBuf = Buf;
 
@@ -290,7 +299,6 @@ static int XHdcp1x_PortHdmiRxRead(const XHdcp1x *InstancePtr, u8 Offset,
 static int XHdcp1x_PortHdmiRxWrite(XHdcp1x *InstancePtr, u8 Offset,
 		const void *Buf, u32 BufSize)
 {
-	XV_HdmiRx *HdmiRx = InstancePtr->Port.PhyIfPtr;
 	u32 NumLeft = BufSize;
 	const u8 *WriteBuf = Buf;
 
@@ -327,7 +335,7 @@ static int XHdcp1x_PortHdmiRxWrite(XHdcp1x *InstancePtr, u8 Offset,
 * @param	InstancePtr is the device to write to.
 * @param	RptrConf is the repeater capability for the device.
 *
-* @return	None.
+* @return	XST_SUCCESS.
 *
 * @note		This function sets the REPEATER bit in the BCaps register for the
 * 		upstream device to read. This can be used to update the device
@@ -350,6 +358,7 @@ static int XHdcp1x_PortHdmiRxSetRepeater(XHdcp1x *InstancePtr, u8 RptrConf)
 	XHdcp1x_PortHdmiRxWrite(InstancePtr, XHDCP1X_PORT_OFFSET_BCAPS,
 			&Value, XHDCP1X_PORT_SIZE_BCAPS);
 
+	return (XST_SUCCESS);
 }
 
 /*****************************************************************************/

@@ -100,9 +100,22 @@ static struct rpmsg_channel *app_rp_chnl;
 static struct rpmsg_endpoint *rp_ept;
 static struct remote_proc *proc = NULL;
 static struct rsc_table_info rsc_info;
+static int evt_virtio_rst = 0;
+static int evt_have_data = 0;
 
 static TaskHandle_t comm_task;
-static int have_data_flag=0;
+
+static void virtio_rst_cb(struct hil_proc *hproc, int id)
+{
+	/* hil_proc only supports single virtio device */
+	(void)id;
+
+	if (!proc || proc->proc != hproc || !proc->rdev)
+		return;
+
+	LPRINTF("Resetting RPMsg\n");
+	evt_virtio_rst = 1;
+}
 
 /*-----------------------------------------------------------------------------*
  *  RPMSG callbacks setup by remoteproc_resource_init()
@@ -116,7 +129,7 @@ static void rpmsg_read_cb(struct rpmsg_channel *rp_chnl, void *data, int len,
 	if (!buffer_push(data, len)) {
 		LPERROR("cannot save data\n");
 	} else {
-		have_data_flag =1;
+		evt_have_data =1;
 	}
 }
 
@@ -154,6 +167,7 @@ int app(struct hil_proc *hproc)
 		return -1;
 	}
 
+<<<<<<< HEAD
 	LPRINTF("Init remoteproc resource done\n");
 
 	LPRINTF("Waiting for events...\n");
@@ -175,10 +189,63 @@ int app(struct hil_proc *hproc)
 				break;
 			}
 
+=======
+	LPRINTF("Init remoteproc resource succeeded\n");
+
+	hil_set_vdev_rst_cb(hproc, 0, virtio_rst_cb);
+
+	LPRINTF("Waiting for events...\n");
+
+	/* Stay in data processing loop until we receive a 'shutdown' message */
+	while (1) {
+		hil_poll(proc->proc, 0);
+
+		if (evt_have_data) {
+			void *data;
+			int len;
+
+			evt_have_data = 0;
+
+			buffer_pull(&data, &len);
+
+			/* If we get a shutdown request we will stop and end this task */
+			if (*(unsigned int *)data == SHUTDOWN_MSG) {
+				break;
+			}
+
+>>>>>>> upstream/master
 			/* Send data back to master*/
 			if (RPMSG_SUCCESS != rpmsg_send(app_rp_chnl, data, len)) {
 				LPERROR("rpmsg_send failed\n");
 			}
+		}
+<<<<<<< HEAD
+	}
+
+	/* disable interrupts and free resources */
+	LPRINTF("De-initializating remoteproc resource\n");
+	remoteproc_resource_deinit(proc);
+
+=======
+
+		if (evt_virtio_rst) {
+			/* vring rst callback, reset rpmsg */
+			LPRINTF("De-initializing RPMsg\n");
+			rpmsg_deinit(proc->rdev);
+			proc->rdev = NULL;
+
+			LPRINTF("Reinitializing RPMsg\n");
+			status = rpmsg_init(hproc, &proc->rdev,
+					    rpmsg_channel_created,
+					    rpmsg_channel_deleted,
+					    rpmsg_read_cb,
+					    1);
+			if (status != RPROC_SUCCESS) {
+				LPERROR("Reinit RPMsg failed\n");
+				break;
+			}
+			LPRINTF("Reinit RPMsg succeeded\n");
+			evt_virtio_rst = 0;
 		}
 	}
 
@@ -186,6 +253,7 @@ int app(struct hil_proc *hproc)
 	LPRINTF("De-initializating remoteproc resource\n");
 	remoteproc_resource_deinit(proc);
 
+>>>>>>> upstream/master
 	return 0;
 }
 

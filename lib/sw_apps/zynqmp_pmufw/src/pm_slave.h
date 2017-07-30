@@ -39,16 +39,20 @@
 #include "pm_defs.h"
 #include "pm_common.h"
 #include "pm_node.h"
-#include "pm_gic_proxy.h"
 
 /* Forward declarations */
 typedef struct PmMaster PmMaster;
 typedef struct PmRequirement PmRequirement;
 typedef struct PmSlave PmSlave;
+<<<<<<< HEAD
 typedef struct PmSlaveUsb PmSlaveUsb;
 
 typedef int (*const PmSlaveFsmHandler)(PmSlave* const slave,
 					   const PmStateId nextState);
+=======
+typedef struct PmSlaveClass PmSlaveClass;
+typedef struct PmWakeEvent PmWakeEvent;
+>>>>>>> upstream/master
 
 /*********************************************************************
  * Macros
@@ -57,9 +61,35 @@ typedef int (*const PmSlaveFsmHandler)(PmSlave* const slave,
 /* Mask definitions for slave's flags */
 #define PM_SLAVE_FLAG_IS_SHAREABLE	0x1U
 
+#define DEFINE_SLAVE_STATES(s)	.states = (s), \
+				.statesCnt = ARRAY_SIZE(s)
+
+#define DEFINE_SLAVE_TRANS(t)	.trans = (t), \
+				.transCnt = ARRAY_SIZE(t)
+
 /*********************************************************************
  * Structure definitions
  ********************************************************************/
+/**
+ * PmWakeEventClass - Class of the wake event
+ * @set		Set event as the wake source (must be defined by each class)
+ * @config	Configure the propagation of wake event (master requested)
+ */
+typedef struct PmWakeEventClass {
+	void (*const set)(PmWakeEvent* const wake, const u32 ipi, const u32 en);
+	void (*const config)(PmWakeEvent* const wake, const u32 ipi, const u32 en);
+} PmWakeEventClass;
+
+/**
+ * PmWakeEvent - Structure to model wake event that can be triggered by slave
+ * @derived	Pointer to the derived structure
+ * @class	Pointer to the class specific to the derived structure
+ */
+typedef struct PmWakeEvent {
+	void* const derived;
+	PmWakeEventClass* const class;
+} PmWakeEvent;
+
 /**
  * PmStateTran - Transition for a state in finite state machine
  * @latency     Transition latency in microseconds
@@ -74,9 +104,7 @@ typedef struct {
 
 /**
  * PmSlaveFsm - Finite state machine data for slaves
- * @state       Pointer to states array. Index in array is a state id, elements
- *              of array are power values in that state. For power island values
- *              are 0 and 1, for power domains values are in mV
+ * @states      Pointer to states array. Index in array is a state id.
  * @enterState  Pointer to a function that executes FSM actions to enter a state
  * @trans       Pointer to array of transitions of the FSM
  * @transCnt    Number of elements in transition array
@@ -84,7 +112,7 @@ typedef struct {
  */
 typedef struct {
 	const u32* const states;
-	PmSlaveFsmHandler enterState;
+	int (*const enterState)(PmSlave* const slave, const PmStateId nextState);
 	const PmStateTran* const trans;
 	const u8 statesCnt;
 	const u8 transCnt;
@@ -93,6 +121,8 @@ typedef struct {
 /**
  * PmSlave - Slave structure used for managing slave's states
  * @node        Pointer to the node structure of this slave
+ * @class       Slave class (NULL if derived slave has no specific methods to be
+ *              called in addition to methods of PmNodeClass)
  * @reqs        Pointer to the list of masters' requirements for the slave
  * @wake        Wake event this slave can generate
  * @slvFsm      Slave finite state machine
@@ -101,11 +131,28 @@ typedef struct {
  */
 typedef struct PmSlave {
 	PmNode node;
+	PmSlaveClass* const class;
 	PmRequirement* reqs;
-	const PmGicProxyWake* const wake;
+	PmWakeEvent* const wake;
 	const PmSlaveFsm* slvFsm;
 	u8 flags;
 } PmSlave;
+
+/**
+ * PmSlaveClass - Slave class to model properties of PmSlave derived objects
+ * @init	Initialize the slave
+ * @forceDown	Force down specific to the slave
+ */
+typedef struct PmSlaveClass {
+	int (*const init)(PmSlave* const slave);
+	int (*const forceDown)(PmSlave* const slave);
+} PmSlaveClass;
+
+/*********************************************************************
+ * Global data declarations
+ ********************************************************************/
+
+extern PmNodeClass pmNodeClassSlave_g;
 
 /*********************************************************************
  * Function declarations
@@ -113,15 +160,15 @@ typedef struct PmSlave {
 int PmUpdateSlave(PmSlave* const slave);
 int PmCheckCapabilities(const PmSlave* const slave, const u32 capabilities);
 int PmSlaveHasWakeUpCap(const PmSlave* const slv);
-
-bool PmSlaveRequiresPower(const PmSlave* const slave);
+int PmSlaveSetConfig(PmSlave* const slave, const u32 policy, const u32 perms);
 
 int PmSlaveVerifyRequest(const PmSlave* const slave);
 
-u32 PmGetLatencyFromState(const PmSlave* const slave, const PmStateId state);
 u32 PmSlaveGetUsersMask(const PmSlave* const slave);
 
-u32 PmSlaveGetUsageStatus(const u32 slavenode, const PmMaster *const master);
-u32 PmSlaveGetRequirements(const u32 slavenode, const PmMaster *const master);
+u32 PmSlaveGetUsageStatus(const PmSlave* const slave,
+			  const PmMaster* const master);
+u32 PmSlaveGetRequirements(const PmSlave* const slave,
+			   const PmMaster* const master);
 
 #endif

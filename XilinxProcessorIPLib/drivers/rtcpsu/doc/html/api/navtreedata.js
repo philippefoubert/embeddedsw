@@ -15,7 +15,20 @@ var NAVTREE =
       [ "Typedefs", "globals_type.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xrtcpsu_alarm_interrupt_example.c", "example.html#ex1", null ],
+      [ "xrtcpsu_alarm_polled_example.c", "example.html#ex2", null ],
+      [ "xrtcpsu_periodic_alarm_interrupt_example.c", "example.html#ex3", null ],
+      [ "xrtcpsu_seconds_interrupt_example.c", "example.html#ex4", null ],
+      [ "xrtcpsu_seconds_polled_example.c", "example.html#ex5", null ],
+      [ "xrtcpsu_set_calibration_example.c", "example.html#ex6", null ],
+      [ "xrtcpsu_set_time_example.c", "example.html#ex7", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

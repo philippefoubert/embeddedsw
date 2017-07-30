@@ -19,6 +19,10 @@ var NAVTREEINDEX0 =
 "bigdigits_8h.html#a5593505351c9c1938ad52404c8f9a44c":[1,1,53],
 "bigdigits_8h.html#a580b353eb67d03b0a36368511797fa40":[1,1,57],
 "bigdigits_8h.html#a5c94137a0eeb9ba885cb29614aee4722":[1,1,34],
+<<<<<<< HEAD
+=======
+"bigdigits_8h.html#a6033aa03068f258fcfb159b2a756a49a":[1,1,40],
+>>>>>>> upstream/master
 "bigdigits_8h.html#a6661573d9edf51c0800e78cc8abb8a67":[1,1,36],
 "bigdigits_8h.html#a6e871a43d19b2d7fcd4b757637a214fe":[1,1,55],
 "bigdigits_8h.html#a7722e651a813d81c395293d956ee0aad":[1,1,27],
@@ -50,7 +54,10 @@ var NAVTREEINDEX0 =
 "bigdigits_8h.html#acc3a35a960069e8c18e7a9ee3ed24191":[1,1,1],
 "bigdigits_8h.html#accf5184fcdf82b57fe62b7b318446c12":[1,1,44],
 "bigdigits_8h.html#ad8426b0575d2fcd0008306ca3e2aed7a":[1,1,51],
+<<<<<<< HEAD
 "bigdigits_8h.html#add5bd92aae1e43600418b63fa0f10e2c":[1,1,40],
+=======
+>>>>>>> upstream/master
 "bigdigits_8h.html#adf93fae14e496cb8282205e99e671706":[1,1,43],
 "bigdigits_8h.html#ae0075ded2e08296e00c7d0d8236baa9e":[1,1,13],
 "bigdigits_8h.html#aeaf5c70793ce41643c96ced238689a81":[1,1,29],

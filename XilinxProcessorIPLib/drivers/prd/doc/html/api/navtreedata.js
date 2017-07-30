@@ -15,7 +15,15 @@ var NAVTREE =
       [ "Enumerator", "globals_eval.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xprd_selftest_example.c", "example.html#ex1", null ],
+      [ "xprd_example.c", "example.html#ex2", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

@@ -3,7 +3,11 @@ var xuartns550__l_8h =
     [ "XUartNs550_DisableIntr", "group__uartns550__v3__3.html#ga9039b3a4a9852fa556e522976edd1288", null ],
     [ "XUartNs550_EnableIntr", "group__uartns550__v3__3.html#ga24622c1399f2cbab46e9dda140ef4aa0", null ],
     [ "XUartNs550_GetLineControlReg", "group__uartns550__v3__3.html#gab9ba96c18cb50a8ab5873d781b4ee94e", null ],
+<<<<<<< HEAD
     [ "XUartNs550_GetLineStatusReg", "group__uartns550__v3__3.html#ga5bbc90c39e15adea04c63548dd537cc5", null ],
+=======
+    [ "XUartNs550_GetLineStatusReg", "group__uartns550__v3__3.html#gacfbf9e5ce401ea4b07a19752802926f7", null ],
+>>>>>>> upstream/master
     [ "XUartNs550_IsReceiveData", "group__uartns550__v3__3.html#ga941188ffba023576548effef6ccb0707", null ],
     [ "XUartNs550_IsTransmitEmpty", "group__uartns550__v3__3.html#gabae5b671e19c043af9e1c76e183acb60", null ],
     [ "XUartNs550_ReadReg", "group__uartns550__v3__3.html#ga58ff500307c70fda263888b18fc6389c", null ],

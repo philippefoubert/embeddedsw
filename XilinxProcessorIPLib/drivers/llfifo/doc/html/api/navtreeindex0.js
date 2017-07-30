@@ -1,6 +1,12 @@
 var NAVTREEINDEX0 =
 {
 "annotated.html":[0,0],
+<<<<<<< HEAD
+=======
+"example.html":[3],
+"example.html#ex1":[3,0],
+"example.html#ex2":[3,1],
+>>>>>>> upstream/master
 "files.html":[2],
 "functions.html":[0,1,0],
 "functions_vars.html":[0,1,1],
@@ -89,5 +95,19 @@ var NAVTREEINDEX0 =
 "struct_x_strm___tx_fifo_streamer.html#ac20fde8a3090fddfc01f8b2900fd9051":[0,0,2,0],
 "xllfifo_8c.html":[2,0],
 "xllfifo_8h.html":[2,1],
+<<<<<<< HEAD
 "xllfifo__hw_8h.html":[2,2]
+=======
+"xllfifo__hw_8h.html":[2,2],
+"xllfifo__interrupt__example_8c.html":[2,3],
+"xllfifo__interrupt__example_8c.html#a38cd37c9e86c6d514d731db7bc520a0b":[2,3,2],
+"xllfifo__interrupt__example_8c.html#a8d6febbfb5e669f63287fc75c282d1f6":[2,3,3],
+"xllfifo__interrupt__example_8c.html#ae66f6b31b5ad750f1fe042a706a4e3d4":[2,3,0],
+"xllfifo__interrupt__example_8c.html#aedb200dfa9fb520a0a99c70134fa54b7":[2,3,1],
+"xllfifo__polling__example_8c.html":[2,4],
+"xllfifo__polling__example_8c.html#a38cd37c9e86c6d514d731db7bc520a0b":[2,4,2],
+"xllfifo__polling__example_8c.html#a9b186f96c85a9de36244d2ec0f4833e6":[2,4,3],
+"xllfifo__polling__example_8c.html#adec078eff87ae9f74e6bbe52d29db16e":[2,4,1],
+"xllfifo__polling__example_8c.html#ae66f6b31b5ad750f1fe042a706a4e3d4":[2,4,0]
+>>>>>>> upstream/master
 };

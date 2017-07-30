@@ -36,7 +36,11 @@
 ###############################################################################
 
 # standalone bsp version. set this to the latest "ACTIVE" version.
+<<<<<<< HEAD
 set standalone_version standalone_v6_1
+=======
+set standalone_version [hsi::get_sw_cores standalone_* -filter {CORE_STATE == "ACTIVE"}]
+>>>>>>> upstream/master
 
 proc kernel_drc {os_handle} {
     set sw_proc_handle [hsi::get_sw_processor]

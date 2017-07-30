@@ -1,6 +1,6 @@
 ##############################################################################
 #
-# Copyright (C) 2014 - 2016 Xilinx, Inc. All rights reserved.
+# Copyright (C) 2014 - 2017 Xilinx, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -47,6 +47,52 @@ set scugic_dist_base	0xF8F01000
 proc standalone_drc {os_handle} {
 }
 
+# -------------------------------------------------------------------------
+# Tcl procedure lpd_is_coherent
+# Returns true(1) if any one of LPD masters has CCI enabled, else false(0)
+# -------------------------------------------------------------------------
+proc lpd_is_coherent {} {
+	#List of all LPD masters that can have cache coherency enabled
+	set lpd_master_names {psu_adma psu_qspi psu_nand psu_sd psu_ethernet psu_cortexr5 psu_usb}
+	foreach master_name $lpd_master_names {
+		# Get all the enabled instances of each IP
+		set filter_txt [list IP_NAME == $master_name]
+		set mlist [hsi::get_cells -filter $filter_txt]
+		# Iterate through each instance and check for CONFIG.IS_CACHE_COHERENT
+		foreach master $mlist {
+			if { [common::get_property CONFIG.IS_CACHE_COHERENT $master] == "1" } {
+				# We found a master thats cache coherent, so return true
+				return 1
+			}
+		}
+	}
+	# None of the masters were cache coherent, so return false
+	return 0
+}
+
+# -------------------------------------------------------------------------
+# Tcl procedure fpd_is_coherent
+# Returns true(1) if any one of the FPD masters has CCI enabled, else false(0)
+# -------------------------------------------------------------------------
+proc fpd_is_coherent {} {
+    #List of all FPD masters that can have cache coherency enabled
+    set fpd_master_names {psu_sata psu_pcie}
+    foreach master_name $fpd_master_names {
+        # Get all the enabled instances of each IP
+        set filter_txt [list IP_NAME == $master_name]
+        set mlist [hsi::get_cells -filter $filter_txt]
+        # Iterate through each instance and check for CONFIG.IS_CACHE_COHERENT
+        foreach master $mlist {
+            if { [common::get_property CONFIG.IS_CACHE_COHERENT $master] == "1" } {
+                # We found a FPD master that is cache coherent, so return true
+                return 1
+            }
+        }
+    }
+    # None of the masters were cache coherent, so return false
+    return 0
+}
+
 # --------------------------------------
 # Tcl procedure generate
 # -------------------------------------
@@ -82,13 +128,20 @@ proc generate {os_handle} {
         foreach entry [glob -nocomplain [file join $armcommonsrcdir *]] {
             file copy -force $entry "./src"
             file delete -force "./src/gcc"
+            file delete -force "./src/iccarm"
         }
         if {[string compare -nocase $compiler "armcc"] != 0 && [string compare -nocase $compiler "iccarm"] != 0} {
             set commonccdir "./src/arm/common/gcc"
             foreach entry [glob -nocomplain [file join $commonccdir *]] {
 	         file copy -force $entry "./src/"
             }
+        } elseif {[string compare -nocase $compiler "iccarm"] == 0} {
+            set commonccdir "./src/arm/common/iccarm"
+            foreach entry [glob -nocomplain [file join $commonccdir *]] {
+                 file copy -force $entry "./src/"
+            }
         }
+
     }
 
     # Only processor specific file should be copied to specified standalone folder
@@ -130,6 +183,22 @@ proc generate {os_handle} {
                     puts $file_handle ""
                 }
             }
+<<<<<<< HEAD
+=======
+
+            if {[lpd_is_coherent]} {
+                set def "#define XPAR_LPD_IS_CACHE_COHERENT"
+                puts $file_handle $def
+                puts $file_handle ""
+            }
+
+            if {[fpd_is_coherent]} {
+                set def "#define XPAR_FPD_IS_CACHE_COHERENT"
+                puts $file_handle $def
+                puts $file_handle ""
+            }
+
+>>>>>>> upstream/master
             xdefine_fabric_reset $file_handle
             close $file_handle
 
@@ -187,7 +256,11 @@ proc generate {os_handle} {
         "psu_cortexr5"  {
 	    set procdrv [hsi::get_sw_processor]
 	    set includedir "./src/arm/cortexa53/includes_ps"
-	    set ccdir "./src/arm/cortexr5/gcc"
+	    if {[string compare -nocase $compiler "iccarm"] == 0} {
+	           set ccdir "./src/arm/cortexr5/iccarm"
+            } else {
+	           set ccdir "./src/arm/cortexr5/gcc"
+	   }
 	    foreach entry [glob -nocomplain [file join $cortexr5srcdir *]] {
 		file copy -force $entry "./src/"
 	    }
@@ -196,6 +269,7 @@ proc generate {os_handle} {
 	    }
 	    file copy -force $includedir "./src/"
 	    file delete -force "./src/gcc"
+	    file delete -force "./src/iccarm"
 	    file delete -force "./src/profile"
             if { $enable_sw_profile == "true" } {
                 error "ERROR: Profiling is not supported for R5"
@@ -376,6 +450,23 @@ proc generate {os_handle} {
         puts $bspcfg_fh "#define MICROBLAZE_PVR_NONE"
     }
 
+<<<<<<< HEAD
+=======
+    if { $proctype == "psu_cortexa53" } {
+	if {[string compare -nocase $compiler "arm-none-eabi-gcc"] != 0} {
+		set hypervisor_guest [common::get_property CONFIG.hypervisor_guest $os_handle ]
+		if { $hypervisor_guest == "true" } {
+			puts $bspcfg_fh "#define EL3 0"
+			puts $bspcfg_fh "#define EL1_NONSECURE 1"
+			puts $bspcfg_fh "#define HYP_GUEST 1"
+		} else {
+			puts $bspcfg_fh "#define EL3 1"
+			puts $bspcfg_fh "#define EL1_NONSECURE 0"
+			puts $bspcfg_fh "#define HYP_GUEST 0"
+		}
+	}
+    }
+>>>>>>> upstream/master
     close $bspcfg_fh
 }
 # --------------------------------------
@@ -850,7 +941,7 @@ proc handle_profile_opbtimer { config_file timer_inst } {
 	     [string compare -nocase $ipsptype "INTR_CTRL"] == 0 } {
 	    # Timer connected to Interrupt controller
 	    puts $config_file "#define TIMER_CONNECT_INTC 1"
-	    puts $config_file "#define INTC_BASEADDR [xget_value $intc_handle "PARAMETER" "C_BASEADDR"]"
+	    puts $config_file "#define INTC_BASEADDR [common::get_property CONFIG.C_BASEADDR $intc_handle]"
 	    set num_intr_inputs [common::get_property CONFIG.C_NUM_INTR_INPUTS $intc_handle]
 	    # if { $num_intr_inputs == 1 } {  ## Always enable system interrupt CR 472288
 		 puts $config_file "#define ENABLE_SYS_INTR 1"

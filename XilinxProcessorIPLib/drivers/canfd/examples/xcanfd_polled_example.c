@@ -52,6 +52,11 @@
 * Ver   Who    Date	Changes
 * ----- -----  -------- -----------------------------------------------
 * 1.0   nsk    06/04/15 First release
+* 1.2   ms     01/23/17 Modified xil_printf statement in main function to
+*                       ensure that "Successfully ran" and "Failed" strings are
+*                       available in all examples. This is a fix for CR-965028.
+*       ms     04/05/17 Added tabspace for return statements in functions
+*                       for proper documentation while generating doxygen.
 *
 * </pre>
 *
@@ -138,7 +143,8 @@ static XCanFd CanFd;
 *
 * @param	None
 *
-* @return	- XST_SUCCESS if the example has completed successfully.
+* @return
+*		- XST_SUCCESS if the example has completed successfully.
 *		- XST_FAILURE if the example has failed.
 *
 * @note		None
@@ -156,7 +162,7 @@ int main(void)
 		xil_printf("XCanFd Polled Mode example Failed\n\r");
 		return XST_FAILURE;
 	}
-	xil_printf("XCanFd Polled Mode example Passed\n\r");
+	xil_printf("Successfully ran XCanFd Polled Mode example\n\r");
 	return XST_SUCCESS;
 
 }

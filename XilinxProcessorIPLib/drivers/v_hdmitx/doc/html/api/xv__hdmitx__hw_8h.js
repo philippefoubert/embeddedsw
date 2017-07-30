@@ -25,6 +25,10 @@ var xv__hdmitx__hw_8h =
     [ "XV_HDMITX_AUX_STA_FREE_PKTS_SHIFT", "xv__hdmitx__hw_8h.html#adc1a9c1d2d63c4849f8fc776838f01cc", null ],
     [ "XV_HDMITX_AUX_STA_IRQ_MASK", "xv__hdmitx__hw_8h.html#a5664a354bf22aa9e19d950a18c9598f4", null ],
     [ "XV_HDMITX_AUX_STA_OFFSET", "xv__hdmitx__hw_8h.html#aadeed071f9ae80ff300b531ea298f42a", null ],
+<<<<<<< HEAD
+=======
+    [ "XV_HDMITX_AUX_STA_PKT_RDY_MASK", "xv__hdmitx__hw_8h.html#ae8dd52aee290be2984731085f7668e44", null ],
+>>>>>>> upstream/master
     [ "XV_HDMITX_DDC_CMD_OFFSET", "xv__hdmitx__hw_8h.html#a7356d56189f12a10c6f79a97012e3882", null ],
     [ "XV_HDMITX_DDC_CMD_RD_TOKEN", "xv__hdmitx__hw_8h.html#a77fe4475732ac1844f33515e64590bd0", null ],
     [ "XV_HDMITX_DDC_CMD_STP_TOKEN", "xv__hdmitx__hw_8h.html#a17aefbf8e9a56021a1fa7321fca45995", null ],
@@ -56,6 +60,19 @@ var xv__hdmitx__hw_8h =
     [ "XV_HDMITX_HW_H_", "xv__hdmitx__hw_8h.html#a0711485d228f909cc65b275f866e526c", null ],
     [ "XV_HdmiTx_In32", "xv__hdmitx__hw_8h.html#a90f7af607960cdf44deb2b43aab27254", null ],
     [ "XV_HDMITX_MASK_16", "xv__hdmitx__hw_8h.html#a74530507b4700c300feb4eceed05668f", null ],
+<<<<<<< HEAD
+=======
+    [ "XV_HDMITX_MASK_BLUE_OFFSET", "xv__hdmitx__hw_8h.html#a9647e1e833bcf466af722bb35001ab8e", null ],
+    [ "XV_HDMITX_MASK_CTRL_CLR_OFFSET", "xv__hdmitx__hw_8h.html#a3639d48e4561aad19842fd0d94a845a2", null ],
+    [ "XV_HDMITX_MASK_CTRL_NOISE_MASK", "xv__hdmitx__hw_8h.html#ad38ac97d5502d061626fe17deb93b658", null ],
+    [ "XV_HDMITX_MASK_CTRL_OFFSET", "xv__hdmitx__hw_8h.html#aa07be6429aa3de9196a5772fb5fb9df1", null ],
+    [ "XV_HDMITX_MASK_CTRL_RUN_MASK", "xv__hdmitx__hw_8h.html#a4a2e6183da180f5788efe86b724434b8", null ],
+    [ "XV_HDMITX_MASK_CTRL_SET_OFFSET", "xv__hdmitx__hw_8h.html#ae10fec02c7d56b2f48deee7af38a7b8e", null ],
+    [ "XV_HDMITX_MASK_GREEN_OFFSET", "xv__hdmitx__hw_8h.html#aca10d7d68e20ce01b1cf316e595f36aa", null ],
+    [ "XV_HDMITX_MASK_ID_OFFSET", "xv__hdmitx__hw_8h.html#a420855708f2f362229d89e1bac673151", null ],
+    [ "XV_HDMITX_MASK_RED_OFFSET", "xv__hdmitx__hw_8h.html#a348a93aa41e2334b3daa3cdd15e4b8a7", null ],
+    [ "XV_HDMITX_MASK_STA_OFFSET", "xv__hdmitx__hw_8h.html#aab51c879f7c90771a1d8e0ad70a4c012", null ],
+>>>>>>> upstream/master
     [ "XV_HdmiTx_Out32", "xv__hdmitx__hw_8h.html#a6038ccff274de8b99efc34332d0c41d9", null ],
     [ "XV_HDMITX_PIO_CTRL_CLR_OFFSET", "xv__hdmitx__hw_8h.html#ad1d5bdab7fa4daf868d93d2edd96f566", null ],
     [ "XV_HDMITX_PIO_CTRL_IE_MASK", "xv__hdmitx__hw_8h.html#a912027acfdcf62f09ebcb9c4eafb1a74", null ],
@@ -75,6 +92,11 @@ var xv__hdmitx__hw_8h =
     [ "XV_HDMITX_PIO_IN_PPP_SHIFT", "xv__hdmitx__hw_8h.html#a53a26ad8c741bb6defdabaf539c15f76", null ],
     [ "XV_HDMITX_PIO_IN_VID_RDY_MASK", "xv__hdmitx__hw_8h.html#a8eae374abecb5156f5827c2543467866", null ],
     [ "XV_HDMITX_PIO_IN_VS_MASK", "xv__hdmitx__hw_8h.html#a5e6881f3d1d651347a8e507c6d708aa6", null ],
+<<<<<<< HEAD
+=======
+    [ "XV_HDMITX_PIO_OUT_BRIDGE_PIXEL_MASK", "xv__hdmitx__hw_8h.html#a43259fa8be8e6d4990e225e7ef66deb6", null ],
+    [ "XV_HDMITX_PIO_OUT_BRIDGE_YUV420_MASK", "xv__hdmitx__hw_8h.html#ae631917853f4efc05ec48b91a487e22e", null ],
+>>>>>>> upstream/master
     [ "XV_HDMITX_PIO_OUT_CLR_OFFSET", "xv__hdmitx__hw_8h.html#a57cd09ceda16cfc89ad51ab5fd16c625", null ],
     [ "XV_HDMITX_PIO_OUT_COLOR_DEPTH_MASK", "xv__hdmitx__hw_8h.html#a564d1abff6cb04057811a461cfbcb692", null ],
     [ "XV_HDMITX_PIO_OUT_COLOR_DEPTH_SHIFT", "xv__hdmitx__hw_8h.html#aa3936d875363ae229e89ab0d93005173", null ],

@@ -86,6 +86,13 @@ XStatus XPm_SetWakeUpSource(const enum XPmNodeId target,
 			    const u8 enable);
 
 XStatus XPm_SystemShutdown(u32 type, u32 subtype);
+<<<<<<< HEAD
+=======
+
+XStatus XPm_SetConfiguration(const u32 address);
+
+XStatus XPm_InitFinalize();
+>>>>>>> upstream/master
 
 /* Callback API function */
 /*

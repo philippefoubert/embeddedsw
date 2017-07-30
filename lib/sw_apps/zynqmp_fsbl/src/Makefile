@@ -56,18 +56,31 @@ OBJS += $(patsubst %.S, %.o, $(S_SOURCES))
 
 OBJS += $(patsubst %.s, %.o, $(s_SOURCES))
 
+<<<<<<< HEAD
 MISC_DIR := ../misc/
 BSP_DIR	:= $(MISC_DIR)/zynqmp_fsbl_bsp/
+=======
+MISC_DIR := ../misc
+BSP_DIR	:= $(MISC_DIR)/zynqmp_fsbl_bsp
+>>>>>>> upstream/master
 
 ifeq "${PROC}" "a53"
 ifeq "${A53_STATE}" "64"
 CC := aarch64-none-elf-gcc
+<<<<<<< HEAD
 CC_FLAGS := -MMD -MP -Wall -fmessage-length=0 -DARMA53_64
+=======
+CC_FLAGS := -MMD -MP -Wall -fmessage-length=0 -DARMA53_64 -Wall -Wextra -Os -flto -ffat-lto-objects
+>>>>>>> upstream/master
 LSCRIPT := -Tlscript_a53.ld
 endif
 ifeq "${A53_STATE}" "32"
 CC := arm-none-eabi-gcc
+<<<<<<< HEAD
 CC_FLAGS := -MMD -MP -Wall -fmessage-length=0 -march=armv7-a -DARMA53_32
+=======
+CC_FLAGS := -MMD -MP -Wall -fmessage-length=0 -march=armv7-a -DARMA53_32 -Wall -Wextra -Os -flto -ffat-lto-objects
+>>>>>>> upstream/master
 #linker script for a53_32 and r5 is same.
 LSCRIPT := -Tlscript.ld
 endif
@@ -78,7 +91,11 @@ endif
 ifeq "${PROC}" "r5"
 A53_STATE :=
 CC := armr5-none-eabi-gcc
+<<<<<<< HEAD
 CC_FLAGS := -MMD -MP -Wall -fmessage-length=0 -mcpu=cortex-r5 -mfloat-abi=soft -DARMR5
+=======
+CC_FLAGS := -MMD -MP -Wall -fmessage-length=0 -mcpu=cortex-r5 -mfloat-abi=hard -DARMR5 -Wall -Wextra -mfpu=vfpv3-d16 -Os -flto -ffat-lto-objects
+>>>>>>> upstream/master
 LSCRIPT := -Tlscript.ld
 INCLUDEPATH := -I$(BSP_DIR)/psu_cortexr5_0/include -I. -I$(MISC_DIR)/$(BOARD)
 LIBPATH := -L$(BSP_DIR)/psu_cortexr5_0/lib
@@ -87,9 +104,15 @@ endif
 
 override CFLAGS := -DXPS_BOARD_ZCU102 $(CFLAGS)
 ECFLAGS :=
+<<<<<<< HEAD
 LDFLAGS := -Wl,--start-group,-lxil,-lgcc,-lc,--end-group \
 	-Wl,--start-group,-lxilffs,-lxil,-lgcc,-lc,--end-group \
 	-Wl,--start-group,-lxilsecure,-lxil,-lgcc,-lc,--end-group  -Wl,--gc-sections
+=======
+LDFLAGS := -Wl,--start-group,-lxil,-lgcc,-lc,-lxilffs,-lxilsecure,-lxilpm,--end-group
+#	-Wl,--start-group,-lxilffs,-lxil,-lgcc,-lc,--end-group \
+#	-Wl,--start-group,-lxilsecure,-lxil,-lgcc,-lc,--end-group  -Wl,--gc-sections
+>>>>>>> upstream/master
 
 EXEC := fsbl.elf
 

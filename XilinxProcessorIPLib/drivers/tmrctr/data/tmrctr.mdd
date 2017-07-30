@@ -55,6 +55,10 @@ BEGIN driver tmrctr
   OPTION supported_peripherals = (axi_timer);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 4.3;
+>>>>>>> upstream/master
   OPTION NAME = tmrctr;
 
 END driver

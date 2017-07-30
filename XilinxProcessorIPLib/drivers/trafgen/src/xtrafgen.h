@@ -193,6 +193,17 @@
 * 		      Some incorrect parameter in axi traffic generator driver.
 * 4.0   sd  19/08/15 Fixed CR:876564 Added 64-bit Support to axi traffic generator
 *		     driver.
+* 4.1   ms  01/23/17 Modified xil_printf statement in main function for all
+*                    examples to ensure that "Successfully ran" and "Failed"
+*                    strings are available in all examples. This is a fix
+*                    for CR-965028.
+*       ms  03/17/17 Added readme.txt file in examples folder for doxygen
+*                    generation.
+*       ms  04/05/17 Added tabspace for return statements in functions of
+*                    trafgen examples for proper documentation while
+*                    generating doxygen and also modified filename tag in
+*                    master streaming example file to include it in doxygen
+*                    examples.
 * </pre>
 ******************************************************************************/
 

@@ -78,7 +78,10 @@
 #include "openamp/rpmsg_retarget.h"
 #include "rsc_table.h"
 #include "platform_info.h"
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
 
 #define REDEF_O_CREAT 100
 #define REDEF_O_EXCL 200
@@ -108,7 +111,7 @@ static struct rsc_table_info rsc_info;
  *  RPMSG callbacks setup by remoteproc_resource_init()
  *-----------------------------------------------------------------------------*/
 static void rpmsg_read_cb(struct rpmsg_channel *rp_chnl, void *data, int len,
-                void * priv, unsigned long src)
+			  void *priv, unsigned long src)
 {
 	(void)rp_chnl;
 	(void)data;
@@ -131,6 +134,7 @@ static void rpmsg_channel_deleted(struct rpmsg_channel *rp_chnl)
 
 static void shutdown_cb(struct rpmsg_channel *rp_chnl)
 {
+	(void)rp_chnl;
 	chnl_is_alive = 0;
 }
 
@@ -152,12 +156,21 @@ int app (struct hil_proc *hproc)
 	/* Initialize framework */
 	LPRINTF("Try to init remoteproc resource\n");
 	status = remoteproc_resource_init(&rsc_info, hproc,
+<<<<<<< HEAD
 						rpmsg_channel_created,
 						rpmsg_channel_deleted, rpmsg_read_cb,
 						&proc, 0);
 	if (RPROC_SUCCESS != status) {
 		LPERROR("Failed  to initialize remoteproc resource.\n");
         return -1;
+=======
+					  rpmsg_channel_created,
+					  rpmsg_channel_deleted, rpmsg_read_cb,
+					  &proc, 0);
+	if (RPROC_SUCCESS != status) {
+		LPERROR("Failed  to initialize remoteproc resource.\n");
+		return -1;
+>>>>>>> upstream/master
 	}
 
 	LPRINTF("Init remoteproc resource done\n");
@@ -198,7 +211,11 @@ int app (struct hil_proc *hproc)
 	bytes_read = read(fd, rbuff, 1024);
 	*(char *)(&rbuff[0] + bytes_read + 1) = 0;
 	printf("\r\nRemote>Read from fd = %d, size = %d, printing contents below .. %s\r\n",
+<<<<<<< HEAD
 	     fd, bytes_read, rbuff);
+=======
+		fd, bytes_read, rbuff);
+>>>>>>> upstream/master
 	close(fd);
 	printf("\r\nRemote>Closed fd = %d\r\n", fd);
 
@@ -264,18 +281,32 @@ int main(void)
 	unsigned long rsc_id = 0;
 	struct hil_proc *hproc;
 	int status = -1;
+<<<<<<< HEAD
 
 	LPRINTF("Starting application...\n");
 
 	/* Initialize HW system components */
 	init_system();
 
+=======
+
+	LPRINTF("Starting application...\n");
+
+	/* Initialize HW system components */
+	init_system();
+
+>>>>>>> upstream/master
 	/* Create HIL proc */
 	hproc = platform_create_proc(proc_id);
 	if (!hproc) {
 		LPERROR("Failed to create hil proc.\n");
 	} else {
+<<<<<<< HEAD
 		rsc_info.rsc_tab = get_resource_table((int)rsc_id, &rsc_info.size);
+=======
+		rsc_info.rsc_tab =
+			get_resource_table((int)rsc_id, &rsc_info.size);
+>>>>>>> upstream/master
 		if (!rsc_info.rsc_tab) {
 			LPERROR("Failed to get resource table data.\n");
 		} else {

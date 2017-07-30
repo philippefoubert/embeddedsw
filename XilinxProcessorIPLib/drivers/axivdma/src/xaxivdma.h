@@ -288,7 +288,16 @@
 *                      (read or write)(CR 874861)
 * 6.1   sk   11/10/15 Used UINTPTR instead of u32 for Baseaddress CR# 867425.
 *                     Changed the prototype of XAxiVdma_CfgInitialize API.
-*
+* 6.2   ms   01/23/17 Modified xil_printf statement in main function for all
+*                     examples to ensure that "Successfully ran" and "Failed"
+*                     strings are available in all examples. This is a fix
+*                     for CR-965028.
+* 6.3   ms   02/20/17 Fixed compilation error in xaxivdma_intr.c. CR-969129.
+*       ms   03/17/17 Modified the text file in examples folder for doxygen
+*                     generation.
+*       ms   04/05/17 Modified Comment lines in functions of axivdma
+*                     examples to recognize it as documentation block
+*                     for doxygen generation of examples.
 * </pre>
 *
 ******************************************************************************/

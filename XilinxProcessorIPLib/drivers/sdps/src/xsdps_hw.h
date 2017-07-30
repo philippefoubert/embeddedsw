@@ -56,6 +56,10 @@
 *       sk     07/16/16 Added Tap delays accordingly to different SD/eMMC
 *                       operating modes.
 * 3.1   sk     11/07/16 Enable Rst_n bit in ext_csd reg if not enabled.
+<<<<<<< HEAD
+=======
+* 3.2   sk     03/20/17 Add support for EL1 non-secure mode.
+>>>>>>> upstream/master
 * </pre>
 *
 ******************************************************************************/
@@ -953,6 +957,7 @@ extern "C" {
 #define XSDPS_HIGH_SPEED_MODE		0x5U
 #define XSDPS_DEFAULT_SPEED_MODE	0x6U
 #define XSDPS_HS200_MODE			0x7U
+#define XSDPS_DDR52_MODE			0x4U
 #define XSDPS_SWITCH_CMD_BLKCNT		1U
 #define XSDPS_SWITCH_CMD_BLKSIZE	64U
 #define XSDPS_SWITCH_CMD_HS_GET		0x00FFFFF0U
@@ -994,6 +999,8 @@ extern "C" {
 #define XSDPS_SD_DDR50_MAX_CLK	50000000U
 #define XSDPS_SD_SDR104_MAX_CLK	208000000U
 #define XSDPS_MMC_HS200_MAX_CLK	200000000U
+#define XSDPS_MMC_HSD_MAX_CLK	52000000U
+#define XSDPS_MMC_DDR_MAX_CLK	52000000U
 
 #define XSDPS_CARD_STATE_IDLE		0U
 #define XSDPS_CARD_STATE_RDY		1U
@@ -1010,7 +1017,15 @@ extern "C" {
 #define XSDPS_SLOT_REM			0U
 #define XSDPS_SLOT_EMB			1U
 
-#if defined (ARMR5) || defined (__aarch64__)
+#define XSDPS_WIDTH_8		8U
+#define XSDPS_WIDTH_4		4U
+
+
+#if defined (ARMR5) || defined (__aarch64__) || defined (ARMA53_32)
+#define SD0_ITAPDLY_SEL_MASK		0x000000FFU
+#define SD0_OTAPDLY_SEL_MASK		0x0000003FU
+#define SD1_ITAPDLY_SEL_MASK		0x00FF0000U
+#define SD1_OTAPDLY_SEL_MASK		0x003F0000U
 #define SD_DLL_CTRL 				0x00000358U
 #define SD_ITAPDLY					0x00000314U
 #define SD_OTAPDLY					0x00000318U

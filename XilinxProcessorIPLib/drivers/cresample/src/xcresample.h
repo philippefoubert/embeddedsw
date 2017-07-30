@@ -179,7 +179,16 @@
 *
 *                        Modifications in the file xcresample_sinit.c are:
 *                        Implemented XCresample_LookupConfig function.
-
+* 4.1   ms      01/16/17 Updated the parameter naming from
+*                        XPAR_CRESAMPLE_NUM_INSTANCES to
+*                        XPAR_XCRESAMPLE_NUM_INSTANCES to avoid compilation
+*                        failure for XPAR_CRESAMPLE_NUM_INSTANCES as the
+*                        tools are generating XPAR_XCRESAMPLE_NUM_INSTANCES
+*                        in the generated xcresample_g.c for fixing MISRA-C
+*                        files. This is a fix for CR-966099 based on the
+*                        update in the tools.
+*       ms      03/17/17 Added readme.txt file in examples folder for doxygen
+*                        generation.
 * </pre>
 *
 ******************************************************************************/

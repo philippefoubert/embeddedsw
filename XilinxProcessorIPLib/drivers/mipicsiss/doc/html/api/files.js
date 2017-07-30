@@ -4,6 +4,12 @@ var files =
     [ "xcsiss.h", "xcsiss_8h.html", "xcsiss_8h" ],
     [ "xcsiss_hw.h", "xcsiss__hw_8h.html", "xcsiss__hw_8h" ],
     [ "xcsiss_intr.c", "xcsiss__intr_8c.html", "xcsiss__intr_8c" ],
+<<<<<<< HEAD
     [ "xcsiss_selftest.c", "xcsiss__selftest_8c.html", "xcsiss__selftest_8c" ],
+=======
+    [ "xcsiss_intr_example.c", "xcsiss__intr__example_8c.html", "xcsiss__intr__example_8c" ],
+    [ "xcsiss_selftest.c", "xcsiss__selftest_8c.html", "xcsiss__selftest_8c" ],
+    [ "xcsiss_selftest_example.c", "xcsiss__selftest__example_8c.html", "xcsiss__selftest__example_8c" ],
+>>>>>>> upstream/master
     [ "xcsiss_sinit.c", "xcsiss__sinit_8c.html", "xcsiss__sinit_8c" ]
 ];

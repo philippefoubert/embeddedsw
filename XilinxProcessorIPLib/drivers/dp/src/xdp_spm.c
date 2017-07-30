@@ -56,6 +56,10 @@
  * 5.1   als  08/03/16 Use video common API rather than internal structure when
  *                     checking for interlaced mode.
  *       als  08/12/16 Updates to support 64-bit base addresses.
+<<<<<<< HEAD
+=======
+ * 5.2   aad  01/24/17 Disable end of line reset for reduced blanking
+>>>>>>> upstream/master
  * </pre>
  *
 *******************************************************************************/
@@ -1274,6 +1278,14 @@ static void XDp_TxSetLineReset(XDp *InstancePtr, u8 Stream,
 	else {
 		RegVal &= ~XDP_TX_LINE_RESET_DISABLE_MASK(Stream);
 	}
-	XDp_WriteReg(ConfigPtr->BaseAddr, XDP_TX_LINE_RESET_DISABLE, RegVal);
+
+	/* Toggle Reset */
+	if(RegVal) {
+		XDp_WaitUs(InstancePtr, 100);
+		XDp_WriteReg(ConfigPtr->BaseAddr, XDP_TX_LINE_RESET_DISABLE, 0);
+		XDp_WaitUs(InstancePtr, 100);
+		XDp_WriteReg(ConfigPtr->BaseAddr,
+			     XDP_TX_LINE_RESET_DISABLE, RegVal);
+	}
 }
 /** @} */

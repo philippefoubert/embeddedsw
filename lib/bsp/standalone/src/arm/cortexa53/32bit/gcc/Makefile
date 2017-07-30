@@ -44,20 +44,25 @@ ECC_FLAGS = $(subst -pg, -DPROFILING, $(EXTRA_COMPILER_FLAGS))
 
 ECC_FLAGS	+= -nostartfiles\
 		  -march=armv7-a
+ECC_FLAGS_NO_FLTO1 = $(subst -flto,,$(ECC_FLAGS))
+ECC_FLAGS_NO_FLTO = $(subst -ffat-lto-objects,,$(ECC_FLAGS_NO_FLTO1))
+
 
 RELEASEDIR=../../../lib
 INCLUDEDIR=../../../include
 INCLUDES=-I./. -I${INCLUDEDIR}
 
 OUTS = *.o
-
+OBJECTS =	$(addsuffix .o, $(basename $(wildcard *.c)))
+ASSEMBLY_OBJECTS  = $(addsuffix .o, $(basename $(wildcard *.S)))
 INCLUDEFILES=*.h
 
 libs: $(LIBS)
 
 standalone_libs: $(LIBSOURCES)
 	echo "Compiling standalone"
-	$(CC) $(CC_FLAGS) $(ECC_FLAGS) $(INCLUDES) $^
+	$(CC) $(CC_FLAGS) $(ECC_FLAGS) $(INCLUDES) $(filter-out _exit.c, $^)
+	$(CC) $(CC_FLAGS) $(ECC_FLAGS_NO_FLTO) $(INCLUDES) _exit.c
 	$(ARCHIVER) -r ${RELEASEDIR}/${LIB} ${OUTS}
 
 .PHONY: include
@@ -67,5 +72,5 @@ standalone_includes:
 	${CP} ${INCLUDEFILES} ${INCLUDEDIR}
 
 clean:
-	rm -rf ${OUTS}
-	$(MAKE) -C COMPILER_FLAGS="$(COMPILER_FLAGS)" EXTRA_COMPILER_FLAGS="$(EXTRA_COMPILER_FLAGS)" COMPILER="$(CC)" ARCHIVER="$(ARCHIVER)" AS="$(AS)" clean
+	rm -rf ${OBJECTS}
+	rm -rf ${ASSEMBLY_OBJECTS}

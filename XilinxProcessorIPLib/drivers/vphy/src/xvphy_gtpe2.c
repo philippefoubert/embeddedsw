@@ -48,13 +48,24 @@
  * 1.0   als  10/19/15 Initial release.
  * 1.1   gm   03/18/16 Added XVphy_Gtpe2RxPllRefClkDiv1Reconfig function
  * 1.2   gm   08/26/16 Suppressed warning messages due to unused arguments
+<<<<<<< HEAD
+=======
+ * 1.4   gm   29/11/16 Added preprocessor directives for sw footprint reduction
+ *                     Changed TX reconfig hook from TxPllRefClkDiv1Reconfig to
+ *                       TxChReconfig
+ *                     Added TX datawidth dynamic reconfiguration
+ *                     Corrected the default return value of DRP encoding
+ *                       APIs to prevent overwritting the reserved bits
+>>>>>>> upstream/master
  * </pre>
  *
 *******************************************************************************/
 
 /******************************* Include Files ********************************/
 
+#include "xparameters.h"
 #include "xvphy_gt.h"
+#if (XPAR_VPHY_0_TRANSCEIVER == XVPHY_GTPE2)
 #include "xstatus.h"
 
 /**************************** Function Prototypes *****************************/
@@ -79,6 +90,8 @@ u32 XVphy_Gtpe2ClkChReconfig(XVphy *InstancePtr, u8 QuadId,
 		XVphy_ChannelId ChId);
 u32 XVphy_Gtpe2ClkCmnReconfig(XVphy *InstancePtr, u8 QuadId,
 		XVphy_ChannelId CmnId);
+u32 XVphy_Gtpe2TxChReconfig(XVphy *InstancePtr, u8 QuadId,
+		XVphy_ChannelId ChId);
 u32 XVphy_Gtpe2RxChReconfig(XVphy *InstancePtr, u8 QuadId,
 		XVphy_ChannelId ChId);
 u32 XVphy_Gtpe2TxPllRefClkDiv1Reconfig(XVphy *InstancePtr, u8 QuadId,
@@ -93,7 +106,8 @@ u32 XVphy_Gtpe2RxPllRefClkDiv1Reconfig(XVphy *InstancePtr, u8 QuadId,
 
 #define XVPHY_DRP_RXDATAWIDTH		0x11
 #define XVPHY_DRP_OUT_DIV_PROG		0x88
-#define XVPHY_DRP_TXCLK25		0x6A
+#define XVPHY_DRP_TXCLK25		    0x6A
+#define XVPHY_DRP_TXDATAWIDTH	    0x6B
 #define XVPHY_DRP_RXCDR_CFG_WORD0	0xA8
 #define XVPHY_DRP_RXCDR_CFG_WORD1	0xA9
 #define XVPHY_DRP_RXCDR_CFG_WORD2	0xAA
@@ -116,7 +130,7 @@ const XVphy_GtConfig Gtpe2Config = {
 	.ClkChReconfig = XVphy_Gtpe2ClkChReconfig,
 	.ClkCmnReconfig = XVphy_Gtpe2ClkCmnReconfig,
 	.RxChReconfig = XVphy_Gtpe2RxChReconfig,
-	.TxPllRefClkDiv1Reconfig = XVphy_Gtpe2TxPllRefClkDiv1Reconfig,
+	.TxChReconfig = XVphy_Gtpe2TxChReconfig,
 
 	.CpllDivs = {
 		.M = Gtpe2CpllDivsM,
@@ -281,16 +295,16 @@ u32 XVphy_Gtpe2OutDivChReconfig(XVphy *InstancePtr, u8 QuadId,
 		/* Mask out RX_OUT_DIV. */
 		DrpVal &= ~0x07;
 		/* Set RX_OUT_DIV. */
-		WriteVal = XVphy_DToDrpEncoding(InstancePtr, QuadId, ChId,
-				XVPHY_DIR_RX);
+		WriteVal = (XVphy_DToDrpEncoding(InstancePtr, QuadId, ChId,
+				XVPHY_DIR_RX) & 0x7);
 		DrpVal |= WriteVal;
 	}
 	else {
 		/* Mask out TX_OUT_DIV. */
 		DrpVal &= ~0x70;
 		/* Set TX_OUT_DIV. */
-		WriteVal = XVphy_DToDrpEncoding(InstancePtr, QuadId, ChId,
-				XVPHY_DIR_TX);
+		WriteVal = (XVphy_DToDrpEncoding(InstancePtr, QuadId, ChId,
+				XVPHY_DIR_TX) & 0x7);
 		DrpVal |= (WriteVal << 4);
 	}
 	/* Write new DRP register value for TX/RX dividers. */
@@ -352,13 +366,13 @@ u32 XVphy_Gtpe2ClkCmnReconfig(XVphy *InstancePtr, u8 QuadId,
 	/* Mask out clock divider bits. */
 	DrpVal &= ~(0x1FFF);
 	/* Set CPLL_FBDIV. */
-	WriteVal = XVphy_NToDrpEncoding(InstancePtr, QuadId, CmnId, 2);
+	WriteVal = (XVphy_NToDrpEncoding(InstancePtr, QuadId, CmnId, 2) & 0x3F);
 	DrpVal |= WriteVal;
 	/* Set CPLL_FBDIV_45. */
-	WriteVal = XVphy_NToDrpEncoding(InstancePtr, QuadId, CmnId, 1);
+	WriteVal = (XVphy_NToDrpEncoding(InstancePtr, QuadId, CmnId, 1) & 0x1);
 	DrpVal |= (WriteVal << 7);
 	/* Set CPLL_REFCLKDIV. */
-	WriteVal = XVphy_MToDrpEncoding(InstancePtr, QuadId, CmnId);
+	WriteVal = (XVphy_MToDrpEncoding(InstancePtr, QuadId, CmnId) & 0x1F);
 	DrpVal |= (WriteVal << 9);
 	/* Write new DRP register value for PLL dividers. */
 	XVphy_DrpWrite(InstancePtr, QuadId, XVPHY_CHANNEL_ID_CMN,
@@ -418,6 +432,46 @@ u32 XVphy_Gtpe2RxChReconfig(XVphy *InstancePtr, u8 QuadId, XVphy_ChannelId ChId)
 	XVphy_Gtpe2RxPllRefClkDiv1Reconfig(InstancePtr, QuadId, ChId);
 
 	return XST_SUCCESS;
+}
+
+/*****************************************************************************/
+/**
+* This function will configure the channel's TX settings.
+*
+* @param	InstancePtr is a pointer to the XVphy core instance.
+* @param	QuadId is the GT quad ID to operate on.
+* @param	ChId is the channel ID to operate on.
+*
+* @return
+*		- XST_SUCCESS if the configuration was successful.
+*		- XST_FAILURE otherwise.
+*
+* @note		None.
+*
+******************************************************************************/
+u32 XVphy_Gtpe2TxChReconfig(XVphy *InstancePtr, u8 QuadId,
+		XVphy_ChannelId ChId)
+{
+	u16 DrpVal;
+
+	if (InstancePtr->Config.TxProtocol == XVPHY_PROTOCOL_HDMI) {
+        DrpVal = XVphy_DrpRead(InstancePtr, QuadId, ChId,
+                XVPHY_DRP_TXDATAWIDTH);
+        DrpVal &= ~(0x07);
+
+		if (InstancePtr->Config.TransceiverWidth == 2) {
+			/* Set TX Data width of the TX GT to 20 bits */
+			DrpVal |= 3;
+		}
+		else {
+			/* Set TX Data width of the TX GT to 40 bits */
+			DrpVal |= 5;
+		}
+		XVphy_DrpWrite(InstancePtr, QuadId, ChId, XVPHY_DRP_TXDATAWIDTH,
+				DrpVal);
+	}
+
+	return XVphy_Gtpe2TxPllRefClkDiv1Reconfig(InstancePtr, QuadId, ChId);
 }
 
 /*****************************************************************************/
@@ -642,7 +696,7 @@ static u8 XVphy_DrpEncodePllMN2(u8 AttrEncode)
 		DrpEncode = (AttrEncode - 2);
 		break;
 	default:
-		DrpEncode = 0xFF;
+		DrpEncode = 0xF;
 		break;
 	}
 
@@ -664,7 +718,7 @@ static u8 XVphy_DrpEncodePllN1(u8 AttrEncode)
 {
 	u8 DrpEncode;
 
-	DrpEncode = AttrEncode - 4;
+	DrpEncode = (AttrEncode - 4) & 0x1;
 
 	return DrpEncode;
 }
@@ -701,7 +755,7 @@ static u8 XVphy_DrpEncodeCpllTxRxD(u8 AttrEncode)
 		DrpEncode = 4;
 		break;
 	default:
-		DrpEncode = 0xFF;
+		DrpEncode = 0x4;
 		break;
 	}
 
@@ -727,5 +781,6 @@ static u16 XVphy_DrpEncodeClk25(u32 RefClkFreqHz)
 	DrpEncode = ((RefClkFreqMHz / 25) +
 			(((RefClkFreqMHz % 25) > 0) ? 1 : 0)) - 1;
 
-	return DrpEncode;
+	return (DrpEncode & 0x1F);
 }
+#endif

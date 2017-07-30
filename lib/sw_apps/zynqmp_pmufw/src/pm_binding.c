@@ -27,6 +27,8 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*********************************************************************
  * Implementations of the functions to be used for integrating power
@@ -42,24 +44,8 @@
 #include "pm_notifier.h"
 #include "pm_power.h"
 #include "pm_gic_proxy.h"
-#include "pm_clock.h"
-
-/*
- * Macro for all wake events in GPI1 that PM handles.
- * Used for initialization to avoid looping through all slaves array.
- */
-#define PMU_IOMODULE_GPI1_WAKES_ALL_MASK \
-		(PMU_IOMODULE_GPI1_GIC_WAKES_ALL_MASK | \
-		PMU_LOCAL_GPI1_ENABLE_FPD_WAKE_GIC_PROX_MASK)
-
-/* All WFI bitfields in GPI2 */
-#define PMU_LOCAL_GPI2_ENABLE_ALL_PWRDN_REQ_MASK \
-		(PMU_LOCAL_GPI2_ENABLE_ACPU0_PWRDWN_REQ_MASK | \
-		PMU_LOCAL_GPI2_ENABLE_ACPU1_PWRDWN_REQ_MASK | \
-		PMU_LOCAL_GPI2_ENABLE_ACPU2_PWRDWN_REQ_MASK | \
-		PMU_LOCAL_GPI2_ENABLE_ACPU3_PWRDWN_REQ_MASK | \
-		PMU_LOCAL_GPI2_ENABLE_R5_0_PWRDWN_REQ_MASK | \
-		PMU_LOCAL_GPI2_ENABLE_R5_1_PWRDWN_REQ_MASK)
+#include "pm_requirement.h"
+#include "pm_extern.h"
 
 /* All GIC wakes in GPI1 */
 #define PMU_IOMODULE_GPI1_GIC_WAKES_ALL_MASK \
@@ -73,13 +59,13 @@
 /**
  * XPfw_PmInit() - initializes PM firmware
  *
- * @note    Call on startup after XPfw_PmSetConfiguration to initialize PM
- *          firmware. It is assumed that PMU firmware enables GPI1, GPI2, and
- *          IPI0 interrupts at the processor level, so PMU only masks/unmasks
- *          specific events.
+ * @note	Call on startup to initialize PM firmware. It is assumed that
+ * PFW enables GPI1, GPI2, and IPI0 interrupts, PM firmware only masks/unmasks
+ * specific events.
  */
 void XPfw_PmInit(void)
 {
+<<<<<<< HEAD
 	u32 val;
 
 	PmDbg("Power Management Init\r\n");
@@ -90,16 +76,13 @@ void XPfw_PmInit(void)
 
 	PmRequirementInit();
 	PmClockInitList();
+=======
+	PmDbg("Power Management Init\r\n");
+>>>>>>> upstream/master
 
-	val = XPfw_Read32(PM_INIT_SYNC_REGISTER);
-	if (PM_INIT_COMPLETED_KEY == val) {
-		/* System init is completed, no one will call PmInit later */
-		XPfw_Write32(PM_INIT_SYNC_REGISTER, 0U);
-		PmInit(NULL);
-	}
+	PmMasterDefaultConfig();
 
-	/* Setup initial slaves for masters */
-	PmSetupInitialMasterRequirements();
+	PmNodeConstruct();
 }
 
 /**
@@ -121,7 +104,7 @@ void XPfw_PmInit(void)
 int XPfw_PmIpiHandler(const u32 IsrMask, const u32* Payload, u8 Len)
 {
 	int status = XST_SUCCESS;
-	const PmMaster* master = PmGetMasterByIpiMask(IsrMask);
+	PmMaster* master = PmGetMasterByIpiMask(IsrMask);
 
 	if ((NULL == Payload) || (NULL == master) || (Len < PAYLOAD_ELEM_CNT)) {
 		/* Never happens if IPI irq handler is implemented correctly */
@@ -159,14 +142,6 @@ int XPfw_PmWfiHandler(const u32 srcMask)
 	}
 
 	status = PmProcFsm(proc, PM_PROC_EVENT_SLEEP);
-	if ((XST_SUCCESS == status) &&
-	    (true == PmMasterIsSuspended(proc->master))) {
-		/*
-		 * We've just powered down the last processor, now use
-		 * opportunistic suspend to power down its parent(s)
-		 */
-		PmOpportunisticSuspend(proc->node.parent);
-	}
 
 done:
 	return status;
@@ -194,16 +169,21 @@ int XPfw_PmWakeHandler(const u32 srcMask)
 
 	if (0U != (PMU_IOMODULE_GPI1_GIC_WAKES_ALL_MASK & srcMask))  {
 		/* Processor GIC wake */
-		PmProc* proc = PmGetProcByWakeStatus(srcMask);
-		if (NULL != proc) {
-			status = PmProcFsm(proc, PM_PROC_EVENT_WAKE);
+		PmProc* proc = PmProcGetByWakeMask(srcMask);
+		if ((NULL != proc) && (NULL != proc->master)) {
+			status = PmMasterWakeProc(proc);
 		} else {
 			status = XST_INVALID_PARAM;
 		}
 	} else if (0U != (PMU_LOCAL_GPI1_ENABLE_FPD_WAKE_GIC_PROX_MASK & srcMask)) {
 		status = PmMasterWake(&pmMasterApu_g);
+<<<<<<< HEAD
 	} else {
 		status = XST_SUCCESS;
+=======
+	} else if (0U != (PMU_LOCAL_GPI1_ENABLE_MIO_WAKE_MASK & srcMask)) {
+		status = PmExternWakeMasters();
+>>>>>>> upstream/master
 	}
 
 	return status;
@@ -253,7 +233,7 @@ done:
  */
 void XPfw_DapFpdWakeEvent(void)
 {
-	pmPowerDomainFpd_g.node.currState = PM_PWR_STATE_ON;
+	pmPowerDomainFpd_g.power.node.currState = PM_PWR_STATE_ON;
 }
 
 /**
@@ -261,5 +241,7 @@ void XPfw_DapFpdWakeEvent(void)
  */
 void XPfw_DapRpuWakeEvent(void)
 {
-	pmPowerIslandRpu_g.node.currState = PM_PWR_STATE_ON;
+	pmPowerIslandRpu_g.power.node.currState = PM_PWR_STATE_ON;
 }
+
+#endif

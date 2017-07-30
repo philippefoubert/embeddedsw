@@ -45,8 +45,12 @@
 /*********************************************************************
  * Function declarations
  ********************************************************************/
+<<<<<<< HEAD
 void PmProcessRequest(const PmMaster *const master, const u32 *payload);
 void PmInit(const PmMaster* const master);
 int PmForcePowerDownInt(u32 node, u32 *oppoint);
+=======
+void PmProcessRequest(PmMaster *const master, const u32 *payload);
+>>>>>>> upstream/master
 
 #endif

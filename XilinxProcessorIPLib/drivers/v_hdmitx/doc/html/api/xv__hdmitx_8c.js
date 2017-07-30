@@ -1,6 +1,10 @@
 var xv__hdmitx_8c =
 [
+<<<<<<< HEAD
     [ "XV_HdmiTx_AuxSend", "xv__hdmitx_8c.html#a06fa3ff9976df2241535d4538a8e4f69", null ],
+=======
+    [ "XV_HdmiTx_AuxSend", "xv__hdmitx_8c.html#ae75f2ab194a44b9f67b7fa9d4545cb57", null ],
+>>>>>>> upstream/master
     [ "XV_HdmiTx_CfgInitialize", "xv__hdmitx_8c.html#acfeb8c295991a88031817404dd4135f3", null ],
     [ "XV_HdmiTx_Clear", "xv__hdmitx_8c.html#a30b8f33b34025333a39bcb12961402af", null ],
     [ "XV_HdmiTx_ClockRatio", "xv__hdmitx_8c.html#a18857793bd92eafef197b339cf1f956e", null ],

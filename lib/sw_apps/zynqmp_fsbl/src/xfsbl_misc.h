@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,7 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00  kc   10/21/13 Initial release
+* 2.0   bv   12/02/16 Made compliance to MISRAC 2012 guidelines
 *
 * </pre>
 *
@@ -62,8 +63,8 @@ extern "C" {
 #include "xil_exception.h"
 
 /************************** Constant Definitions *****************************/
-#define XFSBL_SD_DRV_NUM_0	0
-#define XFSBL_SD_DRV_NUM_1	1
+#define XFSBL_SD_DRV_NUM_0	0U
+#define XFSBL_SD_DRV_NUM_1	1U
 #define BLOCK_SIZE_2MB 0x200000U
 #define BLOCK_SIZE_1GB 0x40000000U
 #define ADDRESS_LIMIT_4GB 0x100000000UL
@@ -74,22 +75,19 @@ extern "C" {
 
 /************************** Function Prototypes ******************************/
 void XFsbl_PrintArray (u32 DebugType, const u8 Buf[], u32 Len, const char *Str);
-void XFsbl_MemSet(void *SrcPtr, u8 Char, u32 Len);
 void *XFsbl_MemCpy(void * DestPtr, const void * SrcPtr, u32 Len);
-int XFsbl_MemCmp(const void *Str1Ptr, const void *Str2Ptr, u32 Count);
 char *XFsbl_Strcpy(char *DestPtr, const char *SrcPtr);
 char * XFsbl_Strcat(char* Str1Ptr, const char* Str2Ptr);
-int XFsbl_Strcmp(const char* Str1Ptr, const char* Str2Ptr);
 void XFsbl_MakeSdFileName(char *XFsbl_SdEmmcFileName,
 		u32 MultibootReg, u32 DrvNum);
 u32 XFsbl_GetDrvNumSD(u32 DeviceFlags);
-u32 XFsbl_Htonl(u32 Value1);
 u32 XFsbl_PowerUpIsland(u32 PwrIslandMask);
 u32 XFsbl_IsolationRestore(u32 IsolationMask);
 void XFsbl_SetTlbAttributes(INTPTR Addr, UINTPTR attrib);
-char *XFsbl_GetSiliconIdName(void);
-char *XFsbl_GetProcEng(void);
+const char *XFsbl_GetSiliconIdName(void);
+const char *XFsbl_GetProcEng(void);
 u32 XFsbl_CheckSupportedCpu(u32 CpuId);
+u32 XFsbl_AdmaCopy(void * DestPtr, void * SrcPtr, u32 Size);
 
 #ifndef ARMA53_64
 void XFsbl_RegisterHandlers(void);

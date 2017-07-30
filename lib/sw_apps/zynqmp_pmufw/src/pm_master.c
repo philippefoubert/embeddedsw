@@ -27,725 +27,38 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*********************************************************************
- * Master related data and function definitions:
- * 1. Data structures for masters and array of their requirements for
- *    slaves capabilities
- * 2. Functions for managing requirements and accessing master data
+ * This file contains PM master related data structures and
+ * functions for accessing them.
  *********************************************************************/
 
 #include "pm_master.h"
 #include "pm_proc.h"
 #include "pm_defs.h"
-#include "pm_sram.h"
-#include "pm_usb.h"
-#include "pm_pll.h"
-#include "pm_periph.h"
 #include "pm_callbacks.h"
 #include "pm_notifier.h"
 #include "pm_system.h"
+#include "pm_sram.h"
 #include "pm_ddr.h"
+#include "pm_requirement.h"
+#include "pmu_global.h"
+#include "pm_node_reset.h"
+#include "pm_clock.h"
+#include "xpfw_restart.h"
 
 #include "xpfw_ipi_manager.h"
 
+#define SUBSYSTEM_RESTART_MASK	BIT(16U)
 #define PM_REQUESTED_SUSPEND        0x1U
 #define TO_ACK_CB(ack, status) (REQUEST_ACK_NON_BLOCKING == (ack))
 
-/* Static resource allocation */
-PmRequirement pmReqData[] = {
-	{
-		.slave = &pmSlaveRtc_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlavePcap_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlavePcie_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveGpu_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTcm1B_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTcm1A_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTcm0B_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTcm0A_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveIpiApu_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = PM_MASTER_USING_SLAVE_MASK,
-		.defaultReq = PM_CAP_ACCESS,
-		.currReq = PM_CAP_ACCESS,
-		.nextReq = PM_CAP_ACCESS,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveDdr_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = PM_MASTER_USING_SLAVE_MASK,
-		.defaultReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.currReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.nextReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveAFI_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveGpio_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveQSpi_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveNand_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveDP_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveGdma_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveAdma_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveEth3_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveEth2_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveEth1_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveEth0_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveCan1_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveCan0_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveSD1_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveSD0_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveI2C1_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveI2C0_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveSpi1_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveSpi0_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveUart1_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveUart0_g,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveGpuPP1_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveGpuPP0_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveIOpll_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveRpll_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveDpll_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveVpll_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveApll_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveSata_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTtc3_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTtc2_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTtc1_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTtc0_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveUsb1_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveUsb0_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveL2_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = PM_MASTER_USING_SLAVE_MASK,
-		.defaultReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.currReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.nextReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveOcm3_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = PM_MASTER_USING_SLAVE_MASK,
-		.defaultReq = 0U,
-		.currReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.nextReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveOcm2_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = PM_MASTER_USING_SLAVE_MASK,
-		.defaultReq = 0U,
-		.currReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.nextReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveOcm1_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = PM_MASTER_USING_SLAVE_MASK,
-		.defaultReq = 0U,
-		.currReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.nextReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveOcm0_g.slv,
-		.master = &pmMasterApu_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = PM_MASTER_USING_SLAVE_MASK,
-		.defaultReq = 0U,
-		.currReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.nextReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveIpiRpu0_g,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = PM_MASTER_USING_SLAVE_MASK,
-		.defaultReq = PM_CAP_ACCESS,
-		.currReq = PM_CAP_ACCESS,
-		.nextReq = PM_CAP_ACCESS,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveDdr_g,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveIOpll_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveRpll_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveDpll_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveVpll_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveApll_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveSata_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTtc0_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveUsb1_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveUsb0_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTcm1B_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = PM_MASTER_USING_SLAVE_MASK,
-		.defaultReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.currReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.nextReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTcm1A_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = PM_MASTER_USING_SLAVE_MASK,
-		.defaultReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.currReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.nextReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTcm0B_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = PM_MASTER_USING_SLAVE_MASK,
-		.defaultReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.currReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.nextReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveTcm0A_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = PM_MASTER_USING_SLAVE_MASK,
-		.defaultReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.currReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.nextReq = PM_CAP_ACCESS | PM_CAP_CONTEXT,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveOcm3_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveOcm2_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveOcm1_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	}, {
-		.slave = &pmSlaveOcm0_g.slv,
-		.master = &pmMasterRpu0_g,
-		.nextSlave = NULL,
-		.nextMaster = NULL,
-		.info = 0U,
-		.defaultReq = 0U,
-		.currReq = 0U,
-		.nextReq = 0U,
-		.latencyReq = MAX_LATENCY,
-	},
-};
+#define DEFINE_PM_PROCS(c)	.procs = (c), \
+				.procsCnt = ARRAY_SIZE(c)
+
+static PmMaster* pmMasterHead = NULL;
 
 static const PmSlave* pmApuMemories[] = {
 	&pmSlaveOcm0_g.slv,
@@ -763,7 +76,7 @@ static int PmApuPrepareSuspendToRam(void)
 {
 	int status;
 	u32 i;
-	PmRequirement* req = PmGetRequirementForSlave(&pmMasterApu_g, NODE_L2);
+	PmRequirement* req = PmRequirementGet(&pmMasterApu_g, &pmSlaveL2_g.slv);
 
 	if (NULL == req) {
 		status = XST_FAILURE;
@@ -781,9 +94,8 @@ static int PmApuPrepareSuspendToRam(void)
 
 	i = 0U;
 	while (NULL != pmMasterApu_g.memories[i]) {
-		PmNodeId memNid = pmMasterApu_g.memories[i]->node.nodeId;
-
-		req = PmGetRequirementForSlave(&pmMasterApu_g, memNid);
+		req = PmRequirementGet(&pmMasterApu_g,
+					pmMasterApu_g.memories[i]);
 		if (NULL == req) {
 			status = XST_FAILURE;
 			goto done;
@@ -824,184 +136,225 @@ static int PmApuEvaluateState(const u32 state)
 	return status;
 }
 
+/**
+ * PmMasterRpuRemapAddr() - Remap address from RPU's (lockstep) to PMU's view
+ * @address     Address to remap
+ *
+ * @return      Remapped address or the provided address if no remapping done
+ */
+static u32 PmMasterRpuRemapAddr(const u32 address)
+{
+	u32 remapAddr = address;
+
+	if (address < 4U * pmSlaveTcm0A_g.size) {
+		remapAddr += pmSlaveTcm0A_g.base;
+	}
+
+	return remapAddr;
+}
+
+/**
+ * PmMasterRpu0RemapAddr() - Remap address from RPU_0's to PMU's view
+ * @address     Address to remap
+ *
+ * @return      Remapped address or the provided address if no remapping done
+ */
+static u32 PmMasterRpu0RemapAddr(const u32 address)
+{
+	u32 remapAddr = address;
+
+	if (address < pmSlaveTcm0A_g.size) {
+		remapAddr += pmSlaveTcm0A_g.base;
+	} else {
+		if ((address >= 2U * pmSlaveTcm0A_g.size) &&
+		    (address < 2U * pmSlaveTcm0A_g.size + pmSlaveTcm0B_g.size)) {
+			remapAddr += pmSlaveTcm0B_g.base;
+		}
+	}
+
+	return remapAddr;
+}
+
+/**
+ * PmMasterRpu1RemapAddr() - Remap address from RPU_1's to PMU's view
+ * @address     Address to remap
+ *
+ * @return      Remapped address or the provided address if no remapping done
+ */
+static u32 PmMasterRpu1RemapAddr(const u32 address)
+{
+	u32 remapAddr = address;
+
+	if (address < pmSlaveTcm1A_g.size) {
+		remapAddr += pmSlaveTcm1A_g.base;
+	} else {
+		if ((address >= 2U * pmSlaveTcm1A_g.size) &&
+		    (address < 2U * pmSlaveTcm1A_g.size + pmSlaveTcm1B_g.size)) {
+			remapAddr += pmSlaveTcm1B_g.base;
+		}
+	}
+
+	return remapAddr;
+}
+
+static PmProc* pmMasterApuProcs[] = {
+	&pmProcApu0_g,
+	&pmProcApu1_g,
+	&pmProcApu2_g,
+	&pmProcApu3_g,
+};
+
 PmMaster pmMasterApu_g = {
-	.procs = pmApuProcs_g,
-	.procsCnt = PM_PROC_APU_MAX,
+	DEFINE_PM_PROCS(pmMasterApuProcs),
 	.wakeProc = NULL,
 	.nid = NODE_APU,
 	.ipiMask = IPI_PMU_0_IER_APU_MASK,
 	.reqs = NULL,
-	.permissions = IPI_PMU_0_IER_RPU_0_MASK | IPI_PMU_0_IER_RPU_1_MASK,
+	.nextMaster = NULL,
+	.wakePerms = 0U,
+	.suspendPerms = 0U,
+	.suspendTimeout = 0U,
 	.suspendRequest = {
 		.initiator = NULL,
 		.acknowledge = 0U,
 	},
-	.state = PM_MASTER_STATE_ACTIVE,
+	.state = PM_MASTER_STATE_UNINITIALIZED,
 	.gic = &pmGicProxy,
 	.memories = pmApuMemories,
 	.evalState = PmApuEvaluateState,
+	.remapAddr = NULL,
 };
 
-PmMaster pmMasterRpu0_g = {
-	.procs = &pmRpuProcs_g[PM_PROC_RPU_0],
-	.procsCnt = 1U,
+static PmProc* pmMasterRpuProcs[] = {
+	&pmProcRpu0_g,
+};
+
+/* RPU in lockstep mode */
+PmMaster pmMasterRpu_g = {
+	DEFINE_PM_PROCS(pmMasterRpuProcs),
 	.wakeProc = NULL,
+	.nextMaster = NULL,
 	.nid = NODE_RPU,
 	.ipiMask = IPI_PMU_0_IER_RPU_0_MASK,
 	.reqs = NULL,
-	.permissions = IPI_PMU_0_IER_APU_MASK | IPI_PMU_0_IER_RPU_1_MASK,
+	.wakePerms = 0U,
+	.suspendPerms = 0U,
+	.suspendTimeout = 0U,
 	.suspendRequest = {
 		.initiator = NULL,
 		.acknowledge = 0U,
 	},
-	.state = PM_MASTER_STATE_ACTIVE,
+	.state = PM_MASTER_STATE_UNINITIALIZED,
 	.gic = NULL,
 	.memories = NULL,
 	.evalState = NULL,
+	.remapAddr = PmMasterRpuRemapAddr,
+};
+
+static PmProc* pmMasterRpu0Procs[] = {
+	&pmProcRpu0_g,
+};
+
+/* RPU in split mode can have 2 masters: RPU_0 and RPU_1 */
+PmMaster pmMasterRpu0_g = {
+	DEFINE_PM_PROCS(pmMasterRpu0Procs),
+	.wakeProc = NULL,
+	.nextMaster = NULL,
+	.nid = NODE_RPU_0,
+	.ipiMask = 0U,
+	.reqs = NULL,
+	.wakePerms = 0U,
+	.suspendPerms = 0U,
+	.suspendTimeout = 0U,
+	.suspendRequest = {
+		.initiator = NULL,
+		.acknowledge = 0U,
+	},
+	.state = PM_MASTER_STATE_UNINITIALIZED,
+	.gic = NULL,
+	.memories = NULL,
+	.evalState = NULL,
+	.remapAddr = PmMasterRpu0RemapAddr,
+};
+
+static PmProc* pmMasterRpu1Procs[] = {
+	&pmProcRpu1_g,
 };
 
 PmMaster pmMasterRpu1_g = {
-	.procs = &pmRpuProcs_g[PM_PROC_RPU_1],
-	.procsCnt = 1U,
+	DEFINE_PM_PROCS(pmMasterRpu1Procs),
 	.wakeProc = NULL,
-	.nid = NODE_RPU_0, /* placeholder for request suspend, not used */
-	.ipiMask = IPI_PMU_0_IER_RPU_1_MASK,
-	.reqs = NULL,   /* lockstep mode is assumed for now */
-	.permissions = IPI_PMU_0_IER_APU_MASK | IPI_PMU_0_IER_RPU_0_MASK,
+	.nid = NODE_RPU_1,
+	.ipiMask = 0U,
+	.reqs = NULL,
+	.nextMaster = NULL,
+	.wakePerms = 0U,
+	.suspendPerms = 0U,
+	.suspendTimeout = 0U,
 	.suspendRequest = {
 		.initiator = NULL,
 		.acknowledge = 0U,
 	},
-	.state = PM_MASTER_STATE_KILLED,
+	.state = PM_MASTER_STATE_UNINITIALIZED,
 	.gic = NULL,
 	.memories = NULL,
 	.evalState = NULL,
+	.remapAddr = PmMasterRpu1RemapAddr,
 };
 
-PmMaster *const pmAllMasters[PM_MASTER_MAX] = {
+/* Array of all possible masters supported by the PFW */
+static PmMaster *const pmMastersAll[] = {
 	&pmMasterApu_g,
-	&pmMasterRpu0_g,
-	&pmMasterRpu1_g,
+	&pmMasterRpu_g,		/* RPU lockstep */
+	&pmMasterRpu0_g,	/* RPU split mode, core 0 */
+	&pmMasterRpu1_g,	/* RPU split mode, core 1 */
 };
 
 /**
- * PmRequirementLink() - Link requirement struct into master's and slave's lists
- * @req	Pointer to the requirement structure to be linked in lists
+ * PmMasterAdd() - Add new master in the list
+ * @newMaster   Master to be added in the list
  */
-static void PmRequirementLink(PmRequirement* const req)
+static void PmMasterAdd(PmMaster* const newMaster)
 {
-	/* The req structure is becoming master's head of requirements list */
-	req->nextSlave = req->master->reqs;
-	req->master->reqs = req;
-
-	/* The req is becoming the head of slave's requirements list as well */
-	req->nextMaster = req->slave->reqs;
-	req->slave->reqs = req;
+	newMaster->nextMaster = pmMasterHead;
+	pmMasterHead = newMaster;
 }
 
 /**
- * PmRequirementInit() - Initialize requirements data structures
+ * PmMasterDefaultConfig() - Add default masters (call only upon PM init)
  */
-void PmRequirementInit(void)
+void PmMasterDefaultConfig(void)
+{
+	PmMasterAdd(&pmMasterApu_g);
+	PmMasterAdd(&pmMasterRpu_g);
+}
+
+/**
+ * PmMasterSetConfig() - Set configuration for a master
+ * @mst         Master for which the configuration is set
+ * @cfg         Configuration data to set
+ *
+ * @note        Master is automatically added in the list of available masters
+ */
+void PmMasterSetConfig(PmMaster* const mst, const PmMasterConfig* const cfg)
 {
 	u32 i;
 
-	for (i = 0U; i < ARRAY_SIZE(pmReqData); i++) {
-		PmRequirementLink(&pmReqData[i]);
+	mst->ipiMask = cfg->ipiMask;
+	mst->suspendTimeout = cfg->suspendTimeout;
+	mst->suspendPerms = cfg->suspendPerms;
+	mst->wakePerms = cfg->wakePerms;
+	PmMasterAdd(mst);
+
+	/* Update pointers of processors to the master */
+	for (i = 0U; i < mst->procsCnt; i++) {
+		mst->procs[i]->master = mst;
 	}
 }
 
-/**
- * PmRequirementSchedule() - Schedule requirements of the master for slave
- * @masterReq   Pointer to master requirement structure (for a slave)
- * @caps        Required capabilities of slave
- *
- * @return      Status of the operation
- *              - XST_SUCCESS if requirement is successfully scheduled
- *              - XST_NO_FEATURE if there is no state with requested
- *                capabilities
- *
- * @note        Slave state will be updated according to the saved requirements
- *              after all processors/master suspends.
- */
-int PmRequirementSchedule(PmRequirement* const masterReq, const u32 caps)
+void PmMasterClearConfig(void)
 {
-	int status;
-
-	/* Check if slave has a state with requested capabilities */
-	status = PmCheckCapabilities(masterReq->slave, caps);
-	if (XST_SUCCESS != status) {
-		goto done;
-	}
-
-	/* Schedule setting of the requirement for later */
-	masterReq->nextReq = caps;
-
-done:
-	return status;
-}
-
-/**
- * PmRequirementUpdate() - Set slaves capabilities according to the master's
- * requirements
- * @masterReq   Pointer to structure keeping informations about the
- *              master's requirement
- * @caps        Capabilities of a slave requested by the master
- *
- * @return      Status of the operation
- */
-int PmRequirementUpdate(PmRequirement* const masterReq, const u32 caps)
-{
-	int status;
-	u32 tmpCaps;
-
-	/* Check if slave has a state with requested capabilities */
-	status = PmCheckCapabilities(masterReq->slave, caps);
-
-	if (XST_SUCCESS != status) {
-		goto done;
-	}
-
-	/* Configure requested capabilities */
-	tmpCaps = masterReq->currReq;
-	masterReq->currReq = caps;
-	status = PmUpdateSlave(masterReq->slave);
-
-	if (XST_SUCCESS == status) {
-		/* All capabilities requested in active state are constant */
-		masterReq->nextReq = masterReq->currReq;
-	} else {
-		/* Remember the last setting, will report an error */
-		masterReq->currReq = tmpCaps;
-	}
-
-done:
-	return status;
-}
-
-/**
- * PmRequirementUpdateScheduled() - Triggers the setting for scheduled
- *                                  requirements
- * @master  Master which changed the state and whose scheduled requirements are
- *          triggered
- * @swap    Flag stating should current/default requirements be saved as next
- *
- * a) swap=false
- * Set scheduled requirements of a master without swapping current/default and
- * next requirements - means the current requirements will be dropped and
- * default requirements has no effect. Upon every self suspend, master has to
- * explicitly re-request slave requirements.
- * b) swap=true
- * Set scheduled requirements of a master with swapping current/default and
- * next requirements (swapping means the current/default requirements will be
- * saved as next, and will be configured once master wakes-up). If the master
- * has default requirements, default requirements are saved as next instead of
- * current requirements. Default requirements has priority over current
- * requirements.
- */
-static int PmRequirementUpdateScheduled(const PmMaster* const master,
-					    const bool swap)
-{
+<<<<<<< HEAD
 	int status = XST_SUCCESS;
 	PmRequirement* req = master->reqs;
 
@@ -1023,9 +376,14 @@ static int PmRequirementUpdateScheduled(const PmMaster* const master,
 					req->nextReq = req->currReq;
 				}
 			}
+=======
+	PmMaster* mst = pmMasterHead;
+>>>>>>> upstream/master
 
-			req->currReq = tmpReq;
+	while (NULL != mst) {
+		PmMaster* next;
 
+<<<<<<< HEAD
 			/* Update slave setting */
 			status = PmUpdateSlave(req->slave);
 			/* if rom works correctly, status should be always ok */
@@ -1037,19 +395,25 @@ static int PmRequirementUpdateScheduled(const PmMaster* const master,
 		}
 		req = req->nextSlave;
 	}
+=======
+		/* Clear the configuration of the master */
+		mst->wakeProc = 0U;
+		mst->ipiMask = 0U;
+		mst->wakePerms = 0U;
+		mst->suspendPerms = 0U;
+		mst->suspendTimeout = 0U;
+		mst->suspendRequest.initiator = NULL;
+		mst->suspendRequest.acknowledge = 0U;
+>>>>>>> upstream/master
 
-	return status;
-}
+		/* Clear requirements of the master */
+		mst->reqs = NULL;
 
-/**
- * PmRequirementCancelScheduled() - Called when master aborts suspend, to cancel
- * scheduled requirements (slave capabilities requests)
- * @master  Master whose scheduled requests should be cancelled
- */
-void PmRequirementCancelScheduled(const PmMaster* const master)
-{
-	PmRequirement* req = master->reqs;
+		/* Clear the pointer to the next master */
+		next = mst->nextMaster;
+		mst->nextMaster = NULL;
 
+<<<<<<< HEAD
 	while (NULL != req) {
 		if (req->currReq != req->nextReq) {
 			/* Drop the scheduled request by making it constant */
@@ -1057,9 +421,13 @@ void PmRequirementCancelScheduled(const PmMaster* const master)
 			req->nextReq = req->currReq;
 		}
 		req = req->nextSlave;
+=======
+		/* Process next master */
+		mst = next;
+>>>>>>> upstream/master
 	}
-}
 
+<<<<<<< HEAD
 /**
  * PmRequirementRequestDefault() - Request default requirements for master
  * @master      Master whose default requirements are requested
@@ -1114,33 +482,13 @@ static int PmRequirementReleaseAll(const PmMaster* const master)
 		}
 		req = req->nextSlave;
 	}
+=======
+	/* Delete the list of available masters */
+	pmMasterHead = NULL;
+>>>>>>> upstream/master
 
-	return status;
-}
-
-/**
- * PmGetRequirementForSlave() - Get pointer to the master's request structure for
- *          a given slave
- * @master  Master whose request structure should be found
- * @nodeId  Slave nodeId
- *
- * @return  Pointer to the master's request structure dedicated to a slave with
- *          given node. If such structure is not found, it means the master is
- *          not allowed to use the slave.
- */
-PmRequirement* PmGetRequirementForSlave(const PmMaster* const master,
-					const PmNodeId nodeId)
-{
-	PmRequirement* req = master->reqs;
-
-	while (NULL != req) {
-		if (nodeId == req->slave->node.nodeId) {
-			break;
-		}
-		req = req->nextSlave;
-	}
-
-	return req;
+	/* Free allocated requirements from the heap */
+	PmRequirementFreeAll();
 }
 
 /**
@@ -1149,19 +497,60 @@ PmRequirement* PmGetRequirementForSlave(const PmMaster* const master,
  *
  * @return  Pointer to a PmMaster structure or NULL if master is not found
  */
-const PmMaster* PmGetMasterByIpiMask(const u32 mask)
+PmMaster* PmGetMasterByIpiMask(const u32 mask)
 {
-	u32 i;
-	const PmMaster *mst = NULL;
+	PmMaster* mst = pmMasterHead;
 
+<<<<<<< HEAD
+	while (NULL != req) {
+		if (nodeId == req->slave->node.nodeId) {
+=======
+	while (NULL != mst) {
+		if (0U != (mask & mst->ipiMask)) {
+>>>>>>> upstream/master
+			break;
+		}
+		mst = mst->nextMaster;
+	}
+
+	return mst;
+}
+
+/**
+ * PmMasterGetNextFromIpiMask() - Get next master from ORed masters' IPI mask
+ * @mask	Mask from which we need to extract a master
+ *
+ * @return	Pointer to a master of NULL if mask does not encode a master
+ *
+ * @note	The argument represents ORed IPI masks of multiple (or none)
+ *		masters, where each master is encoded by a set bit. If a pointer
+ *		to the master is found, the associated bitfield in the mask is
+ *		cleared.
+ */
+PmMaster* PmMasterGetNextFromIpiMask(u32* const mask)
+{
+	PmMaster* master = NULL;
+	u32 masterCnt = __builtin_popcount(*mask);
+	u32 ipiMask;
+
+<<<<<<< HEAD
 	for (i = 0U; i < ARRAY_SIZE(pmAllMasters); i++) {
 		if (0U != (mask & pmAllMasters[i]->ipiMask)) {
 			mst = pmAllMasters[i];
 			break;
 		}
+=======
+	if (0U == masterCnt) {
+		goto done;
+>>>>>>> upstream/master
 	}
 
-	return mst;
+	ipiMask = 1U << __builtin_ctz(*mask);
+	master = PmGetMasterByIpiMask(ipiMask);
+	*mask &= ~ipiMask;
+
+done:
+	return master;
 }
 
 /**
@@ -1180,8 +569,8 @@ PmProc* PmGetProcOfThisMaster(const PmMaster* const master,
 	PmProc *proc = NULL;
 
 	for (i = 0U; i < master->procsCnt; i++) {
-		if (nodeId == master->procs[i].node.nodeId) {
-			proc = &master->procs[i];
+		if (nodeId == master->procs[i]->node.nodeId) {
+			proc = master->procs[i];
 		}
 	}
 
@@ -1201,15 +590,15 @@ PmProc* PmGetProcOfOtherMaster(const PmMaster* const master,
 			       const PmNodeId nodeId)
 {
 	u32 i;
-	PmProc *proc = NULL;
+	PmProc* proc = NULL;
+	PmMaster* mst = pmMasterHead;
 
-	for (i = 0U; i < ARRAY_SIZE(pmAllMasters); i++) {
-		u32 p;
-
-		if (master == pmAllMasters[i]) {
+	while (NULL != mst) {
+		if (master == mst) {
 			continue;
 		}
 
+<<<<<<< HEAD
 		for (p = 0U; p < pmAllMasters[i]->procsCnt; p++) {
 			if (nodeId == pmAllMasters[i]->procs[p].node.nodeId) {
 				proc = &pmAllMasters[i]->procs[p];
@@ -1240,9 +629,15 @@ PmProc* PmGetProcByNodeId(const PmNodeId nodeId)
 		for (p = 0U; p < pmAllMasters[i]->procsCnt; p++) {
 			if (nodeId == pmAllMasters[i]->procs[p].node.nodeId) {
 				proc = &pmAllMasters[i]->procs[p];
+=======
+		for (i = 0U; i < mst->procsCnt; i++) {
+			if (nodeId == mst->procs[i]->node.nodeId) {
+				proc = mst->procs[i];
+>>>>>>> upstream/master
 				goto done;
 			}
 		}
+		mst = mst->nextMaster;
 	}
 
 done:
@@ -1258,18 +653,25 @@ done:
  */
 PmProc* PmGetProcByWfiStatus(const u32 mask)
 {
-	u32 i;
 	PmProc *proc = NULL;
+	PmMaster* mst = pmMasterHead;
 
-	for (i = 0U; i < ARRAY_SIZE(pmAllMasters); i++) {
+	while (NULL != mst) {
 		u32 p;
 
+<<<<<<< HEAD
 		for (p = 0U; p < pmAllMasters[i]->procsCnt; p++) {
 			if (0U != (mask & pmAllMasters[i]->procs[p].wfiStatusMask)) {
 				proc = &pmAllMasters[i]->procs[p];
+=======
+		for (p = 0U; p < mst->procsCnt; p++) {
+			if (0U != (mask & mst->procs[p]->wfiStatusMask)) {
+				proc = mst->procs[p];
+>>>>>>> upstream/master
 				goto done;
 			}
 		}
+		mst = mst->nextMaster;
 	}
 
 done:
@@ -1277,29 +679,34 @@ done:
 }
 
 /**
- * PmGetProcByWakeStatus() - Get proc struct by wake interrupt status
- * @mask    GIC wake mask read from GPI1 register
+ * PmMasterConfigWakeEvents() - Configure wake events for the master
+ * @master	Master for which wake events should be configured
+ * @enable	Flag (true to enable event propagation, false otherwise)
  *
- * @return  Pointer to a processor structure whose wake mask is provided
+ * @note	Config method of the wake event class must ensure that only set
+ *		wake gets enabled/disabled.
  */
-PmProc* PmGetProcByWakeStatus(const u32 mask)
+static void PmMasterConfigWakeEvents(PmMaster* const master, const bool enable)
 {
-	u32 i;
-	PmProc *proc = NULL;
+	PmRequirement* req = master->reqs;
 
-	for (i = 0U; i < ARRAY_SIZE(pmAllMasters); i++) {
-		u32 p;
+	while (NULL != req) {
+		PmWakeEvent* we = req->slave->wake;
 
+<<<<<<< HEAD
 		for (p = 0U; p < pmAllMasters[i]->procsCnt; p++) {
 			if (0U != (mask & pmAllMasters[i]->procs[p].wakeStatusMask)) {
 				proc = &pmAllMasters[i]->procs[p];
 				goto done;
+=======
+		if ((NULL != we) && (NULL != we->class)) {
+			if (NULL != we->class->config) {
+				we->class->config(we, master->ipiMask, enable);
+>>>>>>> upstream/master
 			}
 		}
+		req = req->nextSlave;
 	}
-
-done:
-	return proc;
 }
 
 /**
@@ -1322,6 +729,7 @@ static void PmWakeUpCancelScheduled(PmMaster* const master)
 	if (NULL != master->gic) {
 		master->gic->clear();
 	}
+	PmMasterConfigWakeEvents(master, 0U);
 }
 
 /**
@@ -1338,7 +746,7 @@ static void PmWakeUpCancelScheduled(PmMaster* const master)
 bool PmCanRequestSuspend(const PmMaster* const reqMaster,
 			 const PmMaster* const respMaster)
 {
-	return 0U != (reqMaster->permissions & respMaster->ipiMask);
+	return 0U != (reqMaster->ipiMask & respMaster->suspendPerms);
 }
 
 /**
@@ -1378,8 +786,8 @@ int PmMasterSuspendAck(PmMaster* const mst, const int response)
 
 	if (REQUEST_ACK_NON_BLOCKING == mst->suspendRequest.acknowledge) {
 		PmAcknowledgeCb(mst->suspendRequest.initiator,
-				mst->procs->node.nodeId, response,
-				mst->procs->node.currState);
+				mst->procs[0]->node.nodeId, response,
+				mst->procs[0]->node.currState);
 	} else if (REQUEST_ACK_BLOCKING == mst->suspendRequest.acknowledge) {
 		IPI_RESPONSE1(mst->ipiMask, response);
 	} else {
@@ -1405,12 +813,12 @@ static bool PmMasterLastProcSuspending(const PmMaster* const master)
 	u32 i;
 
 	for (i = 0U; i < master->procsCnt; i++) {
-		if (NODE_IS_OFF(&master->procs[i].node)) {
+		if (NODE_IS_OFF(&master->procs[i]->node)) {
 			/* Count how many processors is down */
 			sleeping++;
 		} else {
 			/* Assume the one processor is suspending */
-			status = PmProcIsSuspending(&master->procs[i]);
+			status = PmProcIsSuspending(master->procs[i]);
 		}
 	}
 
@@ -1435,7 +843,7 @@ static bool PmMasterAllProcsDown(const PmMaster* const master)
 	u32 i;
 
 	for (i = 0U; i < master->procsCnt; i++) {
-		if (false == NODE_IS_OFF(&master->procs[i].node)) {
+		if (false == NODE_IS_OFF(&master->procs[i]->node)) {
 			status = false;
 		}
 	}
@@ -1444,56 +852,184 @@ static bool PmMasterAllProcsDown(const PmMaster* const master)
 }
 
 /**
- * PmMasterNotify() - Notify master of a state change of its processor
- * @master      Pointer to master object which needs to be notified
- * @event       Processor Event to notify the master about
+ * PmMasterWakeProc() - Master prepares for wake and wakes the processor
+ * @proc	Processor to wake up
  *
- * @return      Status of potential changing of slave states or success.
+ * @return	Status of performing wake
  */
-int PmMasterNotify(PmMaster* const master, const PmProcEvent event)
+int PmMasterWakeProc(PmProc* const proc)
 {
+	int status;
+	bool hasResumeAddr = PmProcHasResumeAddr(proc);
+
+	if (false == hasResumeAddr) {
+		status = XST_FAILURE;
+		goto done;
+	}
+
+	status = PmMasterFsm(proc->master, PM_MASTER_EVENT_WAKE);
+	if (XST_SUCCESS != status) {
+		goto done;
+	}
+	status = PmProcFsm(proc, PM_PROC_EVENT_WAKE);
+
+done:
+	return status;
+}
+
+/**
+ * PmMasterForceDownProcs() - Force down processors of this master
+ * @master	Master whose processors need to be forced down
+ *
+ * @return	Status of forcing down
+ */
+static int PmMasterForceDownProcs(const PmMaster* const master)
+{
+	u32 i;
 	int status = XST_SUCCESS;
 
+	for (i = 0U; i < master->procsCnt; i++) {
+		int ret = PmNodeForceDown(&master->procs[i]->node);
+
+		if (XST_SUCCESS != ret) {
+			status = ret;
+		}
+	}
+
+	return status;
+}
+
+/**
+ * PmMasterForceDownCleanup() - Cleanup due to the force down
+ * @master	Master being forced down
+ *
+ * @return	Status of performing cleanup (releasing resources)
+ */
+static int PmMasterForceDownCleanup(PmMaster* const master)
+{
+	int status;
+
+	status = PmRequirementRelease(master->reqs, RELEASE_ALL);
+	PmWakeUpCancelScheduled(master);
+	PmNotifierUnregisterAll(master);
+	master->wakeProc = NULL;
+	master->suspendRequest.initiator = NULL;
+
+	return status;
+}
+
+/**
+ * PmMasterIdleSlaves() - Idle and reset active slaves of a master
+ * @master	Master whose slaves need to be idled and reset
+ *
+ * @note	Idle and reset slaves which have an active clock and
+ * 		- Are not requested by any other master and this master is
+		uninitialized, or
+		- Are exclusively used by this master
+ */
+static void PmMasterIdleSlaves(PmMaster* const master)
+{
+#ifdef ENABLE_NODE_IDLING
+	PmRequirement* req = master->reqs;
+	PmNode* Node;
+
+	PmDbg("%s\r\n", PmStrNode(master->nid));
+
+	while (NULL != req) {
+		u32 usage = PmSlaveGetUsageStatus(req->slave, master);
+		Node = &req->slave->node;
+
+		if (((PM_MASTER_STATE_UNINITIALIZED == master->state) &&
+				(0U == (usage & PM_USAGE_OTHER_MASTER))) ||
+				(usage == PM_USAGE_CURRENT_MASTER)) {
+			if (XST_SUCCESS == PmClockIsActive(Node)) {
+				PmNodeReset(master, Node->nodeId,
+					NODE_IDLE_REQ);
+			}
+		}
+		req = req->nextSlave;
+	}
+#endif
+}
+
+/**
+ * PmMasterFsm() - Implements finite state machine (FSM) for a master
+ * @master	Master whose state machine is triggered
+ * @event	Event to which the master's state machine need to react
+ *
+ * @return	Status of changing state
+ */
+int PmMasterFsm(PmMaster* const master, const PmMasterEvent event)
+{
+	int status = XST_SUCCESS;
+	bool condition;
+	u8 prevState = master->state;
+
 	switch (event) {
-	case PM_PROC_EVENT_SELF_SUSPEND:
-		if ((true == PmMasterIsActive(master)) &&
-		    (true == PmMasterLastProcSuspending(master))) {
+	case PM_MASTER_EVENT_SELF_SUSPEND:
+		condition = PmMasterLastProcSuspending(master);
+		if ((PM_MASTER_STATE_ACTIVE == master->state) &&
+		    (true == condition)) {
 			master->state = PM_MASTER_STATE_SUSPENDING;
 		}
 		break;
-	case PM_PROC_EVENT_SLEEP:
-		if (true == PmMasterIsSuspending(master)) {
+	case PM_MASTER_EVENT_SLEEP:
+		if (PM_MASTER_STATE_SUSPENDING == master->state) {
 			status = PmRequirementUpdateScheduled(master, true);
 			master->state = PM_MASTER_STATE_SUSPENDED;
+<<<<<<< HEAD
 			if (true == PmIsRequestedToSuspend(master)) {
+=======
+			condition = PmIsRequestedToSuspend(master);
+			if (true == condition) {
+>>>>>>> upstream/master
 				status = PmMasterSuspendAck(master, XST_SUCCESS);
 			}
+			PmMasterConfigWakeEvents(master, 1U);
 		}
 		break;
-	case PM_PROC_EVENT_ABORT_SUSPEND:
-		if (true == PmMasterIsSuspending(master)) {
+	case PM_MASTER_EVENT_ABORT_SUSPEND:
+		if (PM_MASTER_STATE_SUSPENDING == master->state) {
 			PmRequirementCancelScheduled(master);
 			PmWakeUpCancelScheduled(master);
 			master->state = PM_MASTER_STATE_ACTIVE;
 		}
 		break;
-	case PM_PROC_EVENT_WAKE:
-		if (true == PmMasterIsSuspended(master)) {
+	case PM_MASTER_EVENT_WAKE:
+		if (PM_MASTER_STATE_SUSPENDED == master->state) {
 			status = PmRequirementUpdateScheduled(master, false);
-		} else if (true == PmMasterIsKilled(master)) {
-			PmRequirementRequestDefault(master);
+		} else if (PM_MASTER_STATE_KILLED == master->state) {
+			PmRequirementPreRequest(master);
 			status = PmRequirementUpdateScheduled(master, false);
+			if (XST_SUCCESS == status) {
+				PmRequirementClockRestore(master);
+			}
 		} else {
 			/* Must have else branch due to MISRA */
 		}
-		master->state = PM_MASTER_STATE_ACTIVE;
+		if (PM_MASTER_STATE_UNINITIALIZED != master->state) {
+			PmMasterConfigWakeEvents(master, 0U);
+			master->state = PM_MASTER_STATE_ACTIVE;
+		}
 		break;
-	case PM_PROC_EVENT_FORCE_PWRDN:
-		if (true == PmMasterAllProcsDown(master)) {
-			status = PmRequirementReleaseAll(master);
-			PmWakeUpCancelScheduled(master);
-			PmNotifierUnregisterAll(master);
+	case PM_MASTER_EVENT_FORCED_PROC:
+		condition = PmMasterAllProcsDown(master);
+		if (true == condition) {
+			status = PmMasterForceDownCleanup(master);
 			master->state = PM_MASTER_STATE_KILLED;
+		}
+		break;
+	case PM_MASTER_EVENT_FORCE_DOWN:
+		master->state = PM_MASTER_STATE_KILLED;
+		status = PmMasterForceDownProcs(master);
+		if (XST_SUCCESS == status) {
+			if (PM_MASTER_STATE_UNINITIALIZED == prevState) {
+				master->state = PM_MASTER_STATE_UNINITIALIZED;
+			}
+			PmMasterIdleSlaves(master);
+			if (PM_MASTER_STATE_UNINITIALIZED != prevState) {
+				status = PmMasterForceDownCleanup(master);
+			}
 		}
 		break;
 	default:
@@ -1521,10 +1057,49 @@ int PmMasterWake(const PmMaster* const mst)
 	}
 
 	if (NULL == proc) {
-		proc = &mst->procs[0];
+		proc = mst->procs[0];
 	}
-	status = PmProcFsm(proc, PM_PROC_EVENT_WAKE);
+	status = PmMasterWakeProc(proc);
 
+	return status;
+}
+
+/**
+ * PmMasterRestart() - Restart the master
+ * @master	Master to restart
+ *
+ * @return	Status of performing the operation
+ */
+int PmMasterRestart(PmMaster* const master)
+{
+	int status;
+	u64 address = 0xFFFC0000ULL;
+
+	/* Master restart is currently supported only for APU */
+	if (master != &pmMasterApu_g) {
+		status = XST_NO_FEATURE;
+		goto done;
+	}
+
+	XPfw_RecoveryAck(master);
+	PmSystemPrepareForRestart(master);
+	status = PmMasterFsm(master, PM_MASTER_EVENT_FORCE_DOWN);
+	if (XST_SUCCESS != status) {
+		goto done;
+	}
+	status = PmMasterFsm(master, PM_MASTER_EVENT_WAKE);
+	if (XST_SUCCESS != status) {
+		goto done;
+	}
+	XPfw_Write32(PMU_GLOBAL_GLOBAL_GEN_STORAGE4, SUBSYSTEM_RESTART_MASK);
+	status = master->procs[0]->saveResumeAddr(master->procs[0], address);
+	if (XST_SUCCESS != status) {
+		goto done;
+	}
+	status = PmProcFsm(master->procs[0], PM_PROC_EVENT_WAKE);
+	PmSystemRestartDone(master);
+
+done:
 	return status;
 }
 
@@ -1540,9 +1115,9 @@ PmMaster* PmMasterGetPlaceholder(const PmNodeId nodeId)
 	u32 i;
 
 	/* Find the master with the node placeholder */
-	for (i = 0U; i < ARRAY_SIZE(pmAllMasters); i++) {
-		if (nodeId == pmAllMasters[i]->nid) {
-			holder = pmAllMasters[i];
+	for (i = 0U; i < ARRAY_SIZE(pmMastersAll); i++) {
+		if (nodeId == pmMastersAll[i]->nid) {
+			holder = pmMastersAll[i];
 			break;
 		}
 	}
@@ -1551,52 +1126,21 @@ PmMaster* PmMasterGetPlaceholder(const PmNodeId nodeId)
 }
 
 /**
- * PmSetupInitialMasterRequirements() - Setup initial state for all masters
+ * PmMasterCanForceDown() - Check if master has permissions to force power down
+ *                          the power node
+ * @master      Master which wants to force power down the node
+ * @power       Target power node
  *
- * During the initial Linux boot process Linux does not call PmRequestNode
- * for the slaves it uses, hence the PMU-FW pre-allocates all of the slaves
- * Linux uses to the APU.
- *
- * If bare metal code is run on the APU then such code must take care of
- * releasing any unused pre-allocated peripherals during init.
+ * @return      True if master has permission to force power down the node,
+ *              false otherwise
  */
-void PmSetupInitialMasterRequirements(void)
+inline bool PmMasterCanForceDown(const PmMaster* const master,
+				 const PmPower* const power)
 {
-	PmRequirement* masterReq;
-	const u32 apuDefaultSlaves[] = {
-		NODE_ADMA,
-		NODE_AFI,
-		NODE_CAN_0,
-		NODE_CAN_1,
-		NODE_DP,
-		NODE_GDMA,
-		NODE_GPIO,
-		NODE_I2C_0,
-		NODE_I2C_1,
-		NODE_NAND,
-		NODE_QSPI,
-		NODE_SATA,
-		NODE_SD_0,
-		NODE_SD_1,
-		NODE_SPI_0,
-		NODE_SPI_1,
-		NODE_TTC_0,
-		NODE_TTC_1,
-		NODE_TTC_2,
-		NODE_TTC_3,
-		NODE_UART_0,
-		NODE_UART_1,
-		NODE_USB_0,
-		NODE_USB_1,
-		NODE_GPU,
-		NODE_PCIE,
-		NODE_RTC,
-		NODE_ETH_3,
-		NODE_GPU_PP_0,
-		NODE_GPU_PP_1,
-	};
-	u32 i;
+	return 0U != (power->forcePerms & master->ipiMask);
+}
 
+<<<<<<< HEAD
 	for (i = 0U; i < ARRAY_SIZE(apuDefaultSlaves); i++) {
 		masterReq = PmGetRequirementForSlave(&pmMasterApu_g,
 						     apuDefaultSlaves[i]);
@@ -1606,4 +1150,21 @@ void PmSetupInitialMasterRequirements(void)
 			masterReq->nextReq = PM_CAP_ACCESS;
 		}
 	}
+=======
+/**
+ * PmMasterInitFinalize() - Master has completed initialization, finalize init
+ * @master	Master which has finalized initialization
+ */
+int PmMasterInitFinalize(PmMaster* const master)
+{
+	int status;
+
+	master->state = PM_MASTER_STATE_ACTIVE;
+
+	status = PmRequirementRelease(master->reqs, RELEASE_UNREQUESTED);
+
+	return status;
+>>>>>>> upstream/master
 }
+
+#endif

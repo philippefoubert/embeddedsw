@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (C) 2011 - 2014 Xilinx, Inc.  All rights reserved.
+# Copyright (C) 2011 - 2016 Xilinx, Inc.  All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,10 @@ BEGIN driver emacps
   OPTION supported_peripherals = (ps7_ethernet psu_ethernet);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 3.4;
+>>>>>>> upstream/master
   OPTION NAME = emacps;
 
 END driver

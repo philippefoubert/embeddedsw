@@ -36,6 +36,10 @@ BEGIN driver ipipsu
   OPTION supported_peripherals = (psu_ipi);
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+   OPTION VERSION = 2.3;
+>>>>>>> upstream/master
   OPTION NAME = ipipsu;
 
 END driver

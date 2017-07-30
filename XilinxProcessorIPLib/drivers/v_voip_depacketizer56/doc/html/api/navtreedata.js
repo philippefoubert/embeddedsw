@@ -11,6 +11,11 @@ var NAVTREE =
     [ "APIs", "globals.html", [
       [ "All", "globals.html", null ],
       [ "Functions", "globals_func.html", null ],
+<<<<<<< HEAD
+=======
+      [ "Typedefs", "globals_type.html", null ],
+      [ "Enumerations", "globals_enum.html", null ],
+>>>>>>> upstream/master
       [ "Macros", "globals_defs.html", null ]
     ] ],
     [ "File List", "files.html", "files" ]

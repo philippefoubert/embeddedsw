@@ -124,6 +124,11 @@ var xv__hdmirx__hw_8h =
     [ "XV_HDMIRX_PIO_IN_SCRAMBLER_LOCK2_MASK", "xv__hdmirx__hw_8h.html#a28904b530f07081146e224cc033c3cdb", null ],
     [ "XV_HDMIRX_PIO_IN_VID_RDY_MASK", "xv__hdmirx__hw_8h.html#a477171cef5c2a0b4621facbb41b82eb8", null ],
     [ "XV_HDMIRX_PIO_OUT_AXIS_EN_MASK", "xv__hdmirx__hw_8h.html#a1d084bc85a72b35776b604a1f15d24df", null ],
+<<<<<<< HEAD
+=======
+    [ "XV_HDMIRX_PIO_OUT_BRIDGE_PIXEL_MASK", "xv__hdmirx__hw_8h.html#a818e2b5f24ae64c160d8291e2a72bbb3", null ],
+    [ "XV_HDMIRX_PIO_OUT_BRIDGE_YUV420_MASK", "xv__hdmirx__hw_8h.html#ade6f035d0bef0ec35894c6d90d700f16", null ],
+>>>>>>> upstream/master
     [ "XV_HDMIRX_PIO_OUT_CLR_OFFSET", "xv__hdmirx__hw_8h.html#a80d63952308a1e96d3bfd10db732b94c", null ],
     [ "XV_HDMIRX_PIO_OUT_COLOR_SPACE_MASK", "xv__hdmirx__hw_8h.html#a03f17ccc9e2953ac921f07446dfc9c16", null ],
     [ "XV_HDMIRX_PIO_OUT_COLOR_SPACE_SHIFT", "xv__hdmirx__hw_8h.html#a5c1716813413cd8ca952fafe0520b782", null ],
@@ -166,6 +171,10 @@ var xv__hdmirx__hw_8h =
     [ "XV_HDMIRX_VTD_CTRL_OFFSET", "xv__hdmirx__hw_8h.html#acc56d3a8152c535ce8783d2ff82f4227", null ],
     [ "XV_HDMIRX_VTD_CTRL_RUN_MASK", "xv__hdmirx__hw_8h.html#af9e3cef6d874c106289bb83133776baf", null ],
     [ "XV_HDMIRX_VTD_CTRL_SET_OFFSET", "xv__hdmirx__hw_8h.html#af82aee3a907bcd6e34308267e8d67014", null ],
+<<<<<<< HEAD
+=======
+    [ "XV_HDMIRX_VTD_CTRL_SYNC_LOSS_MASK", "xv__hdmirx__hw_8h.html#a52ae42852070a50b3a7229c2f66462bd", null ],
+>>>>>>> upstream/master
     [ "XV_HDMIRX_VTD_CTRL_TIMEBASE_SHIFT", "xv__hdmirx__hw_8h.html#ab645b5a6852d39b83d669dd90fb5d383", null ],
     [ "XV_HDMIRX_VTD_CTRL_TIMERBASE_MASK", "xv__hdmirx__hw_8h.html#a829444947a7549a148b9f77c162def4f", null ],
     [ "XV_HDMIRX_VTD_HBP_OFFSET", "xv__hdmirx__hw_8h.html#ae639e59a8ebf41da214a1de1246feae3", null ],
@@ -176,6 +185,10 @@ var xv__hdmirx__hw_8h =
     [ "XV_HDMIRX_VTD_STA_HS_POL_MASK", "xv__hdmirx__hw_8h.html#abb3320c46658b4aaa9faa3c78f535fd1", null ],
     [ "XV_HDMIRX_VTD_STA_IRQ_MASK", "xv__hdmirx__hw_8h.html#aeb5ef898fca55fa90ee72374af67f0ae", null ],
     [ "XV_HDMIRX_VTD_STA_OFFSET", "xv__hdmirx__hw_8h.html#aa0927784dd0514805715557437733268", null ],
+<<<<<<< HEAD
+=======
+    [ "XV_HDMIRX_VTD_STA_SYNC_LOSS_EVT_MASK", "xv__hdmirx__hw_8h.html#ae3bf1496b2a02b5d4403d08676ae052e", null ],
+>>>>>>> upstream/master
     [ "XV_HDMIRX_VTD_STA_TIMEBASE_EVT_MASK", "xv__hdmirx__hw_8h.html#a1f2b2eef2e119965b72bc6ba2d631cb8", null ],
     [ "XV_HDMIRX_VTD_STA_VS_POL_MASK", "xv__hdmirx__hw_8h.html#aa003ad3deba710d8250e4d09c3d706a4", null ],
     [ "XV_HDMIRX_VTD_TOT_LIN_OFFSET", "xv__hdmirx__hw_8h.html#a760c24aa9d33dd2727c6106537c4723d", null ],

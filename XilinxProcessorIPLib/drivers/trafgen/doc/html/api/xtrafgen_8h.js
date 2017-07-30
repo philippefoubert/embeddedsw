@@ -34,23 +34,40 @@ var xtrafgen_8h =
     [ "XTrafGen_IsStreamingTransferDone", "group__trafgen__v3__2.html#ga0ff0fea3c2324dbd0c6edc5efd5ba709", null ],
     [ "XTrafGen_LoopDisable", "group__trafgen__v3__2.html#gad1d6d337106b8d03118d625159a93cf4", null ],
     [ "XTrafGen_LoopEnable", "group__trafgen__v3__2.html#ga7ae20ec6a0531e09e0723905c20bb572", null ],
+<<<<<<< HEAD
     [ "XTrafGen_MasterErrIntrDisable", "group__trafgen__v3__2.html#gab224de7e1fd0dcc9dc2627b625f81424", null ],
     [ "XTrafGen_MasterErrIntrEnable", "group__trafgen__v3__2.html#ga154f34818edeb0858c445690fa4f8670", null ],
     [ "XTrafGen_ReadConfigStatus", "group__trafgen__v3__2.html#gad072536408b0e73e38978c57e0002c79", null ],
+=======
+    [ "XTrafGen_MasterErrIntrDisable", "group__trafgen__v3__2.html#ga074810dd1b55de907889bc81a9f40579", null ],
+    [ "XTrafGen_MasterErrIntrEnable", "group__trafgen__v3__2.html#ga0a8a195712d5963fa07799d59045e86f", null ],
+    [ "XTrafGen_ReadConfigStatus", "group__trafgen__v3__2.html#ga3e380d38654114c2e47162193c31febc", null ],
+>>>>>>> upstream/master
     [ "XTrafGen_ReadCoreRevision", "group__trafgen__v3__2.html#ga4d79e5e5aab48b68ee266961b89da00c", null ],
     [ "XTrafGen_ReadErrors", "group__trafgen__v3__2.html#ga20e311a5ca0e3aa3cce768d48a2bfb88", null ],
     [ "XTrafGen_ReadIdWidth", "group__trafgen__v3__2.html#ga1146dfb17253668f42cd6b2f679552cc", null ],
     [ "XTrafGen_ResetStreamingRandomLen", "group__trafgen__v3__2.html#ga5481f14f30231fcf80dafa2b77f6e8a3", null ],
     [ "XTrafGen_SetStaticBurstLen", "group__trafgen__v3__2.html#ga67433007f5c7594c7595fb71e85e938f", null ],
+<<<<<<< HEAD
     [ "XTrafGen_SetStaticTransferDone", "group__trafgen__v3__2.html#gacba2dd56bfff034a966b81a2103a6bb4", null ],
+=======
+    [ "XTrafGen_SetStaticTransferDone", "group__trafgen__v3__2.html#gaa581daf24fc19f7057cd3d62baf28cf8", null ],
+>>>>>>> upstream/master
     [ "XTrafGen_SetStreamingProgDelay", "group__trafgen__v3__2.html#ga3beeeec32649b7df9c049a6b08daa55a", null ],
     [ "XTrafGen_SetStreamingRandomLen", "group__trafgen__v3__2.html#gaab0a135f1ad92788eeb768cfe26b74b3", null ],
     [ "XTrafGen_SetStreamingTdestPort", "group__trafgen__v3__2.html#gae5372945bcdfa008f7daf48f97edbd7f", null ],
     [ "XTrafGen_SetStreamingTransCnt", "group__trafgen__v3__2.html#ga90d0e4161092c15a1ca821f97cdd7a4b", null ],
+<<<<<<< HEAD
     [ "XTrafGen_SetStreamingTransferDone", "group__trafgen__v3__2.html#gaee4aa3d826f692264c3735a00c29aa47", null ],
     [ "XTrafGen_SetStreamingTransLen", "group__trafgen__v3__2.html#gae7e5d3e4f6de43f247a5f52dbade8deb", null ],
     [ "XTrafGen_SlaveErrIntrDisable", "group__trafgen__v3__2.html#gaa4b8bcf25ed401a3debc9665db06dfef", null ],
     [ "XTrafGen_SlaveErrIntrEnable", "group__trafgen__v3__2.html#ga298a1b459b4552cb79b4a2da8d3a1845", null ],
+=======
+    [ "XTrafGen_SetStreamingTransferDone", "group__trafgen__v3__2.html#gab626edcc0e22fa88764d3cabe973a469", null ],
+    [ "XTrafGen_SetStreamingTransLen", "group__trafgen__v3__2.html#gae7e5d3e4f6de43f247a5f52dbade8deb", null ],
+    [ "XTrafGen_SlaveErrIntrDisable", "group__trafgen__v3__2.html#gaa4b8bcf25ed401a3debc9665db06dfef", null ],
+    [ "XTrafGen_SlaveErrIntrEnable", "group__trafgen__v3__2.html#gacd4a2d138602873e0614886c7e11b751", null ],
+>>>>>>> upstream/master
     [ "XTrafGen_StartMasterLogic", "group__trafgen__v3__2.html#gaf55f0066544c5ca956f2775e2927851d", null ],
     [ "XTrafGen_StaticDisable", "group__trafgen__v3__2.html#gab54737e40a38ba5316b487a045568b11", null ],
     [ "XTrafGen_StaticEnable", "group__trafgen__v3__2.html#ga21218c919ca08e948a557334a8f1ba95", null ],

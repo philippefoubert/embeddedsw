@@ -56,6 +56,10 @@
  * 3.1   rco  07/26/16 Added extern definition for timing table array
  *                     Added video-in-memory color formats
  *                     Updated XVidC_RegisterCustomTimingModes API signature
+ * 4.1   rco  11/23/16 Added new memory formats
+ *                     Added new API to get video mode id that matches exactly
+ *                     with provided timing information
+ *                     Fix c++ warnings
  * </pre>
  *
 *******************************************************************************/
@@ -63,7 +67,6 @@
 /******************************* Include Files ********************************/
 
 #include "xil_assert.h"
-#include "xil_printf.h"
 #include "xstatus.h"
 #include "xvidc.h"
 
@@ -260,6 +263,59 @@ u8 XVidC_IsInterlaced(XVidC_VideoMode VmId)
 /******************************************************************************/
 /**
  * This function returns the Video Mode ID that matches the detected input
+ * timing, frame rate and I/P flag
+ *
+ * @param	Timing is the pointer to timing parameters to match
+ * @param	FrameRate specifies refresh rate in HZ
+ * @param	IsInterlaced is flag.
+ *		      - 0 = Progressive
+ *			  - 1 = Interlaced.
+ *
+ * @return	Id of a supported video mode.
+ *
+ * @note	This is an extension of XVidC_GetVideoModeId API to include
+ *          blanking information in match process. No attempt is made to
+ *          search for reduced blanking entries, if any.
+ *
+*******************************************************************************/
+XVidC_VideoMode XVidC_GetVideoModeIdWBlanking(const XVidC_VideoTiming *Timing,
+		                                      u32 FrameRate, u8 IsInterlaced)
+{
+  XVidC_VideoMode VmId;
+  XVidC_VideoTiming const *StdTiming = NULL;
+
+  /* First search for ID with matching Width & Height */
+  VmId = XVidC_GetVideoModeId(Timing->HActive, Timing->VActive, FrameRate,
+		                      IsInterlaced);
+
+  if(VmId == XVIDC_VM_NOT_SUPPORTED) {
+	return(VmId);
+  } else {
+
+	/* Get standard timing info from default timing table */
+	StdTiming = XVidC_GetTimingInfo(VmId);
+
+	/* Match against detected timing parameters */
+	if((Timing->HActive        == StdTiming->HActive) &&
+	   (Timing->VActive        == StdTiming->VActive) &&
+	   (Timing->HTotal         == StdTiming->HTotal) &&
+	   (Timing->F0PVTotal      == StdTiming->F0PVTotal) &&
+	   (Timing->HFrontPorch    == StdTiming->HFrontPorch) &&
+	   (Timing->HSyncWidth     == StdTiming->HSyncWidth) &&
+	   (Timing->HBackPorch     == StdTiming->HBackPorch) &&
+	   (Timing->F0PVFrontPorch == StdTiming->F0PVFrontPorch) &&
+	   (Timing->F0PVSyncWidth  == StdTiming->F0PVSyncWidth) &&
+	   (Timing->F0PVBackPorch  == StdTiming->F0PVBackPorch)) {
+       return(VmId);
+	 } else {
+	   return(XVIDC_VM_NOT_SUPPORTED);
+	 }
+  }
+}
+
+/******************************************************************************/
+/**
+ * This function returns the Video Mode ID that matches the detected input
  * width, height, frame rate and I/P flag
  *
  * @param	Width specifies the number pixels per scanline.
@@ -428,7 +484,7 @@ XVidC_VideoMode XVidC_GetVideoModeIdRb(u32 Width, u32 Height,
 		if (Found) {
 			break;
 		}
-		VmId++;
+		VmId = (XVidC_VideoMode)((int)VmId + 1);
 	}
 
 	return VmId;
@@ -494,7 +550,7 @@ const char *XVidC_GetVideoModeStr(XVidC_VideoMode VmId)
  * @note	None.
  *
 *******************************************************************************/
-char *XVidC_GetFrameRateStr(XVidC_VideoMode VmId)
+const char *XVidC_GetFrameRateStr(XVidC_VideoMode VmId)
 {
 	const XVidC_VideoTimingMode *VmPtr;
 
@@ -512,13 +568,13 @@ char *XVidC_GetFrameRateStr(XVidC_VideoMode VmId)
 		case (XVIDC_FR_60HZ):   return ("60Hz");
 		case (XVIDC_FR_65HZ):   return ("65Hz");
 		case (XVIDC_FR_67HZ):   return ("67Hz");
-		case (XVIDC_FR_70HZ):   return("70Hz");
+		case (XVIDC_FR_70HZ):   return ("70Hz");
 		case (XVIDC_FR_72HZ):   return ("72Hz");
 		case (XVIDC_FR_75HZ):   return ("75Hz");
 		case (XVIDC_FR_85HZ):   return ("85Hz");
 		case (XVIDC_FR_87HZ):   return ("87Hz");
 		case (XVIDC_FR_88HZ):   return ("88Hz");
-		case (XVIDC_FR_100HZ):  return("100Hz");
+		case (XVIDC_FR_100HZ):  return ("100Hz");
 		case (XVIDC_FR_120HZ):  return ("120Hz");
 
 		default:
@@ -538,7 +594,7 @@ char *XVidC_GetFrameRateStr(XVidC_VideoMode VmId)
  * @note	None.
  *
 *******************************************************************************/
-char *XVidC_Get3DFormatStr(XVidC_3DFormat Format)
+const char *XVidC_Get3DFormatStr(XVidC_3DFormat Format)
 {
 	switch (Format) {
 		case XVIDC_3D_FRAME_PACKING:
@@ -575,26 +631,31 @@ char *XVidC_Get3DFormatStr(XVidC_3DFormat Format)
  * @note	None.
  *
 *******************************************************************************/
-char *XVidC_GetColorFormatStr(XVidC_ColorFormat ColorFormatId)
+const char *XVidC_GetColorFormatStr(XVidC_ColorFormat ColorFormatId)
 {
 	switch (ColorFormatId) {
-		case XVIDC_CSF_RGB:           return ("RGB");
-		case XVIDC_CSF_YCRCB_444:     return ("YUV_444");
-		case XVIDC_CSF_YCRCB_422:     return ("YUV_422");
-		case XVIDC_CSF_YCRCB_420:     return ("YUV_420");
-		case XVIDC_CSF_YONLY:         return ("Y_ONLY");
-		case XVIDC_CSF_MEM_RGBX8:     return ("RGBX8");
-		case XVIDC_CSF_MEM_YUVX8:     return ("YUVX8");
-	    case XVIDC_CSF_MEM_YUYV8:     return ("YUYV8");
-	    case XVIDC_CSF_MEM_RGBA8:     return ("RGBA8");
-	    case XVIDC_CSF_MEM_YUVA8:     return ("YUVA8");
-	    case XVIDC_CSF_MEM_RGBX10:    return ("RGBX10");
-	    case XVIDC_CSF_MEM_YUVX10:    return ("YUVX10");
-	    case XVIDC_CSF_MEM_RGB565:    return ("RGB565");
-	    case XVIDC_CSF_MEM_Y_UV8:     return ("Y_UV8");
-	    case XVIDC_CSF_MEM_Y_UV8_420: return ("Y_UV8_420");
-	    case XVIDC_CSF_MEM_RGB8:      return ("RGB8");
-	    case XVIDC_CSF_MEM_YUV8:      return ("YUV8");
+		case XVIDC_CSF_RGB:            return ("RGB");
+		case XVIDC_CSF_YCRCB_444:      return ("YUV_444");
+		case XVIDC_CSF_YCRCB_422:      return ("YUV_422");
+		case XVIDC_CSF_YCRCB_420:      return ("YUV_420");
+		case XVIDC_CSF_YONLY:          return ("Y_ONLY");
+		case XVIDC_CSF_MEM_RGBX8:      return ("RGBX8");
+		case XVIDC_CSF_MEM_YUVX8:      return ("YUVX8");
+	    case XVIDC_CSF_MEM_YUYV8:      return ("YUYV8");
+	    case XVIDC_CSF_MEM_RGBA8:      return ("RGBA8");
+	    case XVIDC_CSF_MEM_YUVA8:      return ("YUVA8");
+	    case XVIDC_CSF_MEM_RGBX10:     return ("RGBX10");
+	    case XVIDC_CSF_MEM_YUVX10:     return ("YUVX10");
+	    case XVIDC_CSF_MEM_RGB565:     return ("RGB565");
+	    case XVIDC_CSF_MEM_Y_UV8:      return ("Y_UV8");
+	    case XVIDC_CSF_MEM_Y_UV8_420:  return ("Y_UV8_420");
+	    case XVIDC_CSF_MEM_RGB8:       return ("RGB8");
+	    case XVIDC_CSF_MEM_YUV8:       return ("YUV8");
+		case XVIDC_CSF_MEM_Y_UV10:     return ("Y_UV10");
+		case XVIDC_CSF_MEM_Y_UV10_420: return ("Y_UV10_420");
+		case XVIDC_CSF_MEM_Y8:         return ("Y8");
+		case XVIDC_CSF_MEM_Y10:        return ("Y10");
+		case XVIDC_CSF_MEM_BGRA8:      return ("BGRA8");
 
 		default:
 			return ("Color space format not supported");

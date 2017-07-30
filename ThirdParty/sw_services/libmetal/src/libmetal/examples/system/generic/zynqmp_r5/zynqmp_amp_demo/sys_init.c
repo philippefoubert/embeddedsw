@@ -244,7 +244,11 @@ int init_irq()
  */
 int platform_register_metal_device (void)
 {
+<<<<<<< HEAD
 	int i;
+=======
+	unsigned int i;
+>>>>>>> upstream/master
 	int ret;
 	struct metal_device *dev;
 	metal_bus_register(&metal_generic_bus);

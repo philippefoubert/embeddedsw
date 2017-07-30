@@ -158,6 +158,17 @@
 * 1.0   kpc    17/06/2015  Increased the timeout for complete event to avoid
 *			   timeout errors for erase operation on slower devices.
 * 1.1   mi     09/16/16 Removed compilation warnings with extra compiler flags.
+<<<<<<< HEAD
+=======
+* 1.1	nsk    11/07/16    Change memcpy to Xil_MemCpy, CR#960462
+* 1.2   nsk    01/19/17    Fix for the failure of reading nand first redundant
+*                          parameter page. CR#966603
+*       ms     02/12/17    Fix for the compilation warning in _g.c file.
+*       ms     03/17/17    Added readme.txt file in examples folder for doxygen
+*                          generation.
+*       ms     04/10/17    Modified Comment lines in nandpsu_example.c to
+*                          follow doxygen rules.
+>>>>>>> upstream/master
 * </pre>
 *
 ******************************************************************************/

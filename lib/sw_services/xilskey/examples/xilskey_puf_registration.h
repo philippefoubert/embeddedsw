@@ -1,6 +1,10 @@
 /******************************************************************************
 *
+<<<<<<< HEAD
 * Copyright (C) 2016 Xilinx, Inc.  All rights reserved.
+=======
+* Copyright (C) 2016 - 17 Xilinx, Inc.  All rights reserved.
+>>>>>>> upstream/master
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -83,6 +87,13 @@
 *	TRUE permanently does not allows PUF syndrome data registration.
 *	FALSE will not modify anything.
 *
+<<<<<<< HEAD
+=======
+*	#define XSK_PUF_RESERVED				FALSE
+*	TRUE programs this reserved eFUSE bit.
+*	FALSE will not modify anything.
+*
+>>>>>>> upstream/master
 *	#define		XSK_PUF_AES_KEY
 *	"0000000000000000000000000000000000000000000000000000000000000000"
 *	The value mentioned in this will be converted to hex buffer and encrypts
@@ -111,6 +122,11 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 6.1   rp   17/10/16 First release.
+<<<<<<< HEAD
+=======
+* 6.2   vns  03/10/17 Added support for programming and reading one reserved
+*                     bit
+>>>>>>> upstream/master
 * </pre>
 *
 *
@@ -153,6 +169,10 @@ extern "C" {
 #define	XSK_PUF_SYN_INVALID			FALSE
 #define	XSK_PUF_SYN_WRLK			FALSE
 #define	XSK_PUF_REGISTER_DISABLE		FALSE
+<<<<<<< HEAD
+=======
+#define	XSK_PUF_RESERVED			FALSE
+>>>>>>> upstream/master
 #endif
 
 #define	XSK_PUF_AES_KEY		"0000000000000000000000000000000000000000000000000000000000000000"

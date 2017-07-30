@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -42,6 +42,7 @@
  * Ver   Who  Date        Changes
  * ----- ---- -------- -------------------------------------------------------
  * 1.00   kc  07/22/14 Initial release
+ * 2.0    bv  12/05/16 Made compliance to MISRAC 2012 guidelines
  *
  * </pre>
  *
@@ -61,7 +62,7 @@
 /************************** Function Prototypes ******************************/
 
 /************************** Variable Definitions *****************************/
-XCsuDma CsuDma;
+XCsuDma CsuDma = {0U};
 
 /*****************************************************************************/
 /**
@@ -73,10 +74,13 @@ XCsuDma CsuDma;
  * 		returns XFSBL_SUCCESS on success
  *
  *****************************************************************************/
-u32 XFsbl_CsuDmaInit()
+u32 XFsbl_CsuDmaInit(void)
 {
-	u32 Status = XFSBL_SUCCESS;
+	u32 Status;
+	s32 SStatus;
 	XCsuDma_Config * CsuDmaConfig;
+
+	(void)memset(&CsuDma, 0, sizeof(CsuDma));
 
 	CsuDmaConfig = XCsuDma_LookupConfig(0);
 	if (NULL == CsuDmaConfig) {
@@ -85,13 +89,14 @@ u32 XFsbl_CsuDmaInit()
 		goto END;
 	}
 
-	Status = XCsuDma_CfgInitialize(&CsuDma, CsuDmaConfig,
+	SStatus = XCsuDma_CfgInitialize(&CsuDma, CsuDmaConfig,
 			CsuDmaConfig->BaseAddress);
-	if (Status != XFSBL_SUCCESS) {
+	if (SStatus != XFSBL_SUCCESS) {
 		XFsbl_Printf(DEBUG_GENERAL, "XFSBL_ERROR_CSUDMA_INIT_FAIL \n\r");
 		Status = XFSBL_ERROR_CSUDMA_INIT_FAIL;
 		goto END;
 	}
+	Status = XFSBL_SUCCESS;
 END:
 	return Status;
 }

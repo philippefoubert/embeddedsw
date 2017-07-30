@@ -42,6 +42,12 @@ var xdphy__hw_8h =
     [ "XDPHY_HSEXIT_IDELAY_REG_READY_OFFSET", "group__xdphy__v1__0.html#ga66536940ca2123d330e9e753116baa76", null ],
     [ "XDPHY_HSEXIT_IDELAY_REG_TAP_MASK", "group__xdphy__v1__0.html#ga70e60705745389c874fc4931105a958b", null ],
     [ "XDPHY_HSEXIT_IDELAY_REG_TAP_OFFSET", "group__xdphy__v1__0.html#ga4a16c8bbc59f02759ff527a41cc15441", null ],
+<<<<<<< HEAD
+=======
+    [ "XDPHY_HSSETTLE_REG_OFFSET", "group__xdphy__v1__0.html#ga1bd5c4c0e969ac836007ee94e4cfe594", null ],
+    [ "XDPHY_HSSETTLE_REG_TIMEOUT_MASK", "group__xdphy__v1__0.html#ga81d0494a47fc8373620ff052cc42ea80", null ],
+    [ "XDPHY_HSSETTLE_REG_TIMEOUT_OFFSET", "group__xdphy__v1__0.html#gad87dd909a0ccacacd26c2622f86db919", null ],
+>>>>>>> upstream/master
     [ "XDPHY_HSTIMEOUT_REG_OFFSET", "group__xdphy__v1__0.html#ga3bfe3e75d075f2eff4f7d80bc96e117b", null ],
     [ "XDPHY_HSTIMEOUT_REG_TIMEOUT_MASK", "group__xdphy__v1__0.html#ga74cdf673408c25d6cc6386b300fd51c9", null ],
     [ "XDPHY_HSTIMEOUT_REG_TIMEOUT_OFFSET", "group__xdphy__v1__0.html#ga7d56bcabd214547834ab29d9c3e11c31", null ],

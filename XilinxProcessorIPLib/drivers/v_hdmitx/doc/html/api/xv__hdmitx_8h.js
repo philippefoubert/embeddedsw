@@ -16,6 +16,11 @@ var xv__hdmitx_8h =
     [ "XV_HdmiTx_AuxEnable", "xv__hdmitx_8h.html#ac0ac0a64725ea05d65bda3554cd4e29f", null ],
     [ "XV_HdmiTx_AuxIntrDisable", "xv__hdmitx_8h.html#a5aef1b694a90f54d3c77a2b64f7a5a08", null ],
     [ "XV_HdmiTx_AuxIntrEnable", "xv__hdmitx_8h.html#ab7698b34eef6532f70f24d5847f83895", null ],
+<<<<<<< HEAD
+=======
+    [ "XV_HdmiTx_Bridge_pixel", "xv__hdmitx_8h.html#a7358ee247078cc70ca16773c3189f275", null ],
+    [ "XV_HdmiTx_Bridge_yuv420", "xv__hdmitx_8h.html#a3526292651fbddb87792149ea22fa1f7", null ],
+>>>>>>> upstream/master
     [ "XV_HdmiTx_ClearMode", "xv__hdmitx_8h.html#a6946144662c8bcaeccbedc447dec7df4", null ],
     [ "XV_HdmiTx_DdcDisable", "xv__hdmitx_8h.html#aa1a91d9e6514be7735a8c4f1e9500118", null ],
     [ "XV_HdmiTx_DdcEnable", "xv__hdmitx_8h.html#a0e54ac33c2fe76e4b8fa8c3b79b81bf3", null ],
@@ -28,6 +33,15 @@ var xv__hdmitx_8h =
     [ "XV_HdmiTx_GetSampleRate", "xv__hdmitx_8h.html#a2a0edb108ac42633723ed5d4715c511f", null ],
     [ "XV_HdmiTx_GetVersion", "xv__hdmitx_8h.html#a785e4f11794332fbe6fce8959e492ad7", null ],
     [ "XV_HDMITX_H_", "xv__hdmitx_8h.html#aaea24839e7ee6b83c3f5e16481c31a48", null ],
+<<<<<<< HEAD
+=======
+    [ "XV_HdmiTx_MaskDisable", "xv__hdmitx_8h.html#a6fdab886d945d6c8a0d597423d829be9", null ],
+    [ "XV_HdmiTx_MaskEnable", "xv__hdmitx_8h.html#ae61f047ec642e01c6fa27f5973409a7e", null ],
+    [ "XV_HdmiTx_MaskNoise", "xv__hdmitx_8h.html#aced16ee9cce719d0e840c76e56ccc996", null ],
+    [ "XV_HdmiTx_MaskSetBlue", "xv__hdmitx_8h.html#a5725886270c9d752b4170b59a2928f03", null ],
+    [ "XV_HdmiTx_MaskSetGreen", "xv__hdmitx_8h.html#aa1af23f383b3755d2031e8c95a664892", null ],
+    [ "XV_HdmiTx_MaskSetRed", "xv__hdmitx_8h.html#a199677f89de8d04213358b2648ddbb11", null ],
+>>>>>>> upstream/master
     [ "XV_HdmiTx_PioDisable", "xv__hdmitx_8h.html#ab0bafa7fe5aba82fd13c93165bf16765", null ],
     [ "XV_HdmiTx_PioEnable", "xv__hdmitx_8h.html#ae69342f1a8d014061b4dbcd3b7f33e0b", null ],
     [ "XV_HdmiTx_PioIntrClear", "xv__hdmitx_8h.html#ade06a1bc6cc31f1bbb8f6ddcd9fe3a3f", null ],
@@ -38,7 +52,11 @@ var xv__hdmitx_8h =
     [ "XV_HdmiTx_SetScrambler", "xv__hdmitx_8h.html#a6da173e33b955815176fd5640f7a1fbf", null ],
     [ "XV_HdmiTx_Callback", "xv__hdmitx_8h.html#a0d082ed3fc514b136f6064172a228da5", null ],
     [ "XV_HdmiTx_HandlerType", "xv__hdmitx_8h.html#a13f3db95069a268ab390dd4102604fb2", null ],
+<<<<<<< HEAD
     [ "XV_HdmiTx_AuxSend", "xv__hdmitx_8h.html#a06fa3ff9976df2241535d4538a8e4f69", null ],
+=======
+    [ "XV_HdmiTx_AuxSend", "xv__hdmitx_8h.html#ae75f2ab194a44b9f67b7fa9d4545cb57", null ],
+>>>>>>> upstream/master
     [ "XV_HdmiTx_CfgInitialize", "xv__hdmitx_8h.html#acfeb8c295991a88031817404dd4135f3", null ],
     [ "XV_HdmiTx_Clear", "xv__hdmitx_8h.html#a30b8f33b34025333a39bcb12961402af", null ],
     [ "XV_HdmiTx_ClockRatio", "xv__hdmitx_8h.html#a18857793bd92eafef197b339cf1f956e", null ],

@@ -38,7 +38,30 @@
 * AT ALL TIMES.
 *
 ******************************************************************************/
-
+/*****************************************************************************/
+/**
+*
+* @file xcsi_example_selftest.c
+*
+* This file contains an example using the XCsi driver to do self test
+* on the device.
+*
+* @note
+*
+* None
+*
+* MODIFICATION HISTORY:
+* <pre>
+* Ver	Who	Date	Changes
+* ----- ------ -------- -----------------------------------------------
+* 1.1   ms  01/23/17 Modified xil_printf statement in main function to
+*                    ensure that "Successfully ran" and "Failed" strings are
+*                    available in all examples. This is a fix for CR-965028.
+*       ms  04/05/17 Modified Comment lines in functions to
+*                    recognize it as documentation block for doxygen
+*                    generation of examples.
+* </pre>
+******************************************************************************/
 /***************************** Include Files *********************************/
 #include "xcsi.h"
 #include "xparameters.h"
@@ -72,7 +95,7 @@ u32 CsiSelfTestExample(u32 DeviceId);
 XCsi Csi;
 
 /*****************************************************************************/
-/*
+/**
 * The entry point for this example. It invokes the example function,
 * and reports the execution status.
 *
@@ -96,11 +119,11 @@ int main()
 	Status = CsiSelfTestExample(CSI2RX_DEV_ID);
 	if (Status != XST_SUCCESS) {
 
-		xil_printf("CsiSelfTestExample: Failed\n\r");
+		xil_printf("CsiSelfTest Example Failed\n\r");
 		return XST_FAILURE;
 	}
 
-	xil_printf("CsiSelfTestExample: Passed\n\r");
+	xil_printf("Successfully ran CsiSelfTest Example\n\r");
 
 	xil_printf("--- Exiting main() --- \n\r");
 
@@ -110,7 +133,7 @@ int main()
 #endif
 
 /*****************************************************************************/
-/*
+/**
 * This function checks if the Max Lane count from the generated file matches
 * the value present in the protocol configuration register
 *

@@ -44,6 +44,12 @@
 * Ver Who Date    Changes
 * --- --- ------- -------------------------------------------------------
 * 1.0 ram 11/2/16 Initial Release for MIPI DSI TX subsystem
+* 1.1 ms  01/23/17 Modified xil_printf statement in main function to
+*                  ensure that "Successfully ran" and "Failed" strings
+*                  are available in all examples. This is a fix for
+*                  CR-965028.
+*     ms  04/05/17 Added tabspace for return statements in functions for
+*                  proper documentation while generating doxygen.
 * </pre>
 *
 ******************************************************************************/
@@ -124,12 +130,11 @@ s32 main()
 
 	Status = DsiTxSs_IntrExample(XDSITXSS_DEVICE_ID);
 	if (Status != XST_SUCCESS) {
-		xil_printf("MIPI DSITXSS interrupt example "
-				"failed.");
+		xil_printf("MIPI DSITXSS interrupt example failed.");
 		return XST_FAILURE;
 	}
 
-	xil_printf("MIPI DSITXSS interrupt example passed\n\r");
+	xil_printf("Successfully ran MIPI DSITXSS interrupt example\n\r");
 
 	return XST_SUCCESS;
 }
@@ -192,7 +197,8 @@ void Delay(u32 Seconds)
 *		component which is going to be connected to the interrupt
 *		controller.
 *
-* @return	- XST_SUCCESS if successfully setup the interrupt
+* @return
+*		- XST_SUCCESS if successfully setup the interrupt
 *		- XST_FAILURE.failure to setup the interrupt
 *
 * @note		None.

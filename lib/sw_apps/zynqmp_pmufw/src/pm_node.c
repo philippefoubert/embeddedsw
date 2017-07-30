@@ -27,6 +27,8 @@
  * in advertising or otherwise to promote the sale, use or other dealings in
  * this Software without prior written authorization from Xilinx.
  */
+#include "xpfw_config.h"
+#ifdef ENABLE_PM
 
 /*********************************************************************
  * Global array of all nodes, and GetbyId function
@@ -36,11 +38,8 @@
 #include "pm_power.h"
 #include "pm_proc.h"
 #include "pm_slave.h"
-#include "pm_sram.h"
-#include "pm_usb.h"
-#include "pm_periph.h"
-#include "pm_pll.h"
 #include "pm_notifier.h"
+<<<<<<< HEAD
 #include "pm_ddr.h"
 
 static PmNode* const pmNodes[NODE_MAX] = {
@@ -106,6 +105,15 @@ static PmNode* const pmNodes[NODE_MAX] = {
 	&pmSlavePcap_g.node,
 	&pmSlaveRtc_g.node,
 	&pmPowerDomainLpd_g.node,
+=======
+#include "pm_clock.h"
+
+static PmNodeClass* pmNodeClasses[] = {
+	&pmNodeClassProc_g,
+	&pmNodeClassPower_g,
+	&pmNodeClassSlave_g,
+	&pmNodeClassPll_g,
+>>>>>>> upstream/master
 };
 
 /**
@@ -116,16 +124,26 @@ static PmNode* const pmNodes[NODE_MAX] = {
  */
 PmNode* PmGetNodeById(const u32 nodeId)
 {
-	u32 i;
+	u32 i, n;
 	PmNode* node = NULL;
 
+<<<<<<< HEAD
 	for (i = 0U; i < NODE_MAX; i++) {
 		if (pmNodes[i]->nodeId == nodeId) {
 			node = pmNodes[i];
 			break;
+=======
+	for (i = 0U; i < ARRAY_SIZE(pmNodeClasses); i++) {
+		for (n = 0U; n < pmNodeClasses[i]->bucketSize; n++) {
+			if (nodeId == pmNodeClasses[i]->bucket[n]->nodeId) {
+				node = pmNodeClasses[i]->bucket[n];
+				goto done;
+			}
+>>>>>>> upstream/master
 		}
 	}
 
+done:
 	return node;
 }
 
@@ -148,199 +166,243 @@ done:
 }
 
 /**
- * PmNodeLookupConsumption() - Lookup the power consumption of a node in a
- *			       specific state
- * @node       Pointer to the node of the slave
- * @state      State of the slave
+ * PmNodeGetPowerInfo() - Get power consumption information for a node
+ * @node	Pointer to the node
+ * @data	Pointer to the location where the power info should be stored
  *
- * @returns    Power consumption for the slave in the specified state
+ * @returns	Status about returning power info
+ *		XST_SUCCESS if power info is stored in *data
+ *		XST_NO_FEATURE if no power info can be provided for the node
  */
-static u32 PmNodeLookupConsumption(PmNode* const nodePtr, PmStateId state)
+int PmNodeGetPowerInfo(const PmNode* const node, u32* const data)
 {
-	u32 power = POWER_MISSING;
+	int status = XST_SUCCESS;
 
-	if ((NULL == nodePtr) || (NULL == nodePtr->powerInfo) ||
-	    (nodePtr->powerInfoCnt <= state)) {
+	if (NULL == node->powerInfo) {
+		status = XST_NO_FEATURE;
 		goto done;
 	}
 
-	power = nodePtr->powerInfo[state];
+	*data = node->powerInfo[node->currState];
 
 done:
-	return power;
+	return status;
 }
 
 /**
- * PmNodeGetChildPos() - Find child's position in its parent array of children
- *                 matching a given node ID
- * @node        ID of the node
+ * PmNodeGetClassById() - Get node class by class ID
+ * @id		ID of the class to get
  *
- * @returns     Child's position in its parent's array of children
+ * @return	Pointer to class if found, NULL otherwise.
  */
-static u32 PmNodeGetChildPos(PmNodeId node)
+static PmNodeClass* PmNodeGetClassById(const u8 id)
 {
-	u8 i;
-	u32 childPos = ~0;
-	PmNode* nodePtr = PmGetNodeById(node);
+	u32 i;
+	PmNodeClass* class = NULL;
 
-	if ((NULL == nodePtr) || (NULL == nodePtr->parent)) {
-		goto done;
-	}
-
-	for (i = 0U; i < nodePtr->parent->childCnt; i++) {
-		if (node == nodePtr->parent->children[i]->nodeId) {
-			childPos = i;
+	for (i = 0U; i < ARRAY_SIZE(pmNodeClasses); i++) {
+		if (id == pmNodeClasses[i]->id) {
+			class = pmNodeClasses[i];
 			break;
 		}
 	}
 
-done:
-	return childPos;
+	return class;
 }
 
 /**
- * PmNodeGetPowerConsumption() - Get power consumption of a node in a specific
- *                               state
- * @node       Pointer to the node
- * @state      State of the node
+ * PmNodeGetFromClass() - Get node with given ID from class
+ * @class	Node class to search through
+ * @nid		ID of the node to get
  *
- * @returns    Power consumption for the node in a specific state
- *
- * If the requested component represents power island or domain, return the
- * power consumption as a sum of consumptions of the children.
+ * @return	Pointer to node if found, NULL otherwise.
  */
-u32 PmNodeGetPowerConsumption(PmNode* const nodePtr, const PmStateId state)
+static PmNode* PmNodeGetFromClass(const PmNodeClass* const class, const u8 nid)
 {
-	u32 childPwr;
-	u32 childPos;
-	PmPower* root;
-	PmPower* currParent;
-	PmNode* childNode;
-	u32 power = 0U;
+	u32 i;
+	PmNode* node = NULL;
 
-	if ((NULL == nodePtr) || (NULL == nodePtr->powerInfo) ||
-	    (nodePtr->powerInfoCnt <= state)) {
-		goto done;
-	}
-
-	power = PmNodeLookupConsumption(nodePtr, state);
-
-	if ((false == NODE_IS_POWER(nodePtr->typeId)) ||
-	    (true == NODE_IS_OFF(nodePtr))) {
-		goto done;
-	}
-
-	/*
-	 * If requested node is power island or domain, account
-	 * power consumptions of components in hierarchy below
-	 */
-	root = (PmPower*)nodePtr->derived;
-	currParent = root;
-	childPos = 0U;
-
-	/*
-	 * Since MISRA-C doesn't allow recursion, we need an iterative
-	 * algorithm to determine the power consumption for the complete tree.
-	 * Using a depth-first approach:
-	 */
-	do {
-		while (childPos < currParent->childCnt) {
-			childNode = currParent->children[childPos];
-			/* Every node may have a power consumption: */
-			childPwr = PmNodeLookupConsumption(childNode,
-							   childNode->currState);
-
-			if (childPwr == POWER_MISSING) {
-				power = POWER_MISSING;
-				goto done;
-			} else {
-				power += childPwr;
-			}
-
-			if (true == NODE_IS_POWER(childNode->typeId)) {
-				/* Work our way down to the lowest child */
-				currParent = (PmPower*)childNode->derived;
-				childPos = 0U;
-			} else {
-				childPos++;
-			}
-		}
-
-		if (currParent == root) {
+	for (i = 0U; i < class->bucketSize; i++) {
+		if (nid == class->bucket[i]->nodeId) {
+			node = class->bucket[i];
 			break;
 		}
+	}
 
-		/* Now go back up one level, and continue where we left off */
-		childPos = PmNodeGetChildPos(currParent->node.nodeId);
-		if (currParent->childCnt <= childPos) {
-			power = POWER_MISSING;
-			goto done;
-		}
-		childPos++;
-		currParent = currParent->node.parent;
-	} while (1);
+	return node;
+}
 
-done:
+/**
+ * PmNodeGetSlave() - Get pointer to the slave by node ID
+ * @nodeId      ID of the slave node
+ *
+ * @return      Pointer to the slave if found, NULL otherwise
+ */
+PmSlave* PmNodeGetSlave(const u32 nodeId)
+{
+	PmSlave* slave = NULL;
+	PmNodeClass* class = PmNodeGetClassById(NODE_CLASS_SLAVE);
+	PmNode* node = PmNodeGetFromClass(class, nodeId);
+
+	if (NULL != node) {
+		slave = (PmSlave*)node->derived;
+	}
+
+	return slave;
+}
+
+/**
+ * PmNodeGetPower() - Get pointer to the power by node ID
+ * @nodeId      ID of the power node
+ *
+ * @return      Pointer to the power if found, NULL otherwise
+ */
+PmPower* PmNodeGetPower(const u32 nodeId)
+{
+	PmPower* power = NULL;
+	PmNodeClass* class = PmNodeGetClassById(NODE_CLASS_POWER);
+	PmNode* node = PmNodeGetFromClass(class, nodeId);
+
+	if (NULL != node) {
+		power = (PmPower*)node->derived;
+	}
+
 	return power;
 }
 
 /**
- * PmNodeGetWakeLatency() - Get wake-up latency of a node
- * @node       Pointer to the node
+ * PmNodeGetProc() - Get pointer to the processor structure by node ID
+ * @nodeId      ID of the processor node
  *
- * @returns    Wake-up latency for the node
+ * @return      Pointer to the processor if found, NULL otherwise
  */
-u32 PmNodeGetWakeLatency(PmNode* const nodePtr)
+PmProc* PmNodeGetProc(const u32 nodeId)
 {
-	u32 result = 0U;
-	PmPower* parent = nodePtr->parent;
-	const PmPower* power;
-	const PmSlave* slave;
-	const PmProc* proc;
+	PmProc* proc = NULL;
+	PmNodeClass* class = PmNodeGetClassById(NODE_CLASS_PROC);
+	PmNode* node = PmNodeGetFromClass(class, nodeId);
 
-	if (true == NODE_IS_SLAVE(nodePtr->typeId)) {
-		slave = (PmSlave*)nodePtr->derived;
-		result = PmGetLatencyFromState(slave, nodePtr->currState);
-	} else if ((true == NODE_IS_PROC(nodePtr->typeId)) &&
-		   (true == NODE_IS_OFF(nodePtr))) {
-			proc = (PmProc*)nodePtr->derived;
-			result = proc->pwrUpLatency;
-	} else if ((true == NODE_IS_POWER(nodePtr->typeId)) &&
-		   (true == NODE_IS_OFF(nodePtr))) {
-		power = (PmPower*)nodePtr->derived;
-		result = power->pwrUpLatency;
+	if (NULL != node) {
+		proc = (PmProc*)node->derived;
 	}
 
-	/*
-	 * In case when parent power islands/domains are turned off,
-	 * hierarchically account its powerUp latencies
-	 */
-	while ((NULL != parent) && (true == NODE_IS_OFF(&parent->node))) {
-		result += parent->pwrUpLatency;
-		parent = parent->node.parent;
-	}
-
-	return result;
+	return proc;
 }
 
 /**
- * PmNodeDependsOnClock() - Check whether node currently depends on its clock
+ * PmNodeClearConfig() - Clear configuration for all nodes
  */
-bool PmNodeDependsOnClock(const PmNode* const node)
+void PmNodeClearConfig(void)
 {
-	bool deps = false;
+	u32 i, n;
 
-	if (true == NODE_IS_SLAVE(node->typeId)) {
-		const PmSlave* const slv = (PmSlave*)node->derived;
+	for (i = 0U; i < ARRAY_SIZE(pmNodeClasses); i++) {
+		for (n = 0U; n < pmNodeClasses[i]->bucketSize; n++) {
+			PmNode* node = pmNodeClasses[i]->bucket[n];
 
-		if (0U != (PM_CAP_CLOCK & slv->slvFsm->states[node->currState])) {
-			deps = true;
+			node->latencyMarg = MAX_LATENCY;
+			node->flags = 0U;
+
+			if (NULL != pmNodeClasses[i]->clearConfig) {
+				pmNodeClasses[i]->clearConfig(node);
+			}
 		}
-	} else if (false == NODE_IS_OFF(node)) {
-		deps = true;
-	} else {
-		/* Empty else required by MISRA */
+	}
+}
+
+/**
+ * PmNodeConstruct() - Call constructors for all nodes
+ */
+void PmNodeConstruct(void)
+{
+	u32 i, n;
+
+	PmClockConstructList();
+
+	for (i = 0U; i < ARRAY_SIZE(pmNodeClasses); i++) {
+		for (n = 0U; n < pmNodeClasses[i]->bucketSize; n++) {
+			PmNode* node = pmNodeClasses[i]->bucket[n];
+
+			if (NULL != pmNodeClasses[i]->construct) {
+				pmNodeClasses[i]->construct(node);
+			}
+		}
+	}
+}
+
+/**
+ * PmNodeInit() - Initialize all nodes
+ * @return	XST_SUCCESS or error code if failed to initialize a node
+ */
+int PmNodeInit(void)
+{
+	u32 i, n;
+	int status;
+	int ret = XST_SUCCESS;
+
+	for (i = 0U; i < ARRAY_SIZE(pmNodeClasses); i++) {
+		for (n = 0U; n < pmNodeClasses[i]->bucketSize; n++) {
+			PmNode* node = pmNodeClasses[i]->bucket[n];
+
+			if (NULL == pmNodeClasses[i]->init) {
+				continue;
+			}
+			status = pmNodeClasses[i]->init(node);
+			if (XST_SUCCESS != status) {
+				ret = XST_FAILURE;
+				PmDbg("%s failed\r\n", PmStrNode(node->nodeId));
+			}
+
+		}
 	}
 
-	return deps;
+	return ret;
 }
+
+/**
+ * PmNodeForceDown() - Force down the node
+ * @node	Node to force down
+ *
+ * @return	XST_FAILURE if no force operation to execute for the node,
+ *		otherwise status of performing force down operation
+ */
+int PmNodeForceDown(PmNode* const node)
+{
+	int status = XST_FAILURE;
+
+	if (NULL != node->class->forceDown) {
+		status = node->class->forceDown(node);
+	}
+
+	return status;
+}
+
+/**
+ * PmNodeForceDownUnusable() - Force down nodes that are unusable
+ *
+ * @note	Function puts in the lowest power states the nodes which have no
+ *		provision to be used by currently set configuration.
+ */
+void PmNodeForceDownUnusable(void)
+{
+	u32 i, n;
+
+	for (i = 0U; i < ARRAY_SIZE(pmNodeClasses); i++) {
+		for (n = 0U; n < pmNodeClasses[i]->bucketSize; n++) {
+			PmNode* node = pmNodeClasses[i]->bucket[n];
+			bool usable = true;
+
+			if (NULL != pmNodeClasses[i]->isUsable) {
+				usable = pmNodeClasses[i]->isUsable(node);
+			}
+			if (true == usable) {
+				continue;
+			}
+			if (NULL != pmNodeClasses[i]->forceDown) {
+				pmNodeClasses[i]->forceDown(node);
+			}
+		}
+	}
+}
+
+#endif

@@ -52,6 +52,18 @@
 *     sss 08/26/16 XDSI_VM_NON_BURST_SYNC_PULSES enum changed
 *                  Add "Command Queue Vacancy" API
 *                  API for getting pixel format
+<<<<<<< HEAD
+=======
+*     ms  01/23/17 Modified xil_printf statement in main function for all
+*                  examples to ensure that "Successfully ran" and "Failed"
+*                  strings are available in all examples. This is a fix
+*                  for CR-965028.
+*     ms  03/17/17 Added readme.txt file in examples folder for doxygen
+*                  generation.
+*     ms  04/05/17 Modified Comment lines in functions of dsi
+*                  examples to recognize it as documentation block
+*                  for doxygen generation of examples.
+>>>>>>> upstream/master
 * </pre>
 *
 ******************************************************************************/

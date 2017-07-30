@@ -15,13 +15,29 @@ var NAVTREE =
       [ "Typedefs", "globals_type.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xuartps_selftest_example.c", "example.html#ex1", null ],
+      [ "xuartps_hello_world_example.c", "example.html#ex2", null ],
+      [ "xuartps_intr_example.c", "example.html#ex3", null ],
+      [ "xuartps_low_echo_example.c", "example.html#ex4", null ],
+      [ "xuartps_polled_example.c", "example.html#ex5", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 
 var NAVTREEINDEX =
 [
+<<<<<<< HEAD
 "annotated.html"
+=======
+"annotated.html",
+"xuartps__selftest_8c.html"
+>>>>>>> upstream/master
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

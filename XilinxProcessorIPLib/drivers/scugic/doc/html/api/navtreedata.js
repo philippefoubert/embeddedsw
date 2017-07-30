@@ -14,7 +14,16 @@ var NAVTREE =
       [ "Variables", "globals_vars.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xscugic_example.c", "example.html#ex1", null ],
+      [ "xscugic_low_level_example.c", "example.html#ex2", null ],
+      [ "xscugic_tapp_example.c", "example.html#ex3", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

@@ -70,7 +70,11 @@
 * Ver   Who  Date     Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00a asa  4/30/10 First release based on the ll temac driver
-*
+* 5.4   ms   01/23/17 Modified xil_printf statement in main function to
+*                     ensure that "Successfully ran" and "Failed" strings are
+*                     available in all examples. This is a fix for CR-965028.
+*       ms   04/05/17 Added tabspace for return statements in functions
+*                     for proper documentation while generating doxygen.
 * </pre>
 *
 ******************************************************************************/
@@ -157,11 +161,11 @@ int main(void)
 	 */
 	Status = AxiEthernetPolledExample(AXIETHERNET_DEVICE_ID, FIFO_DEVICE_ID);
 	if (Status != XST_SUCCESS) {
-		AxiEthernetUtilErrorTrap("Failed test poll mode fifo");
+		AxiEthernetUtilErrorTrap("Axiethernet poll mode fifo Example Failed\r\n");
 		return XST_FAILURE;
 	}
 
-	AxiEthernetUtilErrorTrap("Test passed");
+	AxiEthernetUtilErrorTrap("Successfully ran Axiethernet poll mode fifo Example\r\n");
 	AxiEthernetUtilErrorTrap("--- Exiting main() ---");
 	return XST_SUCCESS;
 
@@ -619,7 +623,8 @@ int AxiEthernetMultipleFramesPolledExample(void)
 *
 * @param	None.
 *
-* @return	- XST_SUCCESS, Tx has completed
+* @return
+*		- XST_SUCCESS, Tx has completed
 *		- XST_NO_DATA, Timeout. Tx failure.
 *		- XST_FIFO_ERROR, Error in the FIFO.
 *
@@ -680,7 +685,8 @@ int AxiEthernetPollForTxStatus(void)
 *
 * @param	None.
 *
-* @return	- XST_SUCCESS, a frame has been received
+* @return
+*		- XST_SUCCESS, a frame has been received
 *		- XST_NO_DATA, Timeout. Rx failure.
 *		- XST_FIFO_ERROR, Error in the FIFO.
 *		- XST_DATA_LOST, a frame has been dropped

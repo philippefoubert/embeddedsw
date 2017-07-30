@@ -64,6 +64,12 @@
  * 2.01a srt  03/05/12 Modified interrupt support for Zynq.
  * 		       Modified Flushing and Invalidation of Caches to fix CRs
  *		       648103, 648701.
+ * 4.3   ms   01/22/17 Modified xil_printf statement in main function to
+ *            ensure that "Successfully ran" and "Failed" strings are
+ *            available in all examples. This is a fix for CR-965028.
+ *       ms   04/05/17 Modified Comment lines in functions to
+ *                     recognize it as documentation block for doxygen
+ *                     generation of examples.
  * </pre>
  *
  ****************************************************************************/
@@ -175,7 +181,7 @@ volatile static int Error = 0;	/* Dma Bus Error occurs */
 
 
 /*****************************************************************************/
-/*
+/**
 * The entry point for this example. It invokes the example function,
 * and reports the execution status.
 *
@@ -202,13 +208,11 @@ int main()
 			DMA_CTRL_DEVICE_ID,DMA_CTRL_IRPT_INTR);
 
 	if (Status != XST_SUCCESS) {
-
-		xil_printf("XAxiCdma_SimpleIntrExample: Failed\r\n");
+		xil_printf("XAxiCdma_SimpleIntr Example Failed\r\n");
 		return XST_FAILURE;
 	}
 
-	xil_printf("XAxiCdma_SimpleIntrExample: Passed\r\n");
-
+	xil_printf("Successfully ran XAxiCdma_SimpleIntr Example\r\n");
 	xil_printf("--- Exiting main() --- \r\n");
 
 	return XST_SUCCESS;

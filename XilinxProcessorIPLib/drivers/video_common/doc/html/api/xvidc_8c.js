@@ -1,9 +1,16 @@
 var xvidc_8c =
 [
+<<<<<<< HEAD
     [ "XVidC_Get3DFormatStr", "group__video__common__v4__0.html#ga8f0dac42d6acff605c88aacfc65afcac", null ],
     [ "XVidC_GetColorFormatStr", "group__video__common__v4__0.html#gae007912178af04fc00cfc74cf777aa61", null ],
     [ "XVidC_GetFrameRate", "group__video__common__v4__0.html#ga5359c410dfcc1bb7a851f77f0b92b287", null ],
     [ "XVidC_GetFrameRateStr", "group__video__common__v4__0.html#gadf68cda7566e0aed3358f3fd2ad7d174", null ],
+=======
+    [ "XVidC_Get3DFormatStr", "group__video__common__v4__0.html#ga1d00a23344bac2c8f31661ed59e8c573", null ],
+    [ "XVidC_GetColorFormatStr", "group__video__common__v4__0.html#ga8b0d0986815d88136d4ffae6118325e5", null ],
+    [ "XVidC_GetFrameRate", "group__video__common__v4__0.html#ga5359c410dfcc1bb7a851f77f0b92b287", null ],
+    [ "XVidC_GetFrameRateStr", "group__video__common__v4__0.html#ga3a1ddd84b3b0115149c1b0820c6ba6f4", null ],
+>>>>>>> upstream/master
     [ "XVidC_GetPixelClockHzByHVFr", "group__video__common__v4__0.html#ga6642b79ef465ddcbe095e81119a85ea3", null ],
     [ "XVidC_GetPixelClockHzByVmId", "group__video__common__v4__0.html#gac3baac1cdfcdc084ceb228662c72a7a1", null ],
     [ "XVidC_GetTimingInfo", "group__video__common__v4__0.html#ga88a549f52e28fcf7b3e249f42e847bc1", null ],
@@ -11,6 +18,10 @@ var xvidc_8c =
     [ "XVidC_GetVideoModeData", "group__video__common__v4__0.html#ga3be40034baa818fc42e861f7f033afe8", null ],
     [ "XVidC_GetVideoModeId", "group__video__common__v4__0.html#ga0a1cda75da460feccd4ab2c2ee712fa5", null ],
     [ "XVidC_GetVideoModeIdRb", "group__video__common__v4__0.html#ga4377fff1a8e427e5f7bb642c5b115046", null ],
+<<<<<<< HEAD
+=======
+    [ "XVidC_GetVideoModeIdWBlanking", "group__video__common__v4__0.html#ga562322a65704c3d6a2617b9f5e5d1717", null ],
+>>>>>>> upstream/master
     [ "XVidC_GetVideoModeStr", "group__video__common__v4__0.html#ga536ee41269fe7c0519dc8c3838af2d93", null ],
     [ "XVidC_IsInterlaced", "group__video__common__v4__0.html#ga0bea011c3bea29cbae6263599ca9ff06", null ],
     [ "XVidC_RegisterCustomTimingModes", "group__video__common__v4__0.html#ga687eb5fbcb487fa34c66099941b7a8f0", null ],

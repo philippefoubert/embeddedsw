@@ -11,11 +11,22 @@ var NAVTREE =
     [ "APIs", "globals.html", [
       [ "All", "globals.html", null ],
       [ "Functions", "globals_func.html", null ],
+<<<<<<< HEAD
+=======
+      [ "Variables", "globals_vars.html", null ],
+>>>>>>> upstream/master
       [ "Typedefs", "globals_type.html", null ],
       [ "Enumerator", "globals_eval.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "enhance_selftest_example.c", "example.html#ex1", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

@@ -15,7 +15,20 @@ var NAVTREE =
       [ "Typedefs", "globals_type.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xqspips_selftest_example.c", "example.html#ex1", null ],
+      [ "xqspips_dual_flash_lqspi_example.c", "example.html#ex2", null ],
+      [ "xqspips_dual_flash_stack_lqspi_example.c", "example.html#ex3", null ],
+      [ "xqspips_flash_intr_example.c", "example.html#ex4", null ],
+      [ "xqspips_flash_lqspi_example.c", "example.html#ex5", null ],
+      [ "xqspips_flash_polled_example.c", "example.html#ex6", null ],
+      [ "xqspips_g128_flash_example.c", "example.html#ex7", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

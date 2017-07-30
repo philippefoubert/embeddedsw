@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+ * Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,9 @@
  * Ver   Who  Date        Changes
  * ----- ---- -------- -------------------------------------------------------
  * 1.00  ba   11/17/14 Initial release
+ * 2.0   bv   12/05/16 Made compliance to MISRAC 2012 guidelines
+ *                     Chunk for bitstream is been storing at bitstream_buffer
+ *                     section
  *
  * </pre>
  *
@@ -64,10 +67,9 @@
 /************************** Function Prototypes ******************************/
 
 /************************** Variable Definitions *****************************/
-#ifndef XFSBL_PS_DDR
-/* global OCM buffer to store data chunks in case of DDR less system */
-u8 ReadBuffer[READ_BUFFER_SIZE];
-#endif
+/* Global OCM buffer to store data chunks */
+u8 ReadBuffer[READ_BUFFER_SIZE]__attribute__ ((aligned (64)))
+				__attribute__((section (".bitstream_buffer")));
 
 /*****************************************************************************/
 /** This function does the necessary initialization of PCAP interface
@@ -79,8 +81,9 @@ u8 ReadBuffer[READ_BUFFER_SIZE];
  *****************************************************************************/
 u32 XFsbl_PcapInit(void) {
 	u32 RegVal;
-	u32 Status = XFSBL_SUCCESS;
+	u32 Status;
 	u32 PlatInfo;
+	(void)memset(ReadBuffer, 0U, sizeof(ReadBuffer));
 
 	/* Take PCAP out of Reset */
 	RegVal = XFsbl_In32(CSU_PCAP_RESET);
@@ -96,7 +99,7 @@ u32 XFsbl_PcapInit(void) {
 	 * For 1.0 and 2.0 Silicon, PL should already be powered up
 	 * (before MIO config). Hence, skip that step here.
 	 */
-	if (XGetPSVersion_Info() > XPS_VERSION_2) {
+	if (XGetPSVersion_Info() > (u32)XPS_VERSION_2) {
 		Status = XFsbl_PowerUpIsland(PMU_GLOBAL_PWR_STATE_PL_MASK);
 
 		if (Status != XFSBL_SUCCESS) {
@@ -105,13 +108,19 @@ u32 XFsbl_PcapInit(void) {
 			goto END;
 		}
 
-		XFsbl_IsolationRestore(PMU_GLOBAL_REQ_ISO_INT_EN_PL_NONPCAP_MASK);
+		Status = XFsbl_IsolationRestore(PMU_GLOBAL_REQ_ISO_INT_EN_PL_NONPCAP_MASK);
+
+		if (Status != XFSBL_SUCCESS) {
+			Status = XFSBL_ERROR_PMU_GLOBAL_REQ_ISO;
+			XFsbl_Printf(DEBUG_GENERAL, "XFSBL_ERROR_PMU_GLOBAL_REQ_ISO\r\n");
+			goto END;
+		}
 	}
 
 	/* Reset PL */
 	XFsbl_Out32(CSU_PCAP_PROG, 0x0U);
 
-	usleep(PL_RESET_PERIOD_IN_US);
+	(void)usleep(PL_RESET_PERIOD_IN_US);
 
 	XFsbl_Out32(CSU_PCAP_PROG, CSU_PCAP_PROG_PCFG_PROG_B_MASK);
 
@@ -122,9 +131,14 @@ u32 XFsbl_PcapInit(void) {
 
 	PlatInfo = XGet_Zynq_UltraMp_Platform_info();
 
-	if ((PlatInfo != XPLAT_ZYNQ_ULTRA_MP)
-			&& (PlatInfo != XPLAT_ZYNQ_ULTRA_MPQEMU)) {
-		RegVal = 0U;
+	if ((PlatInfo != (u32)XPLAT_ZYNQ_ULTRA_MP)
+			&& (PlatInfo != (u32)XPLAT_ZYNQ_ULTRA_MPQEMU)) {
+		/* To confirm house cleaning of PL is started */
+		do {
+			RegVal = XFsbl_In32(CSU_PCAP_STATUS) &
+				CSU_PCAP_STATUS_PL_CFG_RST_MASK;
+		} while (RegVal != CSU_PCAP_STATUS_PL_CFG_RST_MASK);
+		/* To confirm house cleaning of PL is done */
 		do {
 			RegVal = XFsbl_In32(CSU_PCAP_STATUS) &
 			CSU_PCAP_STATUS_PL_INIT_MASK;
@@ -133,6 +147,7 @@ u32 XFsbl_PcapInit(void) {
 		XFsbl_Printf(DEBUG_GENERAL,
 				"PCAP interface is not supported in this platform \r\n");
 	}
+	Status = XFSBL_SUCCESS;
 END:
 	return Status;
 }
@@ -145,7 +160,7 @@ END:
  * @return	error status based on implemented functionality (SUCCESS by default)
  *
  *****************************************************************************/
-static u32 XFsbl_PcapWaitForDone() {
+u32 XFsbl_PcapWaitForDone(void) {
 	u32 RegVal;
 	u32 Status = XFSBL_SUCCESS;
 
@@ -170,7 +185,7 @@ static u32 XFsbl_PcapWaitForDone() {
  *****************************************************************************/
 u32 XFsbl_WriteToPcap(u32 WrSize, u8 *WrAddr) {
 	u32 RegVal;
-	u32 Status = XFSBL_SUCCESS;
+	u32 Status;
 
 	/*
 	 * Setup the  SSS, setup the PCAP to receive from DMA source
@@ -184,7 +199,7 @@ u32 XFsbl_WriteToPcap(u32 WrSize, u8 *WrAddr) {
 	XCsuDma_Transfer(&CsuDma, XCSUDMA_SRC_CHANNEL, (PTRSIZE) WrAddr, WrSize, 0);
 
 	/* wait for the SRC_DMA to complete and the pcap to be IDLE */
-	XCsuDma_WaitForDone(&CsuDma, XCSUDMA_SRC_CHANNEL);
+	XCsuDma_WaitForDone(&CsuDma, XCSUDMA_SRC_CHANNEL){}
 
 	/* Acknowledge the transfer has completed */
 	XCsuDma_IntrClear(&CsuDma, XCSUDMA_SRC_CHANNEL, XCSUDMA_IXR_DONE_MASK);
@@ -209,12 +224,12 @@ u32 XFsbl_WriteToPcap(u32 WrSize, u8 *WrAddr) {
  *
  *****************************************************************************/
 u32 XFsbl_PLWaitForDone(void) {
-	u32 Status = XFSBL_SUCCESS;
+	u32 Status;
 	u32 PollCount;
-	u32 RegVal;
+	u32 RegVal = 0U;
 
-	PollCount = (PL_DONE_POLL_COUNT);
-	while (PollCount) {
+	PollCount = PL_DONE_POLL_COUNT;
+	while (PollCount > 0U) {
 		/* Read PCAP Status register and check for PL_DONE bit */
 		RegVal = XFsbl_In32(CSU_PCAP_STATUS);
 		RegVal &= CSU_PCAP_STATUS_PL_DONE_MASK;
@@ -242,6 +257,7 @@ u32 XFsbl_PLWaitForDone(void) {
 		RegVal = RegVal & CSU_PCAP_RESET_RESET_MASK;
 	} while (RegVal != CSU_PCAP_RESET_RESET_MASK);
 
+	Status = XFSBL_SUCCESS;
 	END:
 	return Status;
 }

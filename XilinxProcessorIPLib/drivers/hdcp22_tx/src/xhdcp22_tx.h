@@ -83,6 +83,8 @@
 * 1.00  JO     06/24/15 Initial release.
 * 1.01  MG     02/25/16 Added authenticated callback and GetVersion.
 * 2.00  MH     06/28/16 Updated for repeater downstream support.
+* 2.01  MH     02/28/17 Fixed compiler warnings.
+* 2.20  MH     04/12/17 Added function XHdcp22Tx_IsDwnstrmCapable.
 * </pre>
 *
 ******************************************************************************/
@@ -280,9 +282,9 @@ typedef struct
 	/** Base Address is the physical base address of the device's registers. */
 	UINTPTR BaseAddress;
 	/** HDMI or DP (Always HDCP22_TX_HDMI: Currently DP is not supported). */
-	XHdcp22_Tx_Protocol Protocol;
+	int Protocol;
 	/** Future expansion. */
-	XHdcp22_Tx_Mode Mode;
+	int Mode;
 	/** DeviceId of the internal used timer. */
 	u16 TimerDeviceId;
 	/** DeviceId of the used cipher. */
@@ -316,6 +318,7 @@ typedef struct {
 	u8 Rrx[8];           /**< Random nonce for Rx (m: Rtx || Rrx). */
 	u8 Km[16];           /**< Km. */
 	u8 Ekh_Km[16];       /**< Ekh(Km). */
+     u8 Ready;            /**< Indicates a valid entry */
 } XHdcp22_Tx_PairingInfo;
 /**
 * This typedef contains information about the HDCP22 transmitter.
@@ -586,7 +589,7 @@ int XHdcp22Tx_CfgInitialize(XHdcp22_Tx *InstancePtr, XHdcp22_Tx_Config *CfgPtr,
 int XHdcp22Tx_Reset(XHdcp22_Tx *InstancePtr);
 int XHdcp22Tx_ClearPairingInfo(XHdcp22_Tx *InstancePtr);
 int XHdcp22Tx_Authenticate (XHdcp22_Tx *InstancePtr);
-XHdcp22_Tx_AuthenticationType XHdcp22Tx_Poll(XHdcp22_Tx *InstancePtr);
+int XHdcp22Tx_Poll(XHdcp22_Tx *InstancePtr);
 int XHdcp22Tx_Enable (XHdcp22_Tx *InstancePtr);
 int XHdcp22Tx_Disable (XHdcp22_Tx *InstancePtr);
 int XHdcp22Tx_EnableEncryption (XHdcp22_Tx *InstancePtr);
@@ -597,6 +600,7 @@ u8  XHdcp22Tx_IsEnabled (XHdcp22_Tx *InstancePtr);
 u8  XHdcp22Tx_IsEncryptionEnabled (XHdcp22_Tx *InstancePtr);
 u8  XHdcp22Tx_IsInProgress (XHdcp22_Tx *InstancePtr);
 u8  XHdcp22Tx_IsAuthenticated (XHdcp22_Tx *InstancePtr);
+u8  XHdcp22Tx_IsDwnstrmCapable (XHdcp22_Tx *InstancePtr);
 u32 XHdcp22Tx_GetVersion(XHdcp22_Tx *InstancePtr);
 
 /* Set DDC handler function pointers. */

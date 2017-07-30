@@ -73,6 +73,7 @@
 *                       XHdcp1x_RxSetTopologyMaxCascadeExceeded,
 *                       XHdcp1x_RxSetTopologyMaxDevsExceeded,
 *                       XHdcp1x_RxCheckEncryptionChange.
+* 4.1   yas    11/10/16 Added function XHdcp1x_RxSetHdmiMode.
 * </pre>
 *
 *****************************************************************************/
@@ -146,7 +147,9 @@ static void XHdcp1x_RxDebugLog(const XHdcp1x *InstancePtr, const char *LogMsg);
 static void XHdcp1x_RxPostEvent(XHdcp1x *InstancePtr, XHdcp1x_EventType Event);
 static void XHdcp1x_RxStartTimer(XHdcp1x *InstancePtr, u16 TimeoutInMs);
 static void XHdcp1x_RxStopTimer(XHdcp1x *InstancePtr);
+#if XHDCP1X_ADDITIONAL_DEBUG
 static void XHdcp1x_RxBusyDelay(XHdcp1x *InstancePtr, u16 DelayInMs);
+#endif
 static void XHdcp1x_RxAuthCallback(void *Parameter);
 static void XHdcp1x_RxLinkFailCallback(void *Parameter);
 static void XHdcp1x_RxRiUpdateCallback(void *Parameter);
@@ -161,8 +164,7 @@ static int XHdcp1x_RxCalculateSHA1Value(XHdcp1x *InstancePtr,
 		u16 RepeaterInfo);
 static void XHdcp1x_RxAssembleKSVList(XHdcp1x *InstancePtr,
 		XHdcp1x_StateType *NextStatePtr);
-static void XHdcp1x_RxUpdateRi(XHdcp1x *InstancePtr,
-		XHdcp1x_StateType *NextStatePtr);
+static void XHdcp1x_RxUpdateRi(XHdcp1x *InstancePtr);
 static void XHdcp1x_RxCheckLinkIntegrity(XHdcp1x *InstancePtr,
 		XHdcp1x_StateType *NextStatePtr);
 static void XHdcp1x_RxReportLinkIntegrityFailure(XHdcp1x *InstancePtr,
@@ -185,7 +187,9 @@ static void XHdcp1x_RxExitState(XHdcp1x *InstancePtr, XHdcp1x_StateType State);
 static void XHdcp1x_RxDoTheState(XHdcp1x *InstancePtr, XHdcp1x_EventType Event);
 static void XHdcp1x_RxProcessPending(XHdcp1x *InstancePtr);
 static const char *XHdcp1x_RxStateToString(XHdcp1x_StateType State);
+#if XHDCP1X_ADDITIONAL_DEBUG
 static const char *XHdcp1x_RxEventToString(XHdcp1x_EventType Event);
+#endif
 
 /************************** Function Definitions *****************************/
 /*****************************************************************************/
@@ -230,6 +234,7 @@ int XHdcp1x_RxSetCallback(XHdcp1x *InstancePtr,
 			InstancePtr->Rx.IsDdcSetAddressCallbackSet = (TRUE);
 			Status = XST_SUCCESS;
 			break;
+
 		case (XHDCP1X_HANDLER_DDC_SETREGDATA):
 			InstancePtr->Rx.DdcSetDataCallback
 				= (XHdcp1x_SetDdcHandler)CallbackFunc;
@@ -238,6 +243,7 @@ int XHdcp1x_RxSetCallback(XHdcp1x *InstancePtr,
 			InstancePtr->Rx.IsDdcSetDataCallbackSet = (TRUE);
 			Status = XST_SUCCESS;
 			break;
+
 		case (XHDCP1X_HANDLER_DDC_GETREGDATA):
 			InstancePtr->Rx.DdcGetDataCallback
 				= (XHdcp1x_GetDdcHandler)CallbackFunc;
@@ -246,6 +252,7 @@ int XHdcp1x_RxSetCallback(XHdcp1x *InstancePtr,
 			InstancePtr->Rx.IsDdcGetDataCallbackSet = (TRUE);
 			Status = XST_SUCCESS;
 			break;
+
 		/* Repeater - trigger Downstream Authentication */
 		/* Eqilvalent of case
 		 * (XHDCP1X_RPTR_HDLR_TRIG_DOWNSTREAM_AUTH):
@@ -257,6 +264,7 @@ int XHdcp1x_RxSetCallback(XHdcp1x *InstancePtr,
 				= CallbackRef;
 			InstancePtr->Rx.IsRepeaterDownstreamAuthCallbackSet
 				= (TRUE);
+			Status = XST_SUCCESS;
 			break;
 
 		// authenticated
@@ -266,6 +274,7 @@ int XHdcp1x_RxSetCallback(XHdcp1x *InstancePtr,
 			InstancePtr->Rx.AuthenticatedCallbackRef
 				= CallbackRef;
 			InstancePtr->Rx.IsAuthenticatedCallbackSet = (TRUE);
+			Status = XST_SUCCESS;
 			break;
 
 		// unauthenticated
@@ -275,6 +284,7 @@ int XHdcp1x_RxSetCallback(XHdcp1x *InstancePtr,
 			InstancePtr->Rx.UnauthenticatedCallbackRef
 				= CallbackRef;
 			InstancePtr->Rx.IsUnauthenticatedCallbackSet = (TRUE);
+			Status = XST_SUCCESS;
 			break;
 
 		// topology updated
@@ -284,6 +294,7 @@ int XHdcp1x_RxSetCallback(XHdcp1x *InstancePtr,
 			InstancePtr->Rx.TopologyUpdateCallbackRef
 				= CallbackRef;
 			InstancePtr->Rx.IsTopologyUpdateCallbackSet = (TRUE);
+			Status = XST_SUCCESS;
 			break;
 
 		// encryption updated
@@ -293,6 +304,7 @@ int XHdcp1x_RxSetCallback(XHdcp1x *InstancePtr,
 			InstancePtr->Rx.EncryptionUpdateCallbackRef
 				= CallbackRef;
 			InstancePtr->Rx.IsEncryptionUpdateCallbackSet = (TRUE);
+			Status = XST_SUCCESS;
 			break;
 
 		default:
@@ -837,7 +849,7 @@ int XHdcp1x_RxGetRepeaterInfo(XHdcp1x *InstancePtr,
 		XHdcp1x_RepeaterExchange *RepeaterInfoPtr)
 {
 	int Status = XST_SUCCESS;
-	int ksvCount=0;
+	u32 ksvCount=0;
 	u32 ksvsToCopy;
 
 	/* Verify arguments. */
@@ -967,6 +979,7 @@ static void XHdcp1x_RxStopTimer(XHdcp1x *InstancePtr)
 	XHdcp1x_PlatformTimerStop(InstancePtr);
 }
 
+#if XHDCP1X_ADDITIONAL_DEBUG
 /*****************************************************************************/
 /**
 * This function busy delays a state machine.
@@ -984,6 +997,7 @@ static void XHdcp1x_RxBusyDelay(XHdcp1x *InstancePtr, u16 DelayInMs)
 	/* Busy wait */
 	XHdcp1x_PlatformTimerBusy(InstancePtr, DelayInMs);
 }
+#endif
 
 /*****************************************************************************/
 /**
@@ -1038,8 +1052,13 @@ static void XHdcp1x_RxRiUpdateCallback(void *Parameter)
 {
 	XHdcp1x *InstancePtr = (XHdcp1x *)Parameter;
 
-	/* Post the update Ri request */
-	XHdcp1x_RxPostEvent(InstancePtr, XHDCP1X_EVENT_UPDATERi);
+	if(InstancePtr->Rx.CurrentState == XHDCP1X_STATE_AUTHENTICATED) {
+		/* Update the Ri value. */
+		XHdcp1x_RxUpdateRi(InstancePtr);
+	} else {
+		/* Post the update Ri request. */
+		XHdcp1x_RxPostEvent(InstancePtr, XHDCP1X_EVENT_UPDATERi);
+	}
 }
 
 /*****************************************************************************/
@@ -1160,6 +1179,9 @@ static void XHdcp1x_RxDisableState(XHdcp1x *InstancePtr)
 static void XHdcp1x_RxStartComputations(XHdcp1x *InstancePtr,
 		XHdcp1x_StateType *NextStatePtr)
 {
+	/* NextStatePtr not being used */
+	UNUSED(NextStatePtr);
+
 	u8 Buf[8];
 	u64 Value = 0;
 	u32 X = 0;
@@ -1223,7 +1245,6 @@ static void XHdcp1x_RxPollForComputations(XHdcp1x *InstancePtr,
 	if (XHdcp1x_CipherIsRequestComplete(InstancePtr)) {
 		u8 Buf[4];
 		u16 Ro = 0;
-		u32 KSVPtrReset = 0;
 
 		/* Log */
 		XHdcp1x_RxDebugLog(InstancePtr, "computations complete");
@@ -1244,6 +1265,8 @@ static void XHdcp1x_RxPollForComputations(XHdcp1x *InstancePtr,
 		 * pointer reset is implemented in the hardware. */
 
 #else
+		u32 KSVPtrReset = 0;
+
 		/* Reset the KSV FIFO read pointer to ox6802C */
 		XHdcp1x_PortRead(InstancePtr, XHDCP1X_PORT_HDCP_RESET_KSV,
 				&KSVPtrReset, 4);
@@ -1309,8 +1332,7 @@ static int XHdcp1x_RxCalculateSHA1Value(XHdcp1x *InstancePtr, u16 RepeaterInfo)
 {
 	SHA1Context Sha1Context;
 	u8 Buf[24];
-	u8 Ksv[5];
-	int NumToRead = 0;
+	u32 NumToRead = 0;
 	int IsValid = FALSE;
 	u32 KsvCount;
 	u64 tempKsv;
@@ -1371,7 +1393,6 @@ static int XHdcp1x_RxCalculateSHA1Value(XHdcp1x *InstancePtr, u16 RepeaterInfo)
 			/* Iterate through the SHA-1 chunks */
 			do {
 				u32 CalcValue = 0;
-				u32 ReadValue = 0;
 
 				/* Determine CalcValue */
 				CalcValue = *Sha1Buf++;
@@ -1511,7 +1532,6 @@ void XHdcp1x_RxSetTopologyDeviceCnt(XHdcp1x *InstancePtr, u32 Value)
 ******************************************************************************/
 void XHdcp1x_RxSetTopologyMaxCascadeExceeded(XHdcp1x *InstancePtr, u8 Value)
 {
-	u16 CascadeErr = (Value & 0xFFFF);
 #if defined(XPAR_XV_HDMIRX_NUM_INSTANCES) && (XPAR_XV_HDMIRX_NUM_INSTANCES > 0)
 
 	u32 BStatus;
@@ -1556,9 +1576,9 @@ void XHdcp1x_RxSetTopologyMaxDevsExceeded(XHdcp1x *InstancePtr, u8 Value)
 	Xil_AssertVoid(InstancePtr != NULL);
 	Xil_AssertVoid(Value == FALSE || Value == TRUE);
 
-	u16 DevCntErr = (Value & 0xFFFF);
 #if defined(XPAR_XV_HDMIRX_NUM_INSTANCES) && (XPAR_XV_HDMIRX_NUM_INSTANCES > 0)
 
+	u16 DevCntErr = (Value & 0xFFFF);
 	u32 BStatus;
 
 	/* Update the value of Max Devices exceeded in BStatus */
@@ -1579,6 +1599,41 @@ void XHdcp1x_RxSetTopologyMaxDevsExceeded(XHdcp1x *InstancePtr, u8 Value)
 	XHdcp1x_PortWrite(InstancePtr, XHDCP1X_PORT_OFFSET_BINFO,
 		&BInfo, XHDCP1X_PORT_SIZE_BINFO);
 
+#endif
+}
+
+/*****************************************************************************/
+/**
+* This function set the HDMI_MODE in the BStatus register of the HDMI RX DDC
+* space.
+*
+* @param	InstancePtr is a pointer to the Hdcp1x core instance.
+* @param	Value is the truth-value.
+*
+* @return	None.
+*
+* @note		None.
+******************************************************************************/
+void XHdcp1x_RxSetHdmiMode(XHdcp1x *InstancePtr, u8 Value)
+{
+	/* Verify arguments */
+	Xil_AssertVoid(InstancePtr != NULL);
+
+#if defined(XPAR_XV_HDMIRX_NUM_INSTANCES) && (XPAR_XV_HDMIRX_NUM_INSTANCES > 0)
+	u32 BStatus;
+
+	/* Update the value of HDMI_MODE bit in the BStatus Register */
+	XHdcp1x_PortRead(InstancePtr, XHDCP1X_PORT_OFFSET_BSTATUS,
+		&BStatus, XHDCP1X_PORT_SIZE_BSTATUS);
+	if (Value == TRUE) {
+		BStatus |= XHDCP1X_PORT_BIT_BSTATUS_HDMI_MODE;
+	} else {
+		BStatus &= ~XHDCP1X_PORT_BIT_BSTATUS_HDMI_MODE;
+	}
+	XHdcp1x_PortWrite(InstancePtr, XHDCP1X_PORT_OFFSET_BSTATUS,
+		&BStatus, XHDCP1X_PORT_SIZE_BSTATUS);
+#else
+	UNUSED(Value);
 #endif
 }
 
@@ -1615,15 +1670,17 @@ static void XHdcp1x_RxAssembleKSVList(XHdcp1x *InstancePtr,
 		*NextStatePtr = XHDCP1X_STATE_UNAUTHENTICATED;
 	}
 	else {
-		u32 BInfo;
-		u32 BStatus;
+#if defined(XPAR_XV_HDMIRX_NUM_INSTANCES) && (XPAR_XV_HDMIRX_NUM_INSTANCES > 0)
 		u32 BCaps;
+#else
+		u32 BInfo;
 		u32 KSVPtrReset;
+#endif
+
+		u32 BStatus;
 		u8 Buf[5];
-		u8 KsvFifo[15];
 		u32 sha1value;
 		u32 ksvCount, ksvsToWrite;
-		u32 ksvCountThisTime;
 		u16 RepeaterInfo = 0;
 
 #if defined(XPAR_XV_HDMIRX_NUM_INSTANCES) && (XPAR_XV_HDMIRX_NUM_INSTANCES > 0)
@@ -1824,8 +1881,7 @@ static void XHdcp1x_RxAssembleKSVList(XHdcp1x *InstancePtr,
 *		destroys the original value.
 *
 ******************************************************************************/
-static void XHdcp1x_RxUpdateRi(XHdcp1x *InstancePtr,
-		XHdcp1x_StateType *NextStatePtr)
+static void XHdcp1x_RxUpdateRi(XHdcp1x *InstancePtr)
 {
 	char LogBuf[20];
 	u8 Buf[4];
@@ -1937,6 +1993,9 @@ static void XHdcp1x_RxCheckEncryptionChange(XHdcp1x *InstancePtr)
 static void XHdcp1x_RxReportLinkIntegrityFailure(XHdcp1x *InstancePtr,
 		XHdcp1x_StateType *NextStatePtr)
 {
+	/* NextStatePtr not being used */
+	UNUSED(NextStatePtr);
+
 #if defined(XHDCP1X_PORT_BIT_BSTATUS_LINK_FAILURE)
 	u8 Buf[XHDCP1X_PORT_SIZE_BSTATUS];
 
@@ -2011,6 +2070,9 @@ static void XHdcp1x_RxRunDisabledState(XHdcp1x *InstancePtr,
 static void XHdcp1x_RxRunUnauthenticatedState(XHdcp1x *InstancePtr,
 		XHdcp1x_EventType Event, XHdcp1x_StateType *NextStatePtr)
 {
+	/* InstancePtr not being used */
+	UNUSED(InstancePtr);
+
 	/* Case-wise process the kind of event called */
 	switch (Event) {
 		/* For authenticate */
@@ -2098,6 +2160,9 @@ static void XHdcp1x_RxRunComputationsState(XHdcp1x *InstancePtr,
 static void XHdcp1x_RxRunWaitForDownstreamState(XHdcp1x *InstancePtr,
 		XHdcp1x_EventType Event, XHdcp1x_StateType *NextStatePtr)
 {
+	/* InstancePtr not being used */
+	UNUSED(InstancePtr);
+
 	/* Case-wise process the kind of event called */
 	switch (Event) {
 		/* For authenticate */
@@ -2123,6 +2188,31 @@ static void XHdcp1x_RxRunWaitForDownstreamState(XHdcp1x *InstancePtr,
 		case XHDCP1X_EVENT_DOWNSTREAMREADY:
 			*NextStatePtr = XHDCP1X_STATE_ASSEMBLEKSVLIST;
 			break;
+
+		case XHDCP1X_EVENT_NULL:
+			/*Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_CHECK:
+			/*Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_ENABLE:
+			/* Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_PHYUP:
+			/* Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_POLL:
+			/* Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_UPDATERi:
+			/* Do nothing */
+			break;
+
 	}
 }
 
@@ -2142,6 +2232,9 @@ static void XHdcp1x_RxRunWaitForDownstreamState(XHdcp1x *InstancePtr,
 static void XHdcp1x_RxRunAssembleKsvListState(XHdcp1x *InstancePtr,
 		XHdcp1x_EventType Event, XHdcp1x_StateType *NextStatePtr)
 {
+	/* InstancePtr not being used */
+	UNUSED(InstancePtr);
+
 	/* Case-wise process the kind of event called */
 	switch (Event) {
 		/* For disable */
@@ -2152,6 +2245,42 @@ static void XHdcp1x_RxRunAssembleKsvListState(XHdcp1x *InstancePtr,
 		/* For physical layer down */
 		case XHDCP1X_EVENT_PHYDOWN:
 			*NextStatePtr = XHDCP1X_STATE_PHYDOWN;
+			break;
+
+		case XHDCP1X_EVENT_NULL:
+			/* Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_AUTHENTICATE:
+			/* Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_CHECK:
+			/* Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_ENABLE:
+			/* Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_PHYUP:
+			/* Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_POLL:
+			/* Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_UPDATERi:
+			/* Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_TIMEOUT:
+			/* Do nothing */
+			break;
+
+		case XHDCP1X_EVENT_DOWNSTREAMREADY:
+			/* Do nothing */
 			break;
 	}
 }
@@ -2197,7 +2326,7 @@ static void XHdcp1x_RxRunAuthenticatedState(XHdcp1x *InstancePtr,
 
 		/* For update Ri */
 		case XHDCP1X_EVENT_UPDATERi:
-			XHdcp1x_RxUpdateRi(InstancePtr, NextStatePtr);
+			XHdcp1x_RxUpdateRi(InstancePtr);
 			break;
 
 		/* In every 2 second priodically checks encryption status */
@@ -2276,6 +2405,9 @@ static void XHdcp1x_RxRunLinkIntegrityFailedState(XHdcp1x *InstancePtr,
 static void XHdcp1x_RxRunPhysicalLayerDownState(XHdcp1x *InstancePtr,
 		XHdcp1x_EventType Event, XHdcp1x_StateType *NextStatePtr)
 {
+	/* InstancePtr not being used */
+	UNUSED(InstancePtr);
+
 	/* Case-wise process the kind of event called */
 	switch (Event) {
 		/* For disable */
@@ -2599,6 +2731,7 @@ static const char *XHdcp1x_RxStateToString(XHdcp1x_StateType State)
 	return (String);
 }
 
+#if XHDCP1X_ADDITIONAL_DEBUG
 /*****************************************************************************/
 /**
 * This function converts from a event to a display string.
@@ -2663,4 +2796,6 @@ static const char *XHdcp1x_RxEventToString(XHdcp1x_EventType Event)
 
 	return (String);
 }
+#endif
+
 /** @} */

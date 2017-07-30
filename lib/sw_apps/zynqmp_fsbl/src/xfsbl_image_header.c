@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,7 +43,14 @@
 * Ver   Who  Date        Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00  kc   10/21/13 Initial release
-*
+* 2.0   bv   12/05/16 Made compliance to MISRAC 2012 guidelines
+*       vns  01/28/17 Added API for XFsbl_GetVectorLocation and
+*                     XFsbl_GetBlockSize
+*       bv   02/11/17 Added warmrestart support, based on which partition
+*                     header is validated.
+*       vns  02/17/17 If authentication is enabled whole image header
+*                     is been validated by copying to OCM.
+*                     Updated destination CPU for PMUFW.
 * </pre>
 *
 * @note
@@ -61,14 +68,14 @@
 /**************************** Type Definitions *******************************/
 
 /***************** Macros (Inline Functions) Definitions *********************/
-u32 XFsbl_GetPartitionOwner(XFsblPs_PartitionHeader * PartitionHeader)
+u32 XFsbl_GetPartitionOwner(const XFsblPs_PartitionHeader * PartitionHeader)
 {
         return PartitionHeader->PartitionAttributes &
                                 XIH_PH_ATTRB_PART_OWNER_MASK;
 
 }
 
-u32 XFsbl_IsRsaSignaturePresent(XFsblPs_PartitionHeader * PartitionHeader)
+u32 XFsbl_IsRsaSignaturePresent(const XFsblPs_PartitionHeader * PartitionHeader)
 {
         return  PartitionHeader->PartitionAttributes &
                                 XIH_PH_ATTRB_RSA_SIGNATURE_MASK;
@@ -80,29 +87,47 @@ u32 XFsbl_GetChecksumType(XFsblPs_PartitionHeader * PartitionHeader)
                                 XIH_PH_ATTRB_CHECKSUM_MASK;
 }
 
-u32 XFsbl_GetDestinationCpu(XFsblPs_PartitionHeader * PartitionHeader)
+u32 XFsbl_GetDestinationCpu(const XFsblPs_PartitionHeader * PartitionHeader)
 {
         return PartitionHeader->PartitionAttributes &
                                 XIH_PH_ATTRB_DEST_CPU_MASK;
 }
 
 
-u32 XFsbl_IsEncrypted(XFsblPs_PartitionHeader * PartitionHeader)
+u32 XFsbl_IsEncrypted(const XFsblPs_PartitionHeader * PartitionHeader)
 {
         return PartitionHeader->PartitionAttributes &
                                 XIH_PH_ATTRB_ENCRYPTION_MASK;
 }
 
-u32 XFsbl_GetDestinationDevice(XFsblPs_PartitionHeader * PartitionHeader)
+u32 XFsbl_GetDestinationDevice(const XFsblPs_PartitionHeader * PartitionHeader)
 {
         return PartitionHeader->PartitionAttributes &
                                 XIH_PH_ATTRB_DEST_DEVICE_MASK;
 }
 
-u32 XFsbl_GetA53ExecState(XFsblPs_PartitionHeader * PartitionHeader)
+u32 XFsbl_GetA53ExecState(const XFsblPs_PartitionHeader * PartitionHeader)
 {
         return PartitionHeader->PartitionAttributes &
                                 XIH_PH_ATTRB_A53_EXEC_ST_MASK;
+}
+
+u32 XFsbl_GetVectorLocation(const XFsblPs_PartitionHeader * PartitionHeader)
+{
+        return (PartitionHeader->PartitionAttributes &
+           XIH_PH_ATTRB_VEC_LOCATION_MASK);
+}
+
+u32 XFsbl_GetBlockSize(const XFsblPs_PartitionHeader * PartitionHeader)
+{
+	u32 Size = ((PartitionHeader->PartitionAttributes) &
+		XIH_PH_ATTR_BLOCK_SIZE_MASK) >> XIH_ATTRB_BLOCK_SIZE_SHIFT;
+
+	if (Size != 0x00U) {
+		Size = ((u32)2 << Size) * XFSBL_MUL_MEGABYTES;
+	}
+
+	return Size;
 }
 
 /************************** Function Prototypes ******************************/
@@ -110,12 +135,15 @@ static u32 XFsbl_ValidateImageHeaderTable(
 		XFsblPs_ImageHeaderTable * ImageHeaderTable);
 static u32 XFsbl_CheckValidMemoryAddress(u64 Address, u32 CpuId, u32 DevId);
 static void XFsbl_SetATFHandoffParameters(
-		XFsblPs_PartitionHeader *PartitionHeader, u32 EntryCount);
+		const XFsblPs_PartitionHeader *PartitionHeader, u32 EntryCount);
 
 /************************** Variable Definitions *****************************/
 /* Store this data structure at a fixed location for ATF to pick */
-XFsblPs_ATFHandoffParams ATFHandoffParams
+static XFsblPs_ATFHandoffParams ATFHandoffParams
 			__attribute__((section (".handoff_params")));
+#ifdef XFSBL_SECURE
+extern u8 *ImageHdr;
+#endif
 
 /****************************************************************************/
 /**
@@ -138,9 +166,9 @@ XFsblPs_ATFHandoffParams ATFHandoffParams
 *****************************************************************************/
 u32 XFsbl_ValidateChecksum(u32 Buffer[], u32 Length)
 {
-	u32 Status=XFSBL_SUCCESS;
+	u32 Status;
 	u32 Checksum=0U;
-	u32 Count=0U;
+	u32 Count;
 
 	/**
 	 * Length has to be atleast equal to 2,
@@ -176,6 +204,10 @@ u32 XFsbl_ValidateChecksum(u32 Buffer[], u32 Length)
 			Checksum, Buffer[Length-1U]);
 		Status =  XFSBL_FAILURE;
 	}
+	else
+	{
+		Status = XFSBL_SUCCESS;
+	}
 
 END:
 	return Status;
@@ -200,8 +232,8 @@ END:
 static u32 XFsbl_ValidateImageHeaderTable(
 		XFsblPs_ImageHeaderTable * ImageHeaderTable)
 {
-	u32 Status = XFSBL_SUCCESS;
-	u32 PartitionPresentDevice=0U;
+	u32 Status;
+	u32 PartitionPresentDevice;
 
 	/**
 	 * Check the check sum of the image header table
@@ -270,6 +302,8 @@ END:
  *
  * @param DeviceOps pointer deviceops structure which contains the
  * function pointer to flash read function
+ * 		 If it is NULL then image header will be copied from OCM buffer,
+ * 		 which has image header copied from flash device.
  *
  * @param FlashImageOffsetAddress base offset to the image in the flash
  *
@@ -280,47 +314,39 @@ END:
  * @note
  *****************************************************************************/
 u32 XFsbl_ReadImageHeader(XFsblPs_ImageHeader * ImageHeader,
-				XFsblPs_DeviceOps * DeviceOps,
+				const XFsblPs_DeviceOps * DeviceOps,
 				u32 FlashImageOffsetAddress,
-				u32 RunningCpu)
+				u32 RunningCpu, u32 ImageHeaderTableAddressOffset)
 {
-	u32 Status = XFSBL_SUCCESS;
-	u32 ImageHeaderTableAddressOffset=0U;
-	u32 PartitionHeaderAddress=0U;
-	u32 PartitionIndex=0U;
-	XFsblPs_PartitionHeader *CurrPartitionHdr;
+	u32 Status;
+	u32 PartitionHeaderAddress;
+	u32 PartitionIndex;
+	const XFsblPs_PartitionHeader *CurrPartitionHdr;
 	u32 EntryCount = 0;
 	u32 DestnCPU;
-
-	/**
-	 * Read the Image Header Table offset from
-	 * Boot Header
-	 */
-	Status = DeviceOps->DeviceCopy(FlashImageOffsetAddress
-	            + XIH_BH_IH_TABLE_OFFSET,
-		   (PTRSIZE ) &ImageHeaderTableAddressOffset, XIH_FIELD_LEN);
-	if (XFSBL_SUCCESS != Status)
-	{
-		XFsbl_Printf(DEBUG_GENERAL,"Device Copy Failed \n\r");
-		goto END;
-	}
-	XFsbl_Printf(DEBUG_INFO,"Image Header Table Offset 0x%0lx \n\r",
-			ImageHeaderTableAddressOffset);
+	u32 GetDstnCpu;
 
 	/**
 	 * Read the Image header table of 64 bytes
 	 * and update the image header table structure
 	 */
-	Status = DeviceOps->DeviceCopy(FlashImageOffsetAddress +
-				    ImageHeaderTableAddressOffset,
-				    (PTRSIZE ) &(ImageHeader->ImageHeaderTable),
-				    XIH_IHT_LEN);
-	if (XFSBL_SUCCESS != Status)
-	{
-		XFsbl_Printf(DEBUG_GENERAL,"Device Copy Failed \n\r");
-		goto END;
+	if (DeviceOps != NULL) {
+		Status = DeviceOps->DeviceCopy(FlashImageOffsetAddress +
+			ImageHeaderTableAddressOffset,
+			(PTRSIZE ) &(ImageHeader->ImageHeaderTable),
+			XIH_IHT_LEN);
+		if (XFSBL_SUCCESS != Status)
+		{
+			XFsbl_Printf(DEBUG_GENERAL,"Device Copy Failed \n\r");
+			goto END;
+		}
 	}
-
+	else {
+#ifdef XFSBL_SECURE
+		XFsbl_MemCpy((u8 *)&(ImageHeader->ImageHeaderTable),
+				ImageHdr,   XIH_IHT_LEN);
+#endif
+	}
 
 	/**
 	 * Check the validity of Image Header Table
@@ -355,30 +381,29 @@ u32 XFsbl_ReadImageHeader(XFsblPs_ImageHeader * ImageHeader,
 		 * Read the Image header table of 64 bytes
 		 * and update the image header table structure
 		 */
-		Status = DeviceOps->DeviceCopy(
-	                FlashImageOffsetAddress + PartitionHeaderAddress,
-		(PTRSIZE ) &(ImageHeader->PartitionHeader[PartitionIndex]),
-			XIH_PH_LEN);
-		if (XFSBL_SUCCESS != Status)
-		{
-			XFsbl_Printf(DEBUG_GENERAL,"Device Copy Failed \n\r");
-			goto END;
+		if (DeviceOps != NULL) {
+			Status = DeviceOps->DeviceCopy(
+				FlashImageOffsetAddress +
+				PartitionHeaderAddress,
+			(PTRSIZE)&(ImageHeader->PartitionHeader[PartitionIndex]),
+					XIH_PH_LEN);
+			if (XFSBL_SUCCESS != Status)
+			{
+				XFsbl_Printf(DEBUG_GENERAL,
+				"Device Copy Failed \n\r");
+				goto END;
+			}
 		}
-
-#if 0
-		/**
-		 * Check the validity of Image Header Table
-		 */
-		Status = XFsbl_ValidatePartitionHeader(
-				&ImageHeader->PartitionHeader[PartitionIndex]);
-		if (XFSBL_SUCCESS != Status)
-		{
-			XFsbl_Printf(DEBUG_GENERAL,"Partition %x Header "
-				"Validation failed \n\r", PartitionIndex);
-			goto END;
-		}
+		else {
+			PartitionHeaderAddress =
+			PartitionHeaderAddress - ImageHeaderTableAddressOffset;
+#ifdef XFSBL_SECURE
+			XFsbl_MemCpy(
+			&(ImageHeader->PartitionHeader[PartitionIndex]),
+			(u8 *)(UINTPTR)(ImageHdr + PartitionHeaderAddress),
+						XIH_PH_LEN);
 #endif
-
+		}
 		/**
 		 * Assumption: Next partition corresponds to ATF
 		 * The first partition of an application will have a non zero
@@ -390,15 +415,19 @@ u32 XFsbl_ReadImageHeader(XFsblPs_ImageHeader * ImageHeader,
 
 		CurrPartitionHdr = &ImageHeader->PartitionHeader[PartitionIndex];
 
-		DestnCPU = XFsbl_GetDestinationCpu(CurrPartitionHdr);
+		GetDstnCpu = XFsbl_GetDestinationCpu(CurrPartitionHdr);
 
 		/* if destination cpu is not present, it means it is for same cpu */
-		if (DestnCPU == XIH_PH_ATTRB_DEST_CPU_NONE)
+		if (GetDstnCpu == XIH_PH_ATTRB_DEST_CPU_NONE)
 		{
 			DestnCPU = RunningCpu;
 		}
+		else
+		{
+			DestnCPU = GetDstnCpu;
+		}
 
-		if ((PartitionIndex > 1) && (EntryCount < XFSBL_MAX_ENTRIES_FOR_ATF) &&
+		if ((PartitionIndex > 1U) && (EntryCount < XFSBL_MAX_ENTRIES_FOR_ATF) &&
 				(CurrPartitionHdr->DestinationExecutionAddress != 0U) &&
 				(((DestnCPU >= XIH_PH_ATTRB_DEST_CPU_A53_0) &&
 						(DestnCPU <= XIH_PH_ATTRB_DEST_CPU_A53_3))))
@@ -433,14 +462,15 @@ END:
 
 static u32 XFsbl_CheckValidMemoryAddress(u64 Address, u32 CpuId, u32 DevId)
 {
-	u32 Status = XFSBL_SUCCESS;
+	u32 Status;
 
 	/* Check if Address is in the range of PMU RAM for PMU FW */
-	if (DevId == XIH_PH_ATTRB_DEST_DEVICE_PMU)
+	if (CpuId == XIH_PH_ATTRB_DEST_CPU_PMU)
 	{
 		if ((Address >= XFSBL_PMU_RAM_START_ADDRESS) &&
 			(Address < XFSBL_PMU_RAM_END_ADDRESS) )
 		{
+			Status = XFSBL_SUCCESS;
 			goto END;
 		}
 	}
@@ -455,6 +485,7 @@ static u32 XFsbl_CheckValidMemoryAddress(u64 Address, u32 CpuId, u32 DevId)
 						(Address < (XFSBL_R5_BTCM_START_ADDRESS +
 								XFSBL_R5_TCM_BANK_LENGTH))))
 		{
+			Status = XFSBL_SUCCESS;
 			goto END;
 		}
 	}
@@ -464,8 +495,9 @@ static u32 XFsbl_CheckValidMemoryAddress(u64 Address, u32 CpuId, u32 DevId)
 	{
 		if ((Address >= XFSBL_R5_TCM_START_ADDRESS) &&
 				(Address < (XFSBL_R5_TCM_START_ADDRESS +
-						XFSBL_R5_TCM_BANK_LENGTH*4U)))
+						(XFSBL_R5_TCM_BANK_LENGTH*4U))))
 		{
+			Status = XFSBL_SUCCESS;
 			goto END;
 		}
 	}
@@ -477,6 +509,7 @@ static u32 XFsbl_CheckValidMemoryAddress(u64 Address, u32 CpuId, u32 DevId)
 	if ((Address >= XFSBL_PS_DDR_START_ADDRESS) &&
 	     (Address <= XFSBL_PS_DDR_END_ADDRESS) )
 	{
+		Status = XFSBL_SUCCESS;
 		goto END;
 	}
 
@@ -485,6 +518,10 @@ static u32 XFsbl_CheckValidMemoryAddress(u64 Address, u32 CpuId, u32 DevId)
 	if ((Address >= XFSBL_PS_HI_DDR_START_ADDRESS) &&
 	     (Address <= XFSBL_PS_HI_DDR_END_ADDRESS) )
 	{
+<<<<<<< HEAD
+=======
+		Status = XFSBL_SUCCESS;
+>>>>>>> upstream/master
 		goto END;
 	}
 #endif
@@ -497,6 +534,7 @@ static u32 XFsbl_CheckValidMemoryAddress(u64 Address, u32 CpuId, u32 DevId)
 	if ((Address >= XFSBL_PL_DDR_START_ADDRESS) &&
 	     (Address < XFSBL_PL_DDR_END_ADDRESS) )
 	{
+		Status = XFSBL_SUCCESS;
 		goto END;
 	}
 #endif
@@ -508,6 +546,7 @@ static u32 XFsbl_CheckValidMemoryAddress(u64 Address, u32 CpuId, u32 DevId)
         if ((Address >= XFSBL_OCM_START_ADDRESS) &&
              (Address < XFSBL_OCM_END_ADDRESS) )
         {
+			Status = XFSBL_SUCCESS;
                 goto END;
         }
 #endif
@@ -520,6 +559,7 @@ static u32 XFsbl_CheckValidMemoryAddress(u64 Address, u32 CpuId, u32 DevId)
         if ((DevId == XIH_PH_ATTRB_DEST_DEVICE_PL) &&
 			(Address == XFSBL_DUMMY_PL_ADDR))
         {
+        Status = XFSBL_SUCCESS;
 		goto END;
         }
 
@@ -548,12 +588,12 @@ END:
 *
 *****************************************************************************/
 u32 XFsbl_ValidatePartitionHeader(
-	XFsblPs_PartitionHeader * PartitionHeader, u32 RunningCpu)
+	XFsblPs_PartitionHeader * PartitionHeader, u32 RunningCpu, u32 ResetType)
 {
-	u32 Status = XFSBL_SUCCESS;
-	u32 DestinationCpu=0U;
-	u32 DestinationDevice=0;
-	s32 IsEncrypted=FALSE, IsAuthenticated=FALSE;
+	u32 Status;
+	u32 DestinationCpu;
+	u32 DestinationDevice;
+	u32 IsEncrypted, IsAuthenticated;
 
 
 	/**
@@ -564,15 +604,38 @@ u32 XFsbl_ValidatePartitionHeader(
 	{
 		IsEncrypted = TRUE;
 	}
+	else
+	{
+		IsEncrypted = FALSE;
+	}
 
 	if (XFsbl_IsRsaSignaturePresent(PartitionHeader) ==
 			XIH_PH_ATTRB_RSA_SIGNATURE )
 	{
 		IsAuthenticated = TRUE;
 	}
+	else
+	{
+		IsAuthenticated = FALSE;
+	}
 
 
 	DestinationCpu = XFsbl_GetDestinationCpu(PartitionHeader);
+		if(ResetType == XFSBL_APU_ONLY_RESET){
+		if((DestinationCpu <= XIH_PH_ATTRB_DEST_CPU_A53_3) && (DestinationCpu >= XIH_PH_ATTRB_DEST_CPU_A53_0)){
+			/* Do Nothing*/
+		}
+		else
+		{
+			Status = XFSBL_SUCCESS_NOT_PARTITION_OWNER;
+			goto END;
+		}
+
+	}
+	else
+	{
+		/*Do Nothing*/
+	}
 
 	/* if destination cpu is not present, it means it is for same cpu */
 	if (DestinationCpu == XIH_PH_ATTRB_DEST_CPU_NONE)
@@ -580,7 +643,6 @@ u32 XFsbl_ValidatePartitionHeader(
 		DestinationCpu = RunningCpu;
 	}
 
-	DestinationDevice = XFsbl_GetDestinationDevice(PartitionHeader);
 	/**
 	 * Partition fields Validation
 	 */
@@ -690,6 +752,7 @@ u32 XFsbl_ValidatePartitionHeader(
 	 * Address not in TCM, OCM, DDR, PL
 	 *  No DDR and address in DDR
 	 */
+	DestinationDevice = XFsbl_GetDestinationDevice(PartitionHeader);
 	Status = XFsbl_CheckValidMemoryAddress(
                         PartitionHeader->DestinationLoadAddress,
                         DestinationCpu, DestinationDevice);
@@ -741,7 +804,7 @@ u32 XFsbl_ValidatePartitionHeader(
 	/**
 	 * check for invalid cpu
 	 */
-	if (DestinationCpu > XIH_PH_ATTRB_DEST_CPU_R5_L)
+	if (DestinationCpu > XIH_PH_ATTRB_DEST_CPU_PMU)
 	{
 		Status = XFSBL_ERROR_INVALID_CPU_TYPE;
 		XFsbl_Printf(DEBUG_GENERAL,
@@ -820,10 +883,10 @@ END:
 *
 *****************************************************************************/
 static void XFsbl_SetATFHandoffParameters(
-		XFsblPs_PartitionHeader *PartitionHeader, u32 EntryCount)
+		const XFsblPs_PartitionHeader *PartitionHeader, u32 EntryCount)
 {
 	u32 PartitionAttributes;
-	u64 PartitionFlags;
+	u32 PartitionFlags;
 
 	PartitionAttributes = PartitionHeader->PartitionAttributes;
 
@@ -855,7 +918,7 @@ static void XFsbl_SetATFHandoffParameters(
 	}
 
 	/* Insert magic string */
-	if (EntryCount == 0)
+	if (EntryCount == 0U)
 	{
 		ATFHandoffParams.MagicValue[0] = 'X';
 		ATFHandoffParams.MagicValue[1] = 'L';
@@ -863,7 +926,7 @@ static void XFsbl_SetATFHandoffParameters(
 		ATFHandoffParams.MagicValue[3] = 'X';
 	}
 
-	ATFHandoffParams.NumEntries = EntryCount + 1;
+	ATFHandoffParams.NumEntries = EntryCount + 1U;
 
 	ATFHandoffParams.Entry[EntryCount].EntryPoint =
 			PartitionHeader->DestinationExecutionAddress;

@@ -9,7 +9,11 @@ var NAVTREE =
       ] ]
     ] ],
     [ "APIs", "globals.html", [
+<<<<<<< HEAD
       [ "All", "globals.html", null ],
+=======
+      [ "All", "globals.html", "globals_dup" ],
+>>>>>>> upstream/master
       [ "Functions", "globals_func.html", null ],
       [ "Variables", "globals_vars.html", null ],
       [ "Typedefs", "globals_type.html", null ],
@@ -17,13 +21,43 @@ var NAVTREE =
       [ "Enumerator", "globals_eval.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xhdmi_menu.c", "example.html#ex1", null ],
+      [ "xhdmi_menu.h", "example.html#ex2", null ],
+      [ "xhdmi_hdcp_keys.c", "example.html#ex3", null ],
+      [ "xhdmi_hdcp_keys.h", "example.html#ex4", null ],
+      [ "xhdmi_example.c", "example.html#ex5", null ],
+      [ "xhdmi_example_zynq.c", "example.html#ex6", null ],
+      [ "xhdmi_example_zynq_us.c", "example.html#ex7", null ],
+      [ "xhdcp.c", "example.html#ex8", null ],
+      [ "xhdcp.h", "example.html#ex9", null ],
+      [ "video_prbs_genchk_drv.c", "example.html#ex10", null ],
+      [ "video_prbs_genchk_drv.h", "example.html#ex11", null ],
+      [ "si5324drv.c", "example.html#ex12", null ],
+      [ "si5324drv.h", "example.html#ex13", null ],
+      [ "audiogen_drv.c", "example.html#ex14", null ],
+      [ "audiogen_drv.h", "example.html#ex15", null ],
+      [ "audio_prbs_genchk_drv.c", "example.html#ex16", null ],
+      [ "audio_prbs_genchk_drv.h", "example.html#ex17", [
+        [ "NOTES", "example.html#IMPORTANT", null ]
+      ] ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 
 var NAVTREEINDEX =
 [
+<<<<<<< HEAD
 "annotated.html"
+=======
+"annotated.html",
+"xv__hdmitxss_8c.html#a7236081f867771f94ce80eb933e013be"
+>>>>>>> upstream/master
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

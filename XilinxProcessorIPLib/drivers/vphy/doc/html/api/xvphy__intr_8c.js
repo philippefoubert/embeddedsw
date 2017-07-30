@@ -1,5 +1,9 @@
 var xvphy__intr_8c =
 [
+<<<<<<< HEAD
+=======
+    [ "XVphy_CfgErrIntr", "xvphy__intr_8c.html#a047421b414d103faf15418f136e1d107", null ],
+>>>>>>> upstream/master
     [ "XVphy_InterruptHandler", "xvphy__intr_8c.html#a75e14bbc2dcc8eeeaaed26371ae1b34c", null ],
     [ "XVphy_IntrDisable", "xvphy__intr_8c.html#a854725cac309c3302a25dbc29927c9f8", null ],
     [ "XVphy_IntrEnable", "xvphy__intr_8c.html#ab0c6c186dbb5142d23a6a3b76148c37b", null ],

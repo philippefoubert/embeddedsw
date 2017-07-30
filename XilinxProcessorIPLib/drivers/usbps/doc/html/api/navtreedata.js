@@ -14,14 +14,31 @@ var NAVTREE =
       [ "Variables", "globals_vars.html", null ],
       [ "Macros", "globals_defs.html", "globals_defs" ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xusbps_ch9.c", "example.html#ex1", null ],
+      [ "xusbps_ch9.h", "example.html#ex2", null ],
+      [ "xusbps_ch9_storage.c", "example.html#ex3", null ],
+      [ "xusbps_ch9_storage.h", "example.html#ex4", null ],
+      [ "xusbps_class_storage.c", "example.html#ex5", null ],
+      [ "xusbps_class_storage.h", "example.html#ex6", null ],
+      [ "xusbps_intr_example.c", "example.html#ex7", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 
 var NAVTREEINDEX =
 [
 "annotated.html",
+<<<<<<< HEAD
 "group__usbps__v2__2.html#gae47d112e0a25161d88dfbb8e34feeb9e"
+=======
+"group__usbps__v2__2.html#gadda6870b9ef5c1d4e7b345433c44bac2"
+>>>>>>> upstream/master
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

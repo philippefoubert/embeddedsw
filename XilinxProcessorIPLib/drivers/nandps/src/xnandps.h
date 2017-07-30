@@ -172,6 +172,10 @@
 * 2.2   sb     01/31/2015  Use the address cycles defined in onfi parameter
 *			   page than hardcoding this value to 5 for read and
 *			   write operations.
+*       ms     03/17/17    Added readme.txt file in examples folder for doxygen
+*                          generation.
+*       ms     04/10/17    Modified Comment lines in examples to follow doxygen
+*                          rules.
 * </pre>
 *
 ******************************************************************************/

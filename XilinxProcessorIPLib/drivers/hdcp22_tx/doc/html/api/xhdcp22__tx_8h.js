@@ -86,6 +86,10 @@ var xhdcp22__tx_8h =
     [ "XHdcp22Tx_Info", "group__hdcp22__tx__v2__0.html#ga650f737e06ddfa38fa76d28d758039df", null ],
     [ "XHdcp22Tx_IsAuthenticated", "group__hdcp22__tx__v2__0.html#gac378a52e489c09e7cd3108f8ad0dc079", null ],
     [ "XHdcp22Tx_IsDeviceRevoked", "group__hdcp22__tx__v2__0.html#gac4ce58d66df32403a9f1963048cdbdd3", null ],
+<<<<<<< HEAD
+=======
+    [ "XHdcp22Tx_IsDwnstrmCapable", "group__hdcp22__tx__v2__0.html#ga444e0ba5255b0c52f6cde5d406f4e7ae", null ],
+>>>>>>> upstream/master
     [ "XHdcp22Tx_IsEnabled", "group__hdcp22__tx__v2__0.html#ga1581bf2eb6845e55ea14ee3a60eb30b0", null ],
     [ "XHdcp22Tx_IsEncryptionEnabled", "group__hdcp22__tx__v2__0.html#ga7ca5567441ff4e74a0e386e22ecffb75", null ],
     [ "XHdcp22Tx_IsInProgress", "group__hdcp22__tx__v2__0.html#ga624b718cbf5906dac17f554bdfb438e1", null ],
@@ -98,7 +102,11 @@ var xhdcp22__tx_8h =
     [ "XHdcp22Tx_LogReset", "group__hdcp22__tx__v2__0.html#gab170f225bd4e854a9eab9f6e9e99d75f", null ],
     [ "XHdcp22Tx_LogWr", "group__hdcp22__tx__v2__0.html#ga13dade65f38f5ab12c831b69e28cb8d3", null ],
     [ "XHdcp22Tx_LookupConfig", "group__hdcp22__tx__v2__0.html#ga368300c8e509a68bad223fb1441cf436", null ],
+<<<<<<< HEAD
     [ "XHdcp22Tx_Poll", "group__hdcp22__tx__v2__0.html#ga6bd30ae411f82748ad4c541527ccbdbd", null ],
+=======
+    [ "XHdcp22Tx_Poll", "group__hdcp22__tx__v2__0.html#ga3b241b90bc8c251efc52890691a4d31e", null ],
+>>>>>>> upstream/master
     [ "XHdcp22Tx_Reset", "group__hdcp22__tx__v2__0.html#ga6db0e5cde70480f6457e37d3eea52567", null ],
     [ "XHdcp22Tx_SetCallback", "group__hdcp22__tx__v2__0.html#ga9cb19e51fda89c401121edafbda166da", null ],
     [ "XHdcp22Tx_SetContentStreamType", "group__hdcp22__tx__v2__0.html#ga7ebdf8bc4dec78be947ea2328f68a0e5", null ],

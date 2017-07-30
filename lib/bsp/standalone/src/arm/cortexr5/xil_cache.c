@@ -42,6 +42,7 @@
 * Ver    Who Date     Changes
 * ----- ---- -------- -----------------------------------------------
 * 5.00 	pkp  02/20/14 First release
+* 6.2   mus  01/27/17 Updated to support IAR compiler
 * </pre>
 *
 ******************************************************************************/
@@ -60,16 +61,16 @@
 
 #define IRQ_FIQ_MASK 0xC0	/* Mask IRQ and FIQ interrupts in cpsr */
 
-
+#if defined (__GNUC__)
 extern s32  _stack_end;
 extern s32  __undef_stack;
-
+#endif
 /****************************************************************************/
 /************************** Function Prototypes ******************************/
 
-/****************************************************************************
-*
-* Enable the Data cache.
+/****************************************************************************/
+/**
+* @brief    Enable the Data cache.
 *
 * @param	None.
 *
@@ -83,8 +84,11 @@ void Xil_DCacheEnable(void)
 	register u32 CtrlReg;
 
 	/* enable caches only if they are disabled */
+#if defined (__GNUC__)
 	CtrlReg = mfcp(XREG_CP15_SYS_CONTROL);
-
+#elif defined (__ICCARM__)
+	 mfcp(XREG_CP15_SYS_CONTROL,CtrlReg);
+#endif
 	if ((CtrlReg & XREG_CP15_CONTROL_C_BIT)==0x00000000U) {
 		/* invalidate the Data cache */
 		Xil_DCacheInvalidate();
@@ -96,9 +100,9 @@ void Xil_DCacheEnable(void)
 	}
 }
 
-/****************************************************************************
-*
-* Disable the Data cache.
+/****************************************************************************/
+/**
+* @brief    Disable the Data cache.
 *
 * @param	None.
 *
@@ -115,22 +119,24 @@ void Xil_DCacheDisable(void)
 	Xil_DCacheFlush();
 
 	/* disable the Data cache */
+#if defined (__GNUC__)
 	CtrlReg = mfcp(XREG_CP15_SYS_CONTROL);
+#elif defined (__ICCARM__)
+	 mfcp(XREG_CP15_SYS_CONTROL,CtrlReg);
+#endif
 
 	CtrlReg &= ~(XREG_CP15_CONTROL_C_BIT);
 
 	mtcp(XREG_CP15_SYS_CONTROL, CtrlReg);
 }
 
-/****************************************************************************
-*
-* Invalidate the entire Data cache.
+/****************************************************************************/
+/**
+* @brief    Invalidate the entire Data cache.
 *
 * @param	None.
 *
 * @return	None.
-*
-* @note		None.
 *
 ****************************************************************************/
 void Xil_DCacheInvalidate(void)
@@ -141,14 +147,14 @@ void Xil_DCacheInvalidate(void)
 	currmask = mfcpsr();
 	mtcpsr(currmask | IRQ_FIQ_MASK);
 
-
+#if defined (__GNUC__)
 	stack_end = (u32 )&_stack_end;
 	stack_start = (u32 )&__undef_stack;
 	stack_size = stack_start-stack_end;
 
 	/* Flush stack memory to save return address */
 	Xil_DCacheFlushRange(stack_end, stack_size);
-
+#endif
 	mtcp(XREG_CP15_CACHE_SIZE_SEL, 0);
 
 	/*invalidate all D cache*/
@@ -157,15 +163,16 @@ void Xil_DCacheInvalidate(void)
 	mtcpsr(currmask);
 }
 
-/****************************************************************************
+/****************************************************************************/
+/**
+* @brief    Invalidate a Data cache line. If the byte specified by the
+*           address (adr) is cached by the data cache, the cacheline
+*           containing that byte is invalidated.If the cacheline is modified
+* 	        (dirty), the modified contents are lost and are NOT written
+*           to system memory before the line is invalidated.
 *
-* Invalidate a Data cache line. If the byte specified by the address (adr)
-* is cached by the Data cache, the cacheline containing that byte is
-* invalidated.	If the cacheline is modified (dirty), the modified contents
-* are lost and are NOT written to system memory before the line is
-* invalidated.
 *
-* @param	Address to be flushed.
+* @param	adr: 32bit address of the data to be flushed.
 *
 * @return	None.
 *
@@ -188,20 +195,19 @@ void Xil_DCacheInvalidateLine(INTPTR adr)
 	mtcpsr(currmask);
 }
 
-/****************************************************************************
+/****************************************************************************/
+/**
+* @brief    Invalidate the Data cache for the given address range.
+*           If the bytes specified by the address (adr) are cached by the
+*           Data cache,the cacheline containing that byte is invalidated.
+*           If the cacheline is modified (dirty), the modified contents are
+*           lost and are NOT written to system memory before the line is
+*           invalidated.
 *
-* Invalidate the Data cache for the given address range.
-* If the bytes specified by the address (adr) are cached by the Data cache,
-* the cacheline containing that byte is invalidated.	If the cacheline
-* is modified (dirty), the modified contents are lost and are NOT
-* written to system memory before the line is invalidated.
-*
-* @param	Start address of range to be invalidated.
-* @param	Length of range to be invalidated in bytes.
+* @param	adr: 32bit start address of the range to be invalidated.
+* @param	len: Length of range to be invalidated in bytes.
 *
 * @return	None.
-*
-* @note		None.
 *
 ****************************************************************************/
 void Xil_DCacheInvalidateRange(INTPTR adr, u32 len)
@@ -245,15 +251,13 @@ void Xil_DCacheInvalidateRange(INTPTR adr, u32 len)
 	mtcpsr(currmask);
 }
 
-/****************************************************************************
-*
-* Flush the entire Data cache.
+/****************************************************************************/
+/**
+* @brief    Flush the entire Data cache.
 *
 * @param	None.
 *
 * @return	None.
-*
-* @note		None.
 *
 ****************************************************************************/
 void Xil_DCacheFlush(void)
@@ -269,8 +273,11 @@ void Xil_DCacheFlush(void)
 	/* Select cache level 0 and D cache in CSSR */
 	mtcp(XREG_CP15_CACHE_SIZE_SEL, 0);
 
+#if defined (__GNUC__)
 	CsidReg = mfcp(XREG_CP15_CACHE_SIZE_ID);
-
+#elif defined (__ICCARM__)
+	 mfcp(XREG_CP15_CACHE_SIZE_ID,CsidReg);
+#endif
 	/* Determine Cache Size */
 
 	CacheSize = (CsidReg >> 13U) & 0x000001FFU;
@@ -310,15 +317,15 @@ void Xil_DCacheFlush(void)
 	mtcpsr(currmask);
 }
 
-/****************************************************************************
+/****************************************************************************/
+/**
+* @brief   Flush a Data cache line. If the byte specified by the address (adr)
+*          is cached by the Data cache, the cacheline containing that byte is
+*          invalidated.	If the cacheline is modified (dirty), the entire
+*          contents of the cacheline are written to system memory before the
+*          line is invalidated.
 *
-* Flush a Data cache line. If the byte specified by the address (adr)
-* is cached by the Data cache, the cacheline containing that byte is
-* invalidated.	If the cacheline is modified (dirty), the entire
-* contents of the cacheline are written to system memory before the
-* line is invalidated.
-*
-* @param	Address to be flushed.
+* @param   adr: 32bit address of the data to be flushed.
 *
 * @return	None.
 *
@@ -341,19 +348,18 @@ void Xil_DCacheFlushLine(INTPTR adr)
 	mtcpsr(currmask);
 }
 
-/****************************************************************************
-* Flush the Data cache for the given address range.
-* If the bytes specified by the address (adr) are cached by the Data cache,
-* the cacheline containing that byte is invalidated.	If the cacheline
-* is modified (dirty), the written to system memory first before the
-* before the line is invalidated.
+/****************************************************************************/
+/**
+* @brief    Flush the Data cache for the given address range.
+*           If the bytes specified by the address (adr) are cached by the
+*           Data cache, the cacheline containing those bytes is invalidated.If
+*           the cacheline is modified (dirty), the written to system memory
+*           before the lines are invalidated.
 *
-* @param	Start address of range to be flushed.
-* @param	Length of range to be flushed in bytes.
+* @param	adr: 32bit start address of the range to be flushed.
+* @param	len: Length of the range to be flushed in bytes
 *
 * @return	None.
-*
-* @note		None.
 *
 ****************************************************************************/
 void Xil_DCacheFlushRange(INTPTR adr, u32 len)
@@ -383,15 +389,15 @@ void Xil_DCacheFlushRange(INTPTR adr, u32 len)
 	dsb();
 	mtcpsr(currmask);
 }
-/****************************************************************************
+/****************************************************************************/
+/**
+* @brief    Store a Data cache line. If the byte specified by the address
+*           (adr) is cached by the Data cache and the cacheline is modified
+*           (dirty), the entire contents of the cacheline are written to
+*           system memory.After the store completes, the cacheline is marked
+*           as unmodified (not dirty).
 *
-* Store a Data cache line. If the byte specified by the address (adr)
-* is cached by the Data cache and the cacheline is modified (dirty),
-* the entire contents of the cacheline are written to system memory.
-* After the store completes, the cacheline is marked as unmodified
-* (not dirty).
-*
-* @param	Address to be stored.
+* @param	adr: 32bit address of the data to be stored
 *
 * @return	None.
 *
@@ -415,15 +421,13 @@ void Xil_DCacheStoreLine(INTPTR adr)
 	mtcpsr(currmask);
 }
 
-/****************************************************************************
-*
-* Enable the instruction cache.
+/****************************************************************************/
+/**
+* @brief    Enable the instruction cache.
 *
 * @param	None.
 *
 * @return	None.
-*
-* @note		None.
 *
 ****************************************************************************/
 void Xil_ICacheEnable(void)
@@ -431,9 +435,11 @@ void Xil_ICacheEnable(void)
 	register u32 CtrlReg;
 
 	/* enable caches only if they are disabled */
-
+#if defined (__GNUC__)
 	CtrlReg = mfcp(XREG_CP15_SYS_CONTROL);
-
+#elif defined (__ICCARM__)
+	mfcp(XREG_CP15_SYS_CONTROL, CtrlReg);
+#endif
 	if ((CtrlReg & XREG_CP15_CONTROL_I_BIT)==0x00000000U) {
 		/* invalidate the instruction cache */
 		mtcp(XREG_CP15_INVAL_IC_POU, 0);
@@ -445,15 +451,13 @@ void Xil_ICacheEnable(void)
 	}
 }
 
-/****************************************************************************
-*
-* Disable the instruction cache.
+/****************************************************************************/
+/**
+* @brief    Disable the instruction cache.
 *
 * @param	None.
 *
 * @return	None.
-*
-* @note		None.
 *
 ****************************************************************************/
 void Xil_ICacheDisable(void)
@@ -466,23 +470,24 @@ void Xil_ICacheDisable(void)
 	mtcp(XREG_CP15_INVAL_IC_POU, 0);
 
 		/* disable the instruction cache */
-
+#if defined (__GNUC__)
 	CtrlReg = mfcp(XREG_CP15_SYS_CONTROL);
+#elif defined (__ICCARM__)
+	mfcp(XREG_CP15_SYS_CONTROL,CtrlReg);
+#endif
 
 	CtrlReg &= ~(XREG_CP15_CONTROL_I_BIT);
 
 	mtcp(XREG_CP15_SYS_CONTROL, CtrlReg);
 }
 
-/****************************************************************************
-*
-* Invalidate the entire instruction cache.
+/****************************************************************************/
+/**
+* @brief    Invalidate the entire instruction cache.
 *
 * @param	None.
 *
 * @return	None.
-*
-* @note		None.
 *
 ****************************************************************************/
 void Xil_ICacheInvalidate(void)
@@ -502,13 +507,13 @@ void Xil_ICacheInvalidate(void)
 	mtcpsr(currmask);
 }
 
-/****************************************************************************
+/****************************************************************************/
+/**
+* @brief    Invalidate an instruction cache line.If the instruction specified
+*           by the address is cached by the instruction cache, the
+*           cacheline containing that instruction is invalidated.
 *
-* Invalidate an instruction cache line.	If the instruction specified by the
-* parameter adr is cached by the instruction cache, the cacheline containing
-* that instruction is invalidated.
-*
-* @param	None.
+* @param	adr: 32bit address of the instruction to be invalidated.
 *
 * @return	None.
 *
@@ -530,20 +535,19 @@ void Xil_ICacheInvalidateLine(INTPTR adr)
 	mtcpsr(currmask);
 }
 
-/****************************************************************************
+/****************************************************************************/
+/**
+* @brief    Invalidate the instruction cache for the given address range.
+*           If the bytes specified by the address (adr) are cached by the
+*           Data cache, the cacheline containing that byte is invalidated.
+*           If the cachelineis modified (dirty), the modified contents are
+*           lost  and are NOT written to system memory before the line is
+*           invalidated.
 *
-* Invalidate the instruction cache for the given address range.
-* If the bytes specified by the address (adr) are cached by the Data cache,
-* the cacheline containing that byte is invalidated. If the cacheline
-* is modified (dirty), the modified contents are lost and are NOT
-* written to system memory before the line is invalidated.
-*
-* @param	Start address of range to be invalidated.
-* @param	Length of range to be invalidated in bytes.
+* @param	adr: 32bit start address of the range to be invalidated.
+* @param	len: Length of the range to be invalidated in bytes.
 *
 * @return	None.
-*
-* @note		None.
 *
 ****************************************************************************/
 void Xil_ICacheInvalidateRange(INTPTR adr, u32 len)

@@ -15,7 +15,16 @@ var NAVTREE =
       [ "Typedefs", "globals_type.html", null ],
       [ "Macros", "globals_defs.html", null ]
     ] ],
+<<<<<<< HEAD
     [ "File List", "files.html", "files" ]
+=======
+    [ "File List", "files.html", "files" ],
+    [ "Examples", "example.html", [
+      [ "xcanps_intr_example.c", "example.html#ex1", null ],
+      [ "xcanps_polled_example.c", "example.html#ex2", null ],
+      [ "xcanps_watermark_intr_example.c", "example.html#ex3", null ]
+    ] ]
+>>>>>>> upstream/master
   ] ]
 ];
 

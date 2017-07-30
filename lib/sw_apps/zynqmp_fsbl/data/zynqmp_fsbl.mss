@@ -1,6 +1,6 @@
 #/******************************************************************************
 #*
-#* Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+#* Copyright (C) 2015 - 17 Xilinx, Inc.  All rights reserved.
 #*
 #* Permission is hereby granted, free of charge, to any person obtaining a copy
 #* of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,7 @@ BEGIN OS
  PARAMETER OS_NAME = standalone
  PARAMETER STDIN =  *
  PARAMETER STDOUT = *
+ PARAMETER ZYNQMP_FSBL_BSP = true
 END
 
 BEGIN LIBRARY
@@ -47,4 +48,8 @@ END
 
 BEGIN LIBRARY
  PARAMETER LIBRARY_NAME = xilsecure
+END
+
+BEGIN LIBRARY
+ PARAMETER LIBRARY_NAME = xilpm
 END

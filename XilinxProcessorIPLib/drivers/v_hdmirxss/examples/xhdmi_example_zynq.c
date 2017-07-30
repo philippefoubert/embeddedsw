@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2014 - 2016 Xilinx, Inc.  All rights reserved.
+* Copyright (C) 2014 - 2017 Xilinx, Inc.  All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@
 /*****************************************************************************/
 /**
 *
-* @file xhdmi_example.c
+* @file xhdmi_example_zynq.c
 *
 * This file demonstrates how to use Xilinx HDMI TX Subsystem, HDMI RX Subsystem
 * and Video PHY Controller drivers.
@@ -51,6 +51,21 @@
 *                       PRBS_validation will check both video & audio contents
 * 2.12  GM     07/10/16 Added onboard SI5324 Initialization API to enable
 *                       125Mhz as NI-DRU reference clock
+<<<<<<< HEAD
+=======
+* 2.13  YH     03/01/16 Fixed a system hang issue by clearing TxBusy flag when a
+*                            non-supportedvideo resolution is set
+*                            during enable colorbar API
+* 2.14  GM     23/01/17 Replace the Extraction Value of VPhy line rate with,
+*                            XVphy_GetLineRateHz Rate API return value.
+*                       Removed CPU Clock Frequence on XVphy_HdmiInitialize
+*                            Initialization.
+* 2.15  ms     04/10/17 Modified filename tag to include the file in doxygen
+*                       examples.
+* 2.16  mmo    05/05/17 Replace pre-processed interrupt vector ID with the
+*                            pre-processed canonical interrupt vector ID for
+*                            microblaze processor
+>>>>>>> upstream/master
 * </pre>
 *
 ******************************************************************************/
@@ -97,6 +112,8 @@
 #endif
 #include "xhdmi_hdcp_keys.h"
 #include "xhdcp.h"
+
+#define LOOPBACK_MODE_EN 0
 
 #if defined (__arm__)
 #define XPAR_CPU_CORE_CLOCK_FREQ_HZ 100000000
@@ -623,7 +640,11 @@ int OnBoardSi5324Init(void)
 			   (SI5324_CLKSRC_XTAL), (SI5324_XTAL_FREQ), (u32)125000000);
 
 if (Status != (SI5324_SUCCESS)) {
+<<<<<<< HEAD
 	print("Error programming On-Board SI5324\n\r");
+=======
+	xil_printf("Error programming On-Board SI5324\r\n");
+>>>>>>> upstream/master
 	return 0;
 }
 
@@ -905,12 +926,12 @@ void VphyHdmiRxReadyCallback(void *CallbackRef)
 											XVPHY_CHANNEL_ID_CH1);
 	if (!(RxPllType == XVPHY_PLL_TYPE_CPLL)) {
 		XV_HdmiRxSs_SetStream(&HdmiRxSs, VphyPtr->HdmiRxRefClkHz,
-				(VphyPtr->Quads[0].Plls[XVPHY_CHANNEL_ID_CMN0 -
-			     XVPHY_CHANNEL_ID_CH1].LineRateHz / 1000000));
+				(XVphy_GetLineRateHz(&Vphy, 0, XVPHY_CHANNEL_ID_CMN0)/1000000));
+
 	}
 	else {
 		XV_HdmiRxSs_SetStream(&HdmiRxSs, VphyPtr->HdmiRxRefClkHz,
-				(VphyPtr->Quads[0].Plls[0].LineRateHz/1000000));
+				(XVphy_GetLineRateHz(&Vphy, 0, XVPHY_CHANNEL_ID_CH1)/1000000));
 	}
 }
 #endif
@@ -1292,17 +1313,15 @@ void TxStreamUpCallback(void *CallbackRef)
 
   TxPllType = XVphy_GetPllType(&Vphy, 0, XVPHY_DIR_TX, XVPHY_CHANNEL_ID_CH1);
   if ((TxPllType == XVPHY_PLL_TYPE_CPLL)) {
-	  TxLineRate = Vphy.Quads[0].Plls[0].LineRateHz;
+	  TxLineRate = XVphy_GetLineRateHz(&Vphy, 0, XVPHY_CHANNEL_ID_CH1);
   }
   else if((TxPllType == XVPHY_PLL_TYPE_QPLL) ||
 	  (TxPllType == XVPHY_PLL_TYPE_QPLL0) ||
 	  (TxPllType == XVPHY_PLL_TYPE_PLL0)) {
-	  TxLineRate = Vphy.Quads[0].Plls[XVPHY_CHANNEL_ID_CMN0 -
-		  XVPHY_CHANNEL_ID_CH1].LineRateHz;
+	  TxLineRate = XVphy_GetLineRateHz(&Vphy, 0, XVPHY_CHANNEL_ID_CMN0);
   }
   else {
-	  TxLineRate = Vphy.Quads[0].Plls[XVPHY_CHANNEL_ID_CMN1 -
-		  XVPHY_CHANNEL_ID_CH1].LineRateHz;
+	  TxLineRate = XVphy_GetLineRateHz(&Vphy, 0, XVPHY_CHANNEL_ID_CMN1);
   }
 
   i2c_dp159(&Vphy, 0, TxLineRate);
@@ -1763,6 +1782,7 @@ void EnableColorBar(XVphy                *VphyPtr,
       if (Result == (XST_FAILURE)) {
           xil_printf("Unable to set requested TX video resolution.\n\r");
           xil_printf("Returning to previously TX video resolution.\n\r");
+		  TxBusy = (FALSE);
       }
 
       /* Disable RX clock forwarding */
@@ -1897,7 +1917,7 @@ int main()
 #if XPAR_XHDCP_NUM_INSTANCES
     XV_HdmiTxSs_HdcpSetKey(&HdmiTxSs, XV_HDMITXSS_KEY_HDCP14, Hdcp14KeyA);
     XV_HdmiRxSs_HdcpSetKey(&HdmiRxSs, XV_HDMIRXSS_KEY_HDCP14, Hdcp14KeyB);
-    /* TODO: Set pointer to HDCP 1.4 SRM */
+
 
     /* Initialize key manager */
     Status = XHdcp_KeyManagerInit(XPAR_HDCP_KEYMNGMT_BLK_0_BASEADDR, HdmiTxSs.Hdcp14KeyPtr);
@@ -1935,7 +1955,7 @@ int main()
     /* Set pointer to NULL */
     XV_HdmiRxSs_HdcpSetKey(&HdmiRxSs, XV_HDMIRXSS_KEY_HDCP14, (NULL));
 
-    /* TODO: Set pointer to HDCP 1.4 SRM to NULL */
+
   }
 #endif
 
@@ -2013,31 +2033,33 @@ int main()
 #else
   //Register HDMI TX SS Interrupt Handler with Interrupt Controller
   Status |= XIntc_Connect(&Intc,
-			  XPAR_MB_SS_0_AXI_INTC_V_HDMI_TX_SS_IRQ_INTR,
-			  (XInterruptHandler)XV_HdmiTxSS_HdmiTxIntrHandler,
-			  (void *)&HdmiTxSs);
+#if defined(USE_HDCP)
+                          XPAR_INTC_0_V_HDMITXSS_0_IRQ_VEC_ID,
+#else
+						  XPAR_INTC_0_V_HDMITXSS_0_VEC_ID,
+#endif
+                          (XInterruptHandler)XV_HdmiTxSS_HdmiTxIntrHandler,
+                          (void *)&HdmiTxSs);
 
 // HDCP 1.4
 #ifdef XPAR_XHDCP_NUM_INSTANCES
   // HDCP 1.4 Cipher interrupt
   Status |= XIntc_Connect(&Intc,
-			  //XPAR_MB_SS_0_AXI_INTC_0_V_HDMI_TX_SS_0_HDCP_IRQ_INTR,
-			  XPAR_MB_SS_0_AXI_INTC_V_HDMI_TX_SS_HDCP14_IRQ_INTR,
-			  (XInterruptHandler)XV_HdmiTxSS_HdcpIntrHandler,
-			  (void *)&HdmiTxSs);
+                          XPAR_INTC_0_V_HDMITXSS_0_HDCP14_IRQ_VEC_ID,
+                          (XInterruptHandler)XV_HdmiTxSS_HdcpIntrHandler,
+                          (void *)&HdmiTxSs);
 
   // HDCP 1.4 Timer interrupt
   Status |= XIntc_Connect(&Intc,
-			  //XPAR_MB_SS_0_AXI_INTC_0_V_HDMI_TX_SS_0_HDCP_INTERRUPT_INTR,
-			  XPAR_MB_SS_0_AXI_INTC_V_HDMI_TX_SS_HDCP14_TIMER_IRQ_INTR,
-			  (XInterruptHandler)XV_HdmiTxSS_HdcpTimerIntrHandler,
-			  (void *)&HdmiTxSs);
+                          XPAR_INTC_0_V_HDMITXSS_0_HDCP14_TIMER_IRQ_VEC_ID,
+                          (XInterruptHandler)XV_HdmiTxSS_HdcpTimerIntrHandler,
+                          (void *)&HdmiTxSs);
 #endif
 
 // HDCP 2.2
 #if (XPAR_XHDCP22_TX_NUM_INSTANCES)
   Status |= XIntc_Connect(&Intc,
-          XPAR_MB_SS_0_AXI_INTC_V_HDMI_TX_SS_HDCP22_TIMER_IRQ_INTR,
+		  XPAR_INTC_0_V_HDMITXSS_0_HDCP22_TIMER_IRQ_VEC_ID,
           (XInterruptHandler)XV_HdmiTxSS_Hdcp22TimerIntrHandler,
           (void *)&HdmiTxSs);
 #endif
@@ -2068,26 +2090,28 @@ int main()
 
 #else
 	  XIntc_Enable(&Intc,
-			  XPAR_MB_SS_0_AXI_INTC_V_HDMI_TX_SS_IRQ_INTR);
+#if defined(USE_HDCP)
+                   XPAR_INTC_0_V_HDMITXSS_0_IRQ_VEC_ID
+#else
+			       XPAR_INTC_0_V_HDMITXSS_0_VEC_ID
+#endif
+				   );
 
 // HDCP 1.4
 #ifdef XPAR_XHDCP_NUM_INSTANCES
     // HDCP 1.4 Cipher interrupt
-	  XIntc_Enable(&Intc,
-			  //XPAR_MB_SS_0_AXI_INTC_0_V_HDMI_TX_SS_0_HDCP_IRQ_INTR
-      XPAR_MB_SS_0_AXI_INTC_V_HDMI_TX_SS_HDCP14_IRQ_INTR);
+	XIntc_Enable(&Intc,
+                 XPAR_INTC_0_V_HDMITXSS_0_HDCP14_IRQ_VEC_ID);
 
     // HDCP 1.4 Timer interrupt
     XIntc_Enable(&Intc,
-			  //XPAR_MB_SS_0_AXI_INTC_0_V_HDMI_TX_SS_0_HDCP_INTERRUPT_INTR
-      XPAR_MB_SS_0_AXI_INTC_V_HDMI_TX_SS_HDCP14_TIMER_IRQ_INTR);
+		     XPAR_INTC_0_V_HDMITXSS_0_HDCP14_TIMER_IRQ_VEC_ID);
 #endif
 
 // HDCP 2.2
 #if (XPAR_XHDCP22_TX_NUM_INSTANCES)
     XIntc_Enable(&Intc,
-        XPAR_MB_SS_0_AXI_INTC_V_HDMI_TX_SS_HDCP22_TIMER_IRQ_INTR
-        );
+                 XPAR_INTC_0_V_HDMITXSS_0_HDCP22_TIMER_IRQ_VEC_ID);
 #endif
 
 #endif
@@ -2101,27 +2125,27 @@ int main()
   /* HDMI TX SS callback setup */
   XV_HdmiTxSs_SetCallback(&HdmiTxSs,
 							  XV_HDMITXSS_HANDLER_CONNECT,
-							  TxConnectCallback,
+							  (void *)TxConnectCallback,
 							  (void *)&HdmiTxSs);
 
   XV_HdmiTxSs_SetCallback(&HdmiTxSs,
 							  XV_HDMITXSS_HANDLER_TOGGLE,
-							  TxToggleCallback,
+							  (void *)TxToggleCallback,
 							  (void *)&HdmiTxSs);
 
   XV_HdmiTxSs_SetCallback(&HdmiTxSs,
 							  XV_HDMITXSS_HANDLER_VS,
-							  TxVsCallback,
+							  (void *)TxVsCallback,
 							  (void *)&HdmiTxSs);
 
   XV_HdmiTxSs_SetCallback(&HdmiTxSs,
 							  XV_HDMITXSS_HANDLER_STREAM_UP,
-							  TxStreamUpCallback,
+							  (void *)TxStreamUpCallback,
 							  (void *)&HdmiTxSs);
 
   XV_HdmiTxSs_SetCallback(&HdmiTxSs,
 							  XV_HDMITXSS_HANDLER_STREAM_DOWN,
-							  TxStreamDownCallback,
+							  (void *)TxStreamDownCallback,
 							  (void *)&HdmiTxSs);
 
 #ifdef USE_HDCP
@@ -2188,31 +2212,34 @@ int main()
 
 #else
   Status |= XIntc_Connect(&Intc,
-			  XPAR_MB_SS_0_AXI_INTC_V_HDMI_RX_SS_IRQ_INTR,
-			  (XInterruptHandler)XV_HdmiRxSS_HdmiRxIntrHandler,
-			  (void *)&HdmiRxSs);
+#if defined(USE_HDCP)
+                          XPAR_INTC_0_V_HDMIRXSS_0_IRQ_VEC_ID,
+#else
+						  XPAR_INTC_0_V_HDMIRXSS_0_VEC_ID,
+#endif
+                          (XInterruptHandler)XV_HdmiRxSS_HdmiRxIntrHandler,
+                          (void *)&HdmiRxSs);
+
 #ifdef XPAR_XHDCP_NUM_INSTANCES
   // HDCP 1.4 Cipher interrupt
   Status |= XIntc_Connect(&Intc,
-			  //XPAR_MB_SS_0_AXI_INTC_0_V_HDMI_RX_SS_0_HDCP_IRQ_INTR,
-          XPAR_MB_SS_0_AXI_INTC_V_HDMI_RX_SS_HDCP14_IRQ_INTR,
-			  (XInterruptHandler)XV_HdmiRxSS_HdcpIntrHandler,
-			  (void *)&HdmiRxSs);
+		                  XPAR_INTC_0_V_HDMIRXSS_0_HDCP14_IRQ_VEC_ID,
+                          (XInterruptHandler)XV_HdmiRxSS_HdcpIntrHandler,
+                          (void *)&HdmiRxSs);
 
   // HDCP 1.4 Timer interrupt
   Status |= XIntc_Connect(&Intc,
-			  //XPAR_MB_SS_0_AXI_INTC_0_V_HDMI_RX_SS_0_HDCP_INTERRUPT_INTR,
-          XPAR_MB_SS_0_AXI_INTC_V_HDMI_RX_SS_HDCP14_TIMER_IRQ_INTR,
-			  (XInterruptHandler)XV_HdmiRxSS_HdcpTimerIntrHandler,
-			  (void *)&HdmiRxSs);
+		                  XPAR_INTC_0_V_HDMIRXSS_0_HDCP14_TIMER_IRQ_VEC_ID,
+                          (XInterruptHandler)XV_HdmiRxSS_HdcpTimerIntrHandler,
+                          (void *)&HdmiRxSs);
 #endif
 
 #if (XPAR_XHDCP22_RX_NUM_INSTANCES)
   // HDCP 2.2 Timer interrupt
   Status |= XIntc_Connect(&Intc,
-               XPAR_MB_SS_0_AXI_INTC_V_HDMI_RX_SS_HDCP22_TIMER_IRQ_INTR,
-               (XInterruptHandler)XV_HdmiRxSS_Hdcp22TimerIntrHandler,
-               (void *)&HdmiRxSs);
+                          XPAR_INTC_0_V_HDMIRXSS_0_HDCP22_TIMER_IRQ_VEC_ID,
+                          (XInterruptHandler)XV_HdmiRxSS_Hdcp22TimerIntrHandler,
+                          (void *)&HdmiRxSs);
 #endif
 
 #endif
@@ -2234,23 +2261,27 @@ int main()
 
 #else
 	  XIntc_Enable(&Intc,
-			  XPAR_MB_SS_0_AXI_INTC_V_HDMI_RX_SS_IRQ_INTR);
+#if defined(USE_HDCP)
+                   XPAR_INTC_0_V_HDMIRXSS_0_IRQ_VEC_ID
+#else
+			       XPAR_INTC_0_V_HDMIRXSS_0_VEC_ID
+#endif
+				   );
+
 #ifdef XPAR_XHDCP_NUM_INSTANCES
 	  // HDCP 1.4 Cipher interrupt
     XIntc_Enable(&Intc,
-			  //XPAR_MB_SS_0_AXI_INTC_0_V_HDMI_RX_SS_0_HDCP_IRQ_INTR
-        XPAR_MB_SS_0_AXI_INTC_V_HDMI_RX_SS_HDCP14_IRQ_INTR);
+                 XPAR_INTC_0_V_HDMIRXSS_0_HDCP14_IRQ_VEC_ID);
 
     // HDCP 1.4 Timer interrupt
     XIntc_Enable(&Intc,
-			  //XPAR_MB_SS_0_AXI_INTC_0_V_HDMI_RX_SS_0_HDCP_INTERRUPT_INTR
-        XPAR_MB_SS_0_AXI_INTC_V_HDMI_RX_SS_HDCP14_TIMER_IRQ_INTR);
+		     XPAR_INTC_0_V_HDMIRXSS_0_HDCP14_TIMER_IRQ_VEC_ID);
 #endif
 
 #if (XPAR_XHDCP22_RX_NUM_INSTANCES)
     // HDCP 2.2 Timer interrupt
     XIntc_Enable(&Intc,
-      XPAR_MB_SS_0_AXI_INTC_V_HDMI_RX_SS_HDCP22_TIMER_IRQ_INTR);
+                 XPAR_INTC_0_V_HDMIRXSS_0_HDCP22_TIMER_IRQ_VEC_ID);
 #endif
 
 #endif
@@ -2264,19 +2295,19 @@ int main()
   /* RX callback setup */
   XV_HdmiRxSs_SetCallback(&HdmiRxSs,
 							  XV_HDMIRXSS_HANDLER_CONNECT,
-							  RxConnectCallback,
+							  (void *)RxConnectCallback,
 							  (void *)&HdmiRxSs);
   XV_HdmiRxSs_SetCallback(&HdmiRxSs,
 							  XV_HDMIRXSS_HANDLER_AUX,
-							  RxAuxCallback,
+							  (void *)RxAuxCallback,
 							  (void *)&HdmiRxSs);
   XV_HdmiRxSs_SetCallback(&HdmiRxSs,
 							  XV_HDMIRXSS_HANDLER_AUD,
-							  RxAudCallback,
+							  (void *)RxAudCallback,
 							  (void *)&HdmiRxSs);
   XV_HdmiRxSs_SetCallback(&HdmiRxSs,
 							  XV_HDMIRXSS_HANDLER_LNKSTA,
-							  RxLnkStaCallback,
+							  (void *)RxLnkStaCallback,
 							  (void *)&HdmiRxSs);
   //XV_HdmiRxSs_SetCallback(&HdmiRxSs,
   //	  	  	  	  	  	  	  XV_HDMIRXSS_HANDLER_DDC,
@@ -2284,15 +2315,15 @@ int main()
   //	  	  	  	  	  	  	  (void *)&HdmiRxSs);
   XV_HdmiRxSs_SetCallback(&HdmiRxSs,
 							  XV_HDMIRXSS_HANDLER_STREAM_DOWN,
-							  RxStreamDownCallback,
+							  (void *)RxStreamDownCallback,
 							  (void *)&HdmiRxSs);
   XV_HdmiRxSs_SetCallback(&HdmiRxSs,
 							  XV_HDMIRXSS_HANDLER_STREAM_INIT,
-							  RxStreamInitCallback,
+							  (void *)RxStreamInitCallback,
 							  (void *)&HdmiRxSs);
   XV_HdmiRxSs_SetCallback(&HdmiRxSs,
 							  XV_HDMIRXSS_HANDLER_STREAM_UP,
-							  RxStreamUpCallback,
+							  (void *)RxStreamUpCallback,
 							  (void *)&HdmiRxSs);
 
 #ifdef USE_HDCP
@@ -2322,7 +2353,7 @@ int main()
 			(void *)&Vphy);
 #else
   Status = XIntc_Connect(&Intc,
-		                 XPAR_MB_SS_0_AXI_INTC_VID_PHY_CONTROLLER_IRQ_INTR,
+		                 XPAR_INTC_0_VPHY_0_VEC_ID,
 			             (XInterruptHandler)XVphy_InterruptHandler,
 			             (void *)&Vphy);
 #endif
@@ -2332,8 +2363,10 @@ int main()
     }
 
     /* Initialize HDMI VPHY */
-    Status = XVphy_HdmiInitialize(&Vphy, 0,
-			XVphyCfgPtr, XPAR_CPU_CORE_CLOCK_FREQ_HZ);
+    Status = XVphy_HdmiInitialize(&Vphy,
+                                  0,
+                                  XVphyCfgPtr,
+                                  XPAR_CPU_CORE_CLOCK_FREQ_HZ);
     if (Status != XST_SUCCESS) {
       print("HDMI VPHY initialization error\n\r");
       return XST_FAILURE;
@@ -2345,28 +2378,28 @@ int main()
 		XPAR_FABRIC_VID_PHY_CONTROLLER_IRQ_INTR);
 #else
     XIntc_Enable(&Intc,
-		XPAR_MB_SS_0_AXI_INTC_VID_PHY_CONTROLLER_IRQ_INTR);
+                 XPAR_INTC_0_VPHY_0_VEC_ID);
 #endif
 
 #ifdef XPAR_XV_HDMITXSS_NUM_INSTANCES
     /* VPHY callback setup */
     XVphy_SetHdmiCallback(&Vphy,
 						XVPHY_HDMI_HANDLER_TXINIT,
-						VphyHdmiTxInitCallback,
+						(void *)VphyHdmiTxInitCallback,
 						(void *)&Vphy);
     XVphy_SetHdmiCallback(&Vphy,
 						XVPHY_HDMI_HANDLER_TXREADY,
-						VphyHdmiTxReadyCallback,
+						(void *)VphyHdmiTxReadyCallback,
 						(void *)&Vphy);
 #endif
 #ifdef XPAR_XV_HDMIRXSS_NUM_INSTANCES
     XVphy_SetHdmiCallback(&Vphy,
 						XVPHY_HDMI_HANDLER_RXINIT,
-						VphyHdmiRxInitCallback,
+						(void *)VphyHdmiRxInitCallback,
 						(void *)&Vphy);
     XVphy_SetHdmiCallback(&Vphy,
 						XVPHY_HDMI_HANDLER_RXREADY,
-						VphyHdmiRxReadyCallback,
+						(void *)VphyHdmiRxReadyCallback,
 						(void *)&Vphy);
 #endif
 

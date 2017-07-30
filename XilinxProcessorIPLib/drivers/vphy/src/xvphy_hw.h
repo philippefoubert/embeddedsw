@@ -47,6 +47,8 @@
  * ----- ---- -------- -----------------------------------------------
  * 1.0   als  10/19/15 Initial release.
  * 1.1   gm   02/01/16 Added GTPE2 and GTHE4 support
+ * 1.4   gm   29/11/16 Added ERR_IRQ register offset
+ * 1.5   gm   02/05/17 Added CPLL CAL reg and masks
  * </pre>
  *
 *******************************************************************************/
@@ -70,14 +72,14 @@
 /** @name VPHY core registers: General registers.
   * @{
   */
-#define XVPHY_VERSION_REG		0x000
+#define XVPHY_VERSION_REG			0x000
 #define XVPHY_BANK_SELECT_REG		0x00C
 #define XVPHY_REF_CLK_SEL_REG		0x010
-#define XVPHY_PLL_RESET_REG		0x014
+#define XVPHY_PLL_RESET_REG			0x014
 #define XVPHY_PLL_LOCK_STATUS_REG	0x018
-#define XVPHY_TX_INIT_REG		0x01C
+#define XVPHY_TX_INIT_REG			0x01C
 #define XVPHY_TX_INIT_STATUS_REG	0x020
-#define XVPHY_RX_INIT_REG		0x024
+#define XVPHY_RX_INIT_REG			0x024
 #define XVPHY_RX_INIT_STATUS_REG	0x028
 #define XVPHY_IBUFDS_GTXX_CTRL_REG	0x02C
 #define XVPHY_POWERDOWN_CONTROL_REG	0x030
@@ -99,12 +101,19 @@
 #define XVPHY_DRP_STATUS_COMMON_REG	0x064
 /* @} */
 
+/** @name VPHY core registers: CPLL Calibration registers.
+  * @{
+  */
+#define XVPHY_CPLL_CAL_PERIOD_REG	0x068
+#define XVPHY_CPLL_CAL_TOL_REG		0x06C
+/* @} */
+
 /** @name VPHY core registers: Transmitter function registers.
   * @{
   */
 #define XVPHY_TX_CONTROL_REG		0x070
 #define XVPHY_TX_BUFFER_BYPASS_REG	0x074
-#define XVPHY_TX_STATUS_REG		0x078
+#define XVPHY_TX_STATUS_REG			0x078
 #define XVPHY_TX_DRIVER_CH12_REG	0x07C
 #define XVPHY_TX_DRIVER_CH34_REG	0x080
 /* @} */
@@ -113,14 +122,15 @@
   * @{
   */
 #define XVPHY_RX_CONTROL_REG		0x100
-#define XVPHY_RX_STATUS_REG		0x104
-#define XVPHY_RX_EQ_CDR_REG		0x108
-#define XVPHY_RX_TDLOCK_REG		0x10C
+#define XVPHY_RX_STATUS_REG		    0x104
+#define XVPHY_RX_EQ_CDR_REG		    0x108
+#define XVPHY_RX_TDLOCK_REG		    0x10C
 /* @} */
 
 /** @name VPHY core registers: Interrupt registers.
   * @{
   */
+#define XVPHY_ERR_IRQ			0x03C
 #define XVPHY_INTR_EN_REG		0x110
 #define XVPHY_INTR_DIS_REG		0x114
 #define XVPHY_INTR_MASK_REG		0x118
@@ -354,6 +364,10 @@
 #define XVPHY_DRP_STATUS_DRPO_MASK	0x0FFFF
 #define XVPHY_DRP_STATUS_DRPRDY_MASK	0x10000
 #define XVPHY_DRP_STATUS_DRPBUSY_MASK	0x20000
+/* 0x068: CPLL CAL PERIOD */
+#define XVPHY_CPLL_CAL_PERIOD_MASK      0x3FFFF
+/* 0x06C: CPLL CAL TOLERANCE */
+#define XVPHY_CPLL_CAL_TOL_MASK         0x3FFFF
 /* 0x070: TX_CONTROL */
 #define XVPHY_TX_CONTROL_TX8B10BEN_MASK(Ch) \
 		(0x01 << (8 * (Ch - 1)))

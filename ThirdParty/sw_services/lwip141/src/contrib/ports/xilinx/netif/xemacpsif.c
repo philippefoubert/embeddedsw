@@ -299,7 +299,11 @@ static err_t low_level_init(struct netif *netif)
 		return ERR_MEM;
 
 	/* maximum transfer unit */
+#ifdef ZYNQMP_USE_JUMBO
+	netif->mtu = XEMACPS_MTU_JUMBO - XEMACPS_HDR_SIZE;
+#else
 	netif->mtu = XEMACPS_MTU - XEMACPS_HDR_SIZE;
+#endif
 
 #if LWIP_IGMP
 	netif->igmp_mac_filter = xemacpsif_mac_filter_update;
@@ -354,8 +358,8 @@ void HandleEmacPsError(struct xemac_s *xemac)
 	SYS_ARCH_DECL_PROTECT(lev);
 	SYS_ARCH_PROTECT(lev);
 
-	free_txrx_pbufs(xemacpsif);
 	xemacpsif = (xemacpsif_s *)(xemac->state);
+	free_txrx_pbufs(xemacpsif);
 	status = XEmacPs_CfgInitialize(&xemacpsif->emacps, mac_config,
 						mac_config->BaseAddress);
 	if (status != XST_SUCCESS) {

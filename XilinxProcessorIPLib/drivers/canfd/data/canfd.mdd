@@ -48,6 +48,10 @@ BEGIN driver canfd
   OPTION supported_peripherals = (canfd );
   OPTION driver_state = ACTIVE;
   OPTION copyfiles = all;
+<<<<<<< HEAD
+=======
+  OPTION VERSION = 1.2;
+>>>>>>> upstream/master
   OPTION NAME = canfd;
 
 END driver

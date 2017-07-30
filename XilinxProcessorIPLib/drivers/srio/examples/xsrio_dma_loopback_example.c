@@ -63,7 +63,12 @@
  * Ver   Who  Date     Changes
  * ----- ---- -------- -------------------------------------------------------
  * 1.0   adk  16/04/14	Initial release
- *
+ * 1.1   ms   01/23/17  Modified xil_printf statement in main function to
+ *                      ensure that "Successfully ran" and "Failed" strings
+ *                      are available in all examples. This is a fix for
+ *                      CR-965028.
+ *       ms   04/05/17  Added tabspace for return statements in functions for
+ *                      proper documentation while generating doxygen.
  * </pre>
  *
  * ***************************************************************************
@@ -102,7 +107,8 @@ int XSrioDmaLoopbackExample(XSrio *InstancePtr, u16 DeviceId);
 *
 * @param	None
 *
-* @return	- XST_SUCCESS if tests pass
+* @return
+*		- XST_SUCCESS if tests pass
 * 		- XST_FAILURE if fails.
 *
 * @note		None
@@ -121,7 +127,7 @@ int main()
 		return XST_FAILURE;
 	}
 
-	xil_printf("SRIO DMA Loopback Test passed\n\r");
+	xil_printf("Successfully ran SRIO DMA Loopback Test\n\r");
 	xil_printf("--- Exiting main() ---\n\r");
 
 	return XST_SUCCESS;
@@ -146,7 +152,8 @@ int main()
 *		XSrio driver.
 * @param	DeviceId is Device ID of the SRIO Gen2 Device.
 *
-* @return	-XST_SUCCESS to indicate success
+* @return
+*		-XST_SUCCESS to indicate success
 *		-XST_FAILURE to indicate failure
 *
 ******************************************************************************/
@@ -206,12 +213,10 @@ int XSrioDmaLoopbackExample(XSrio *InstancePtr, u16 DeviceId)
 	 * The Packet-format used here is HELLO Packet format
 	 * More details look into pg 3.1 version:73 page(HELLO PACKET FORMAT).
 	 */
-	*(u32 *)(MEM_ADDR + 0x00) = 0x50000600; /**< Lower word of the
-						 *   HELLO Packet
-						 */
-	*(u32 *)(MEM_ADDR + 0x04) = 0x08602F74; /**< Upper word of the 
-					         *   HELLO packet
-					         */
+	*(u32 *)(MEM_ADDR + 0x00) = 0x50000600;
+		/* Lower word of the HELLO Packet */
+	*(u32 *)(MEM_ADDR + 0x04) = 0x08602F74;
+		/* Upper word of the HELLO packet */
 	Count = 8;
 
 	while(Count<(DATA_SIZE * 2)) {
@@ -249,8 +254,9 @@ int XSrioDmaLoopbackExample(XSrio *InstancePtr, u16 DeviceId)
 	XAxiDma_IntrEnable(&AxiDma,XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
 	XAxiDma_WriteReg(DmaConfig->BaseAddr, XAXIDMA_SRCADDR_OFFSET, MEM_ADDR);
 
-	/**< Configure the DMA Rx Side 
-         * MEM_ADDR+0x5000 is the address where Rx packet is formed
+	/*
+	 * Configure the DMA Rx Side
+     * MEM_ADDR+0x5000 is the address where Rx packet is formed
 	 */
 	XAxiDma_WriteReg(DmaConfig->BaseAddr,
 		XAXIDMA_RX_OFFSET+XAXIDMA_CR_OFFSET, XAXIDMA_CR_RUNSTOP_MASK);

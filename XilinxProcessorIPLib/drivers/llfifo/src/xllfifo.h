@@ -172,8 +172,16 @@
  *                     XLlFifo_Initialize APIs.
  * 5.1  adk   01/02/15 CR#885653 Fix Incorrect AXI4 Base address being
  *                     Exported to the xparameters.h file.
- *
- *
+ *      ms    01/23/17 Modified xil_printf statement in main function for all
+ *                     examples to ensure that "Successfully ran" and "Failed"
+ *                     strings are available in all examples. This is a fix
+ *                     for CR-965028.
+ *      ms    03/17/17 Added readme.txt file in examples folder for doxygen
+ *                     generation.
+ *      ms    04/05/17  Added tabspace for return statements in functions for
+ *                      proper documentation and Modified Comment lines
+ *                      to consider it as a documentation block while
+ *                      generating doxygen for llfifo examples.
  * </pre>
  *
  *****************************************************************************/

@@ -1,5 +1,9 @@
 var files =
 [
+<<<<<<< HEAD
+=======
+    [ "cfa_selftest_example.c", "cfa__selftest__example_8c.html", "cfa__selftest__example_8c" ],
+>>>>>>> upstream/master
     [ "xcfa.c", "xcfa_8c.html", "xcfa_8c" ],
     [ "xcfa.h", "xcfa_8h.html", "xcfa_8h" ],
     [ "xcfa_hw.h", "xcfa__hw_8h.html", "xcfa__hw_8h" ],
