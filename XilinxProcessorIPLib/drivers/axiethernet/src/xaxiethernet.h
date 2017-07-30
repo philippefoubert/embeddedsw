@@ -484,6 +484,12 @@
 *		     only one instance)
 *       ms 03/17/17 Modified text file in examples folder for doxygen
 *                   generation.
+*       ms 04/05/17 Added tabspace for return statements in functions
+*                   of axiethernet examples for proper documentation while
+*                   generating doxygen.
+* 5.5	adk 19/05/17 Increase Timeout value in the driver as per new h/w update
+* 		     i.e. Increase of transceiver initialization times in
+* 		     ultrascale+ devices (CR#976244).
 * </pre>
 *
 ******************************************************************************/

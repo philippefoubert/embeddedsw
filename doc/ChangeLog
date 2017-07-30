@@ -1,3 +1,49 @@
+Changes for 2017.2
+================================
+
+cpu_cortexr5_v1_3
+Added -mfloat-abi=hard and -mfpu=vfpv3-d16 in extra compiler flags,
+to support hard flaoting point for cortex-r5 standalone BSP.
+
+gpiops_v3_3:
+Added notes about gpio pin description for zcu102 and zc702
+boards. Fix for cr-955076
+
+ipipsu_v2_3:
+Added suffix U for all macros of ipipsu in xparameters.h
+Fix for CR-963131.
+
+scugic_v3_7:
+Added suffix U for all macros of scugic in xparameters.h
+Fix for CR-963131.
+
+standlone_v6_3:
+Added hard floating point support in the cortex-r5 BSP.
+Updated Cortex-a53 32 bit BSP boot code to fix bug in the HW coherency
+enablement. It fixes the CR#973287
+Updated Cortex-a53 64 bit BSP boot code, to remove redundant write to
+the L2CTLR_EL1 register. It fixes the CR#974698
+
+sysmonpsu_v2_2:
+Corrected temperature conversion formulas
+
+xilsecure_v2_1
+Added SHA2 binary for freertos R5 with soft floating point and
+standalone R5 binary with hard floating point.
+
+xilfpga_v2_1:
+Fixed the check logic issue in Xfpga_PL_BitStream_Load().
+
+zynqmp_fsbl:
+Added word alignement to AuthBuffer, by adding attribute.
+
+zynqmp_pmufw:
+Bypass RPLL in system reset for Silicon 1.0. This is a workaround for a bug in Silicon 1.0 which was fixed in other versions of Silicon
+Binding main and lsbus top switch clocks to the DDR node to ensure that PLLs which drive these clocks do not get reset/bypassed as long as the DDR being accessed.
+
+axiethernet_v5_5:
+Increase Timeout value in the driver as per new h/w update CR#976244.
+
 Change Log for 2017.1
 =================================
 
@@ -809,6 +855,9 @@ Add HDCP repeater support
 Add HDCP 1.4 & 2.2 auto switching support
 Add Import Example Design support
 Update to optimize out HDCP when excluded
+
+v_hdmirxss_v3_2:
+Fix to prevent HDCP protocol switching when only one protocol is in the design
 
 v_hdmitxss_v3_0:
 Up version to 3.0 with the following updates:
@@ -1865,6 +1914,13 @@ Implemented 2/4 byte GT mode switching HDMI
 Fixed c++ compiler warnings
 Added Transceiver_Width, C_Err_Irq_En, AXI_LITE_FREQ_HZ Parameters in xvphy_g.c and in vphy main data structure
 Added XVphy_GtUserRdyEnable for TX and RX in XVphy_DpInitialize API
+
+vphy_v1_5:
+Updated the Updated the RXPI_CFG0 calculation in xvphy_gthe4.c
+Corrected RXCDR_CFG values for DP in xvphy_gthe4.c
+Added XVphy_CfgCpllCalPeriodandTol API in xvphy_gthe4.c adn vphy_i.h
+Added Div in HdmiCfgCalcMmcmParam search algorithm in xvphy_hdmi.c
+Added DrpClkFreq in XVphy_Config
 
 vprocss_v2_1:
 Added new version 2.1

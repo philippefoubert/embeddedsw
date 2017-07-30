@@ -43,16 +43,16 @@
 * Ver   Who    Date     Changes
 * ----- ---- -------- -------------------------------------------------------
 * 1.00         10/07/15 Initial release.
-* 1.10  MG     17/12/16 Fixed issue in function SetAudioChannels
+* 1.01  MG     17/12/16 Fixed issue in function SetAudioChannels
 *                       Updated function XV_HdmiTxSs_SendAuxInfoframe
-* 1.2   yh     12/01/16 Check vtc existance before configuring it
-* 1.3   yh     15/01/16 Add 3D Support
-* 1.4   yh     20/01/16 Added remapper support
-* 1.5   yh     01/02/16 Added set_ppc api
-* 1.6   yh     01/02/16 Removed xil_print "Cable (dis)connected"
-* 1.7   yh     15/02/16 Added default value to XV_HdmiTxSs_ConfigRemapper
-* 1.8   MG     03/02/16 Added HDCP support
-* 1.9   MG     09/03/16 Added XV_HdmiTxSs_SetHdmiMode and XV_HdmiTxSs_SetDviMode
+* 1.02  yh     12/01/16 Check vtc existance before configuring it
+* 1.03  yh     15/01/16 Add 3D Support
+* 1.04  yh     20/01/16 Added remapper support
+* 1.05  yh     01/02/16 Added set_ppc api
+* 1.06  yh     01/02/16 Removed xil_print "Cable (dis)connected"
+* 1.07  yh     15/02/16 Added default value to XV_HdmiTxSs_ConfigRemapper
+* 1.08  MG     03/02/16 Added HDCP support
+* 1.09  MG     09/03/16 Added XV_HdmiTxSs_SetHdmiMode and XV_HdmiTxSs_SetDviMode
 *                       Removed reduced blanking support
 * 1.10  MH     03/15/16 Moved HDCP 2.2 reset from stream up/down callback to
 *                       connect callback
@@ -108,6 +108,8 @@
 *                             Segment Support and HDMI Compliance Test
 *                       Updated the XV_HdmiTxSs_ShowEdid API to have support
 *                             multiple EDID.
+* 1.25  MH     21/04/17 Updated to set HDMI mode in functions
+*                             XV_HdmiTxSS_SetHdmiMode and XV_HdmiTxSS_SetDviMode.
 * </pre>
 *
 ******************************************************************************/
@@ -196,6 +198,12 @@ static void XV_HdmiTxSs_ConfigBridgeMode(XV_HdmiTxSs *InstancePtr);
 void XV_HdmiTxSS_SetHdmiMode(XV_HdmiTxSs *InstancePtr)
 {
     XV_HdmiTx_SetHdmiMode(InstancePtr->HdmiTxPtr);
+
+#ifdef XPAR_XHDCP_NUM_INSTANCES
+    if (InstancePtr->Hdcp14Ptr) {
+        XHdcp1x_SetHdmiMode(InstancePtr->Hdcp14Ptr, TRUE);
+    }
+#endif
 }
 
 /*****************************************************************************/
@@ -208,6 +216,12 @@ void XV_HdmiTxSS_SetHdmiMode(XV_HdmiTxSs *InstancePtr)
 void XV_HdmiTxSS_SetDviMode(XV_HdmiTxSs *InstancePtr)
 {
     XV_HdmiTx_SetDviMode(InstancePtr->HdmiTxPtr);
+
+#ifdef XPAR_XHDCP_NUM_INSTANCES
+    if (InstancePtr->Hdcp14Ptr) {
+        XHdcp1x_SetHdmiMode(InstancePtr->Hdcp14Ptr, FALSE);
+    }
+#endif
 }
 
 /*****************************************************************************/

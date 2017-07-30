@@ -166,6 +166,10 @@
 * 2.1   sk     03/03/16 Check for PL reset before doing PL Sysmon reset.
 *       ms     03/17/17 Added readme.txt file in examples folder for doxygen
 *                       generation.
+*       ms     04/05/17 Modified Comment lines in functions of sysmonpsu
+*                       examples to recognize it as documentation block
+*                       for doxygen generation.
+* 2.2   sk     04/14/17 Corrected temperature conversion formulas.
 *
 * </pre>
 *
@@ -428,7 +432,7 @@ typedef struct {
 *
 *****************************************************************************/
 #define XSysMonPsu_RawToTemperature_OnChip(AdcData)				\
-	((((float)(AdcData)/65536.0f)/0.00199451786f ) - 273.6777f)
+	((((float)(AdcData)/65536.0f)/0.00196342531f ) - 280.2309f)
 
 /****************************************************************************/
 /**
@@ -445,7 +449,7 @@ typedef struct {
 *
 *****************************************************************************/
 #define XSysMonPsu_RawToTemperature_ExternalRef(AdcData)			\
-	((((float)(AdcData)/65536.0f)/0.00198842814f ) - 273.8195f)
+	((((float)(AdcData)/65536.0f)/0.00197008621f ) - 279.4266f)
 
 /****************************************************************************/
 /**
@@ -497,7 +501,7 @@ typedef struct {
 *
 *****************************************************************************/
 #define XSysMonPsu_TemperatureToRaw_OnChip(Temperature)				\
-	((s32)(((Temperature) + 273.6777f)*65536.0f*0.00199451786f))
+	((s32)(((Temperature) + 280.2309f)*65536.0f*0.00196342531f))
 
 /****************************************************************************/
 /**
@@ -515,7 +519,7 @@ typedef struct {
 *
 *****************************************************************************/
 #define XSysMonPsu_TemperatureToRaw_ExternalRef(Temperature)		\
-	((s32)(((Temperature) + 273.8195f)*65536.0f*0.00198842814f))
+	((s32)(((Temperature) + 279.4266f)*65536.0f*0.00197008621f))
 
 /****************************************************************************/
 /**
