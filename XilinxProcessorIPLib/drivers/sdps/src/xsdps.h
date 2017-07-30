@@ -109,14 +109,14 @@
 * 2.2   hk     07/28/14 Make changes to enable use of data cache.
 * 2.3   sk     09/23/14 Send command for relative card address
 *                       when re-initialization is done.CR# 819614.
-*						Use XSdPs_Change_ClkFreq API whenever changing
-*						clock.CR# 816586.
-* 2.4	sk	   12/04/14 Added support for micro SD without
-* 						WP/CD. CR# 810655.
-*						Checked for DAT Inhibit mask instead of CMD
-* 						Inhibit mask in Cmd Transfer API.
-*						Added Support for SD Card v1.0
-* 2.5 	sg		07/09/15 Added SD 3.0 features
+*                        Use XSdPs_Change_ClkFreq API whenever changing
+*                        clock.CR# 816586.
+* 2.4    sk       12/04/14 Added support for micro SD without
+*                         WP/CD. CR# 810655.
+*                        Checked for DAT Inhibit mask instead of CMD
+*                         Inhibit mask in Cmd Transfer API.
+*                        Added Support for SD Card v1.0
+* 2.5     sg        07/09/15 Added SD 3.0 features
 *       kvn     07/15/15 Modified the code according to MISRAC-2012.
 * 2.6   sk     10/12/15 Added support for SD card v1.0 CR# 840601.
 * 2.7   sk     11/24/15 Considered the slot type befoe checking CD/WP pins.
@@ -165,8 +165,8 @@ extern "C" {
 
 /************************** Constant Definitions *****************************/
 
-#define XSDPS_CT_ERROR	0x2U	/**< Command timeout flag */
-#define MAX_TUNING_COUNT	40U		/**< Maximum Tuning count */
+#define XSDPS_CT_ERROR              0x2U    /**< Command timeout flag */
+#define MAX_TUNING_COUNT            40U     /**< Maximum Tuning count */
 
 /**************************** Type Definitions *******************************/
 
@@ -176,21 +176,21 @@ typedef void (*XSdPs_ConfigTap) (u32 Bank, u32 DeviceId, u32 CardType);
  * This typedef contains configuration information for the device.
  */
 typedef struct {
-	u16 DeviceId;			/**< Unique ID  of device */
-	u32 BaseAddress;		/**< Base address of the device */
-	u32 InputClockHz;		/**< Input clock frequency */
-	u32 CardDetect;			/**< Card Detect */
-	u32 WriteProtect;			/**< Write Protect */
-	u32 BusWidth;			/**< Bus Width */
-	u32 BankNumber;			/**< MIO Bank selection for SD */
-	u32 HasEMIO;			/**< If SD is connected to EMIO */
+    u16 DeviceId;            /**< Unique ID  of device */
+    u32 BaseAddress;         /**< Base address of the device */
+    u32 InputClockHz;        /**< Input clock frequency */
+    u32 CardDetect;          /**< Card Detect */
+    u32 WriteProtect;        /**< Write Protect */
+    u32 BusWidth;            /**< Bus Width */
+    u32 BankNumber;          /**< MIO Bank selection for SD */
+    u32 HasEMIO;             /**< If SD is connected to EMIO */
 } XSdPs_Config;
 
 /* ADMA2 descriptor table */
 typedef struct {
-	u16 Attribute;		/**< Attributes of descriptor */
-	u16 Length;		/**< Length of current dma transfer */
-	u32 Address;		/**< Address of current dma transfer */
+    u16 Attribute;           /**< Attributes of descriptor */
+    u16 Length;              /**< Length of current dma transfer */
+    u32 Address;             /**< Address of current dma transfer */
 } XSdPs_Adma2Descriptor;
 
 /**
@@ -199,31 +199,32 @@ typedef struct {
  * to a variable of this type is then passed to the driver API functions.
  */
 typedef struct {
-	XSdPs_Config Config;	/**< Configuration structure */
-	u32 IsReady;		/**< Device is initialized and ready */
-	u32 Host_Caps;		/**< Capabilities of host controller */
-	u32 Host_CapsExt;	/**< Extended Capabilities */
-	u32 HCS;		/**< High capacity support in card */
-	u8  CardType;		/**< Type of card - SD/MMC/eMMC */
-	u8  Card_Version;	/**< Card version */
-	u8  HC_Version;		/**< Host controller version */
-	u8  BusWidth;		/**< Current operating bus width */
-	u32 BusSpeed;		/**< Current operating bus speed */
-	u8  Switch1v8;		/**< 1.8V Switch support */
-	u32 CardID[4];		/**< Card ID Register */
-	u32 RelCardAddr;	/**< Relative Card Address */
-	u32 CardSpecData[4];	/**< Card Specific Data Register */
-	u32 SectorCount;		/**< Sector Count */
-	u32 SdCardConfig;	/**< Sd Card Configuration Register */
-	u32 Mode;			/**< Bus Speed Mode */
-	XSdPs_ConfigTap Config_TapDelay;	/**< Configuring the tap delays */
-	/**< ADMA Descriptors */
+    XSdPs_Config Config;    /**< Configuration structure */
+    u32 IsReady;            /**< Device is initialized and ready */
+    u32 Host_Caps;          /**< Capabilities of host controller */
+    u32 Host_CapsExt;       /**< Extended Capabilities */
+    u32 HCS;                /**< High capacity support in card */
+    u8  CardType;           /**< Type of card - SD/MMC/eMMC */
+    u8  Card_Version;       /**< Card version */
+    u8  HC_Version;         /**< Host controller version */
+    u8  BusWidth;           /**< Current operating bus width */
+    u32 BusSpeed;           /**< Current operating bus speed */
+    u8  Switch1v8;          /**< 1.8V Switch support */
+    u32 CardID[4];          /**< Card ID Register */
+    u32 RelCardAddr;        /**< Relative Card Address */
+    u32 CardSpecData[4];    /**< Card Specific Data Register */
+    u32 SectorCount;        /**< Sector Count */
+    u32 SdCardConfig;       /**< Sd Card Configuration Register */
+    u32 Mode;               /**< Bus Speed Mode */
+
+    XSdPs_ConfigTap Config_TapDelay;    /**< Configuring the tap delays */
+    /**< ADMA Descriptors */
 #ifdef __ICCARM__
 #pragma data_alignment = 32
-	XSdPs_Adma2Descriptor Adma2_DescrTbl[32];
+    XSdPs_Adma2Descriptor Adma2_DescrTbl[32];
 #pragma data_alignment = 4
 #else
-	XSdPs_Adma2Descriptor Adma2_DescrTbl[32] __attribute__ ((aligned(32)));
+    XSdPs_Adma2Descriptor Adma2_DescrTbl[32] __attribute__ ((aligned(32)));
 #endif
 } XSdPs;
 
@@ -231,8 +232,7 @@ typedef struct {
 
 /************************** Function Prototypes ******************************/
 XSdPs_Config *XSdPs_LookupConfig(u16 DeviceId);
-s32 XSdPs_CfgInitialize(XSdPs *InstancePtr, XSdPs_Config *ConfigPtr,
-				u32 EffectiveAddr);
+s32 XSdPs_CfgInitialize(XSdPs *InstancePtr, XSdPs_Config *ConfigPtr, u32 EffectiveAddr);
 s32 XSdPs_SdCardInitialize(XSdPs *InstancePtr);
 s32 XSdPs_ReadPolled(XSdPs *InstancePtr, u32 Arg, u32 BlkCnt, u8 *Buff);
 s32 XSdPs_WritePolled(XSdPs *InstancePtr, u32 Arg, u32 BlkCnt, const u8 *Buff);
